@@ -37,8 +37,6 @@ namespace OutlookPrivacyPlugin
 
     protected override void OnLoad(EventArgs e)
     {
-      BlogLabel.Links.Add(0, BlogLabel.Text.Length, "http://" + BlogLabel.Text);
-      DonateLabel.Links.Add(0, DonateLabel.Text.Length, "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=PLFSJBFC5FG3Q&lc=BE&item_name=David%20Cumps&item_number=OutlookGnuPG&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted");
       IconLabel.Links.Add(0, IconLabel.Text.Length, "http://www.famfamfam.com/");
       OpenPGPLink.Links.Add(0, OpenPGPLink.Text.Length, "http://www.starksoft.com/");
       ClipboardLink.Links.Add(0, ClipboardLink.Text.Length, "http://www.codeproject.com/KB/system/clipboard_backup_cs.aspx?display=Print");

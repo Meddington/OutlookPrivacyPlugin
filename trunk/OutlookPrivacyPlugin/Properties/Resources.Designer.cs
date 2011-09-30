@@ -60,13 +60,6 @@ namespace OutlookPrivacyPlugin.Properties {
             }
         }
         
-        internal static System.Drawing.Bitmap About {
-            get {
-                object obj = ResourceManager.GetObject("About", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
         internal static System.Drawing.Bitmap database_gear {
             get {
                 object obj = ResourceManager.GetObject("database_gear", resourceCulture);
