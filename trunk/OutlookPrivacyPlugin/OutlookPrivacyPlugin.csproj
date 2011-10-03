@@ -202,6 +202,7 @@
     <Compile Include="About.Designer.cs">
       <DependentUpon>About.cs</DependentUpon>
     </Compile>
+    <Compile Include="Attachment.cs" />
     <Compile Include="GnuKey.cs" />
     <Compile Include="GnuPGCommandBar.cs" />
     <Compile Include="GnuPGRibbon.cs">
