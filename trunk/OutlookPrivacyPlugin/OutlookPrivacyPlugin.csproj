@@ -41,7 +41,7 @@
     <PublishUrl>publish\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.3</ApplicationVersion>
+    <ApplicationVersion>1.0.0.4</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
@@ -308,6 +308,10 @@
     <ProjectReference Include="..\References\OpenPGP\src\Starksoft.Cryptography.OpenPGP.csproj">
       <Project>{ED351287-F7EA-4AF8-B331-DF06FBBE5023}</Project>
       <Name>Starksoft.Cryptography.OpenPGP</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\References\SharpMimeTools\SharpMimeTools.csproj">
+      <Project>{D5CEEE86-95B6-4F17-B19A-BCF3CB2B1E0B}</Project>
+      <Name>SharpMimeTools</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

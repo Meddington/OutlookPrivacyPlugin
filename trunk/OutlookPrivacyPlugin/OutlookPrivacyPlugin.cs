@@ -13,6 +13,7 @@ using Office = Microsoft.Office.Core;
 using OutlookPrivacyPlugin.Properties;
 using Starksoft.Cryptography.OpenPGP;
 using Exception = System.Exception;
+using anmar.SharpMimeTools;
 
 namespace OutlookPrivacyPlugin
 {
@@ -329,9 +330,11 @@ namespace OutlookPrivacyPlugin
 				ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
 
 				// Look for PGP headers
-				Match match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+				Match match = null;
+				if(mailItem.Body != null)
+					Regex.Match(mailItem.Body, _pgpHeaderPattern);
 
-				if ((_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
+				if (match != null && (_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
 				{
 					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
@@ -363,7 +366,7 @@ namespace OutlookPrivacyPlugin
 					// Update match again, in case decryption failed/cancelled.
 					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
 				}
-				else if (_settings.AutoVerify && match.Value == _pgpSignedHeader)
+				else if (match != null && _settings.AutoVerify && match.Value == _pgpSignedHeader)
 				{
 					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
@@ -392,12 +395,82 @@ namespace OutlookPrivacyPlugin
 
 					VerifyEmail(mailItem);
 				}
+				else
+				{
+					bool foundPgpMime = false;
+					Microsoft.Office.Interop.Outlook.Attachment encryptedMime = null;
 
-				ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
-				ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
+					// Look for PGP MIME
+					foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+					{
+						if (attachment.FileName == "PGP_MIME version identification.dat")
+							foundPgpMime = true;
+
+						if (attachment.FileName == "encrypted.asc")
+							encryptedMime = attachment;
+					}
+
+					if (foundPgpMime && encryptedMime != null)
+					{
+						HandlePgpMime(mailItem, encryptedMime);
+					}
+				}
+
+				if (match != null)
+				{
+					ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
+					ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
+				}
 			}
 			ribbon.InvalidateButtons();
 		}
+
+		void HandlePgpMime(Outlook.MailItem mailItem, Microsoft.Office.Interop.Outlook.Attachment encryptedMime)
+		{
+			// 1. Decrypt attachement
+
+			var tempfile = Path.GetTempFileName();
+			encryptedMime.SaveAsFile(tempfile);
+			var encrypteddata = File.ReadAllBytes(tempfile);
+			var cleardata = DecryptAndVerify(encrypteddata);
+			if (cleardata == null)
+				return;
+
+			// Remove existing attachments.
+			List<Microsoft.Office.Interop.Outlook.Attachment> attachments = new List<Outlook.Attachment>();
+			foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+				attachments.Add(attachment);
+
+			foreach(var attachment in attachments)
+				attachment.Delete();
+
+			// Extract files from MIME data
+
+			SharpMessage msg = new SharpMessage(ASCIIEncoding.ASCII.GetString(cleardata));
+			string body = mailItem.Body;
+			mailItem.Body = msg.Body;
+			mailItem.HTMLBody = "<html><body>" + msg.Body + "</body></html>";
+
+			// Note: Don't update BodyFormat or message will not display correctly the first
+			// time it's opened.
+
+			foreach (SharpAttachment mimeAttachment in msg.Attachments)
+			{
+				mimeAttachment.Stream.Position = 0;
+				var fileName = mimeAttachment.Name;
+				var tempFile = Path.Combine(Path.GetTempPath(), fileName);
+
+				using(FileStream fout = File.OpenWrite(tempFile))
+				{
+					mimeAttachment.Stream.CopyTo(fout);
+				}
+
+				mailItem.Attachments.Add(tempFile, Outlook.OlAttachmentType.olByValue, 1, fileName);
+			}
+
+			mailItem.Save();
+		}
+
 		/// <summary>
 		/// WrapperEvent fired when a mailItem is closed.
 		/// </summary>
@@ -1094,6 +1167,14 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
+			byte[] cleardata = DecryptAndVerify(ASCIIEncoding.ASCII.GetBytes(mailItem.Body));
+			if(cleardata != null)
+				mailItem.Body = UTF8Encoding.UTF8.GetString(cleardata);
+		}
+		#endregion
+
+		byte[] DecryptAndVerify(byte [] data)
+		{
 			// Still no gpg.exe path... Annoy the user once again, maybe he'll get it ;)
 			if (string.IsNullOrEmpty(_settings.GnuPgPath))
 				Settings();
@@ -1107,7 +1188,7 @@ namespace OutlookPrivacyPlugin
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
-				return;
+				return null;
 			}
 
 			string passphrase = string.Empty;
@@ -1119,7 +1200,7 @@ namespace OutlookPrivacyPlugin
 			if (passphraseResult != DialogResult.OK)
 			{
 				// The user closed the passphrase dialog, prevent sending the mail
-				return;
+				return null;
 			}
 
 			passphrase = passphraseDialog.EnteredPassphrase;
@@ -1134,76 +1215,68 @@ namespace OutlookPrivacyPlugin
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
-				return;
+				return null;
 			}
 
 			// Decrypt without fd-status (might already blow up, early out)
 			// Decrypt with fd-status and cut out the stdout of normal decrypt (prevents BAD/GOODMC messages in message confusing us)
-			string stdOutResult = string.Empty;
-			using (MemoryStream inputStream = new MemoryStream(mail.Length))
+			byte[] cleardata = null;
+			using (MemoryStream inputStream = new MemoryStream(data))
 			using (MemoryStream outputStream = new MemoryStream())
 			{
-				using (StreamWriter writer = new StreamWriter(inputStream))
+				try
 				{
-					writer.Write(mail);
-					writer.Flush();
-					inputStream.Position = 0;
+					_gnuPg.OutputStatus = false;
+					_gnuPg.Passphrase = passphrase;
+					_gnuPg.Decrypt(inputStream, outputStream, new MemoryStream());
+				}
+				catch (Exception ex)
+				{
+					string error = ex.Message;
 
-					try
+					// We deal with bad signature later
+					if (!error.ToLowerInvariant().Contains("bad signature"))
 					{
-						_gnuPg.OutputStatus = false;
-						_gnuPg.Passphrase = passphrase;
-						_gnuPg.Decrypt(inputStream, outputStream, new MemoryStream());
-					}
-					catch (Exception ex)
-					{
-						string error = ex.Message;
+						MessageBox.Show(
+							error,
+							"GnuPG Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
 
-						// We deal with bad signature later
-						if (!error.ToLowerInvariant().Contains("bad signature"))
-						{
-							MessageBox.Show(
-								error,
-								"GnuPG Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return;
-						}
+						return null;
 					}
 				}
 
-				using (StreamReader reader = new StreamReader(outputStream))
-				{
-					outputStream.Position = 0;
-					stdOutResult = reader.ReadToEnd();
-				}
+				// Decrypted data
+				cleardata = outputStream.ToArray();
 			}
 
-			string verifyResult = string.Empty;
-			string errorResult = string.Empty;
-			using (MemoryStream inputStream = new MemoryStream(mail.Length))
-			using (MemoryStream outputStream = new MemoryStream())
-			using (MemoryStream errorStream = new MemoryStream())
+			do
 			{
-				using (StreamWriter writer = new StreamWriter(inputStream))
+				string verifyResult = string.Empty;
+				string errorResult = string.Empty;
+				using (MemoryStream inputStream = new MemoryStream(data))
+				using (MemoryStream outputStream = new MemoryStream())
+				using (MemoryStream errorStream = new MemoryStream())
 				{
-					writer.Write(mail);
-					writer.Flush();
-					inputStream.Position = 0;
-
 					try
 					{
 						_gnuPg.OutputStatus = true;
 						_gnuPg.Passphrase = passphrase;
-						_gnuPg.Decrypt(inputStream, outputStream, errorStream);
+						_gnuPg.Verify(inputStream, outputStream, errorStream);
 					}
 					catch (Exception ex)
 					{
 						string error = ex.Message;
 
+						if (error.Contains("gpg: no valid OpenPGP data found."))
+						{
+							// Ignore
+							break;
+						}
+
 						// We deal with bad signature later
-						if (!error.ToLowerInvariant().Contains("bad signature"))
+						else if (!error.ToLowerInvariant().Contains("bad signature"))
 						{
 							MessageBox.Show(
 								error,
@@ -1211,138 +1284,84 @@ namespace OutlookPrivacyPlugin
 								MessageBoxButtons.OK,
 								MessageBoxIcon.Error);
 
-							return;
+							return null;
 						}
+					}
+
+					using (StreamReader reader = new StreamReader(outputStream))
+					{
+						outputStream.Position = 0;
+						verifyResult = reader.ReadToEnd();
+					}
+
+					using (StreamReader reader = new StreamReader(errorStream))
+					{
+						errorStream.Position = 0;
+						errorResult = reader.ReadToEnd();
 					}
 				}
 
-				using (StreamReader reader = new StreamReader(outputStream))
-				{
-					outputStream.Position = 0;
-					verifyResult = reader.ReadToEnd();
-				}
+				// Verify: status-fd
+				// stdOut: the message
+				// error: gpg error/status
 
-				using (StreamReader reader = new StreamReader(errorStream))
-				{
-					errorStream.Position = 0;
-					errorResult = reader.ReadToEnd();
-				}
-			}
-
-			verifyResult = verifyResult.Replace(stdOutResult, string.Empty);
-
-			// Verify: status-fd
-			// stdOut: the message
-			// error: gpg error/status
-
-			if (verifyResult.Contains("BADMDC"))
-			{
-				errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
-				MessageBox.Show(
-					errorResult,
-					"Invalid Encryption",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-			}
-			else if (verifyResult.Contains("GOODMDC") && verifyResult.Contains("BADSIG"))
-			{
-				errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
-				MessageBox.Show(
-					errorResult,
-					"Invalid Signature",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-			}
-			else if (verifyResult.Contains("GOODMDC"))
-			{
-				if (verifyResult.Contains("GOODSIG"))
+				if (verifyResult.Contains("BADMDC"))
 				{
 					errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
 
 					MessageBox.Show(
 						errorResult,
-						"Valid Signature",
+						"Invalid Encryption",
 						MessageBoxButtons.OK,
-						MessageBoxIcon.Information);
-
+						MessageBoxIcon.Error);
 				}
-
-				mailItem.Body = stdOutResult;
-
-				List<Attachment> attachments = new List<Attachment>();
-				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+				else if (verifyResult.Contains("GOODMDC") && verifyResult.Contains("BADSIG"))
 				{
-					if (!attachment.FileName.EndsWith(".pgp"))
-						continue;
+					errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
 
-					Attachment a = new Attachment();
-
-					a.TempFile = Path.GetTempPath();
-					a.FileName = attachment.FileName;
-					a.DisplayName = attachment.DisplayName;
-					a.AttachmentType = attachment.Type;
-
-					a.TempFile = Path.Combine(a.TempFile, a.FileName);
-					a.TempFile = a.TempFile.Remove(a.TempFile.IndexOf(".pgp"));
-
-					attachment.SaveAsFile(a.TempFile);
-
-					byte[] cyphertext = File.ReadAllBytes(a.TempFile);
-
-					using(MemoryStream sin = new MemoryStream(cyphertext))
-					using (MemoryStream sout = new MemoryStream())
+					MessageBox.Show(
+						errorResult,
+						"Invalid Signature",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Error);
+				}
+				else if (verifyResult.Contains("GOODMDC"))
+				{
+					if (verifyResult.Contains("GOODSIG"))
 					{
-						try
-						{
-							_gnuPg.OutputStatus = false;
-							_gnuPg.Passphrase = passphrase;
-							_gnuPg.Decrypt(sin, sout, new MemoryStream());
+						errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
 
-							File.WriteAllBytes(a.TempFile, sout.ToArray());
-							attachment.Delete();
-							attachments.Add(a);
-						}
-						catch (Exception ex)
-						{
-							string error = ex.Message;
+						MessageBox.Show(
+							errorResult,
+							"Valid Signature",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Information);
 
-							// We deal with bad signature later
-							if (!error.ToLowerInvariant().Contains("bad signature"))
-							{
-								MessageBox.Show(
-									error,
-									"GnuPG Error",
-									MessageBoxButtons.OK,
-									MessageBoxIcon.Error);
-
-								return;
-							}
-						}
 					}
-				}
 
-				foreach (var a in attachments)
+					return cleardata;
+				}
+				else
 				{
-					mailItem.Attachments.Add(a.TempFile, a.AttachmentType, 1, a.DisplayName);
-				}
-			}
-			else
-			{
-				errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-				errorResult = errorResult.Replace("WARNING", Environment.NewLine + "WARNING");
+					errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
+					errorResult = errorResult.Replace("WARNING", Environment.NewLine + "WARNING");
 
-				DialogResult res = MessageBox.Show(
-					errorResult + Environment.NewLine + "Decrypt mail anyway?",
-					"Unknown Encryption",
-					MessageBoxButtons.OKCancel,
-					MessageBoxIcon.Exclamation);
-				if (res == DialogResult.OK)
-					mailItem.Body = stdOutResult;
+					DialogResult res = MessageBox.Show(
+						errorResult + Environment.NewLine + "Decrypt mail anyway?",
+						"Unknown Encryption",
+						MessageBoxButtons.OKCancel,
+						MessageBoxIcon.Exclamation);
+
+					if (res == DialogResult.OK)
+						return cleardata;
+				}
+
+				return null;
 			}
+			while (true);
+
+			return cleardata;
 		}
-		#endregion
 
 		#region General Logic
 		internal void About()
@@ -1384,18 +1403,10 @@ namespace OutlookPrivacyPlugin
 			List<GnuKey> keys = new List<GnuKey>();
 			foreach (GnuPGKey privateKey in privateKeys)
 			{
-#if VS2008
-        keys.Add(new GnuKey
-        {
-          Key = privateKey.UserId,
-          KeyDisplay = string.Format("{0} <{1}>", privateKey.UserName, privateKey.UserId)
-        });
-#else
 				GnuKey k = new GnuKey();
 				k.Key = privateKey.UserId;
 				k.KeyDisplay = string.Format("{0} <{1}>", privateKey.UserName, privateKey.UserId);
 				keys.Add(k);
-#endif
 			}
 
 			return keys;
@@ -1417,18 +1428,10 @@ namespace OutlookPrivacyPlugin
 			List<GnuKey> keys = new List<GnuKey>();
 			foreach (GnuPGKey privateKey in privateKeys)
 			{
-#if VS2008
-        keys.Add(new GnuKey
-        {
-          Key = privateKey.UserId,
-          KeyDisplay = string.Format("{0} <{1}>", privateKey.UserName, privateKey.UserId)
-        });
-#else
 				GnuKey k = new GnuKey();
 				k.Key = privateKey.UserId;
 				k.KeyDisplay = string.Format("{0} <{1}>", privateKey.UserName, privateKey.UserId);
 				keys.Add(k);
-#endif
 			}
 
 			return keys;
@@ -1457,11 +1460,14 @@ namespace OutlookPrivacyPlugin
 		#endregion
 
 		#region Helper Logic
+
 		private string RemoveInvalidAka(string msg)
 		{
 			char[] delimiters = { '\r', '\n' };
 			string result = string.Empty;
+			
 			Regex r = new Regex("aka.*jpeg image of size");
+
 			foreach (string s in msg.Split(delimiters))
 			{
 				if (string.IsNullOrEmpty(s) || r.IsMatch(s))
@@ -1478,6 +1484,7 @@ namespace OutlookPrivacyPlugin
 			else
 				return false;
 		}
+
 		#endregion
 	}
 }
