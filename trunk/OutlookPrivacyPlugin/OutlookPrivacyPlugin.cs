@@ -328,27 +328,73 @@ namespace OutlookPrivacyPlugin
 				// Default: disable read-buttons
 				ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
 
-				// Handle plain text mail
-				if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
+				// Look for PGP headers
+				Match match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+
+				if ((_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
 				{
-					// Look for PGP headers
-					Match match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
-
-					if ((_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
+					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
-						_autoDecrypt = false;
-						DecryptEmail(mailItem);
-						// Update match again, in case decryption failed/cancelled.
-						match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
-					}
-					else if (_settings.AutoVerify && match.Value == _pgpSignedHeader)
-					{
-						VerifyEmail(mailItem);
+						StringBuilder body = new StringBuilder(mailItem.Body);
+						mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
+
+						Stack<int> indexes = new Stack<int>();
+						for (int cnt = 0; cnt < body.Length; cnt++)
+						{
+							if (body[cnt] > 127)
+								indexes.Push(cnt);
+						}
+
+						while (true)
+						{
+							if (indexes.Count == 0)
+								break;
+
+							int index = indexes.Pop();
+							body.Remove(index, 1);
+						}
+
+						mailItem.Body = body.ToString();
+						mailItem.Save();
 					}
 
-					ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
-					ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
+					_autoDecrypt = false;
+					DecryptEmail(mailItem);
+					// Update match again, in case decryption failed/cancelled.
+					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
 				}
+				else if (_settings.AutoVerify && match.Value == _pgpSignedHeader)
+				{
+					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
+					{
+						StringBuilder body = new StringBuilder(mailItem.Body);
+						mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
+
+						Stack<int> indexes = new Stack<int>();
+						for (int cnt = 0; cnt < body.Length; cnt++)
+						{
+							if (body[cnt] > 127)
+								indexes.Push(cnt);
+						}
+
+						while (true)
+						{
+							if (indexes.Count == 0)
+								break;
+
+							int index = indexes.Pop();
+							body.Remove(index, 1);
+						}
+
+						mailItem.Body = body.ToString();
+						mailItem.Save();
+					}
+
+					VerifyEmail(mailItem);
+				}
+
+				ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
+				ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
 			}
 			ribbon.InvalidateButtons();
 		}
