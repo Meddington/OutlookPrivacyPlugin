@@ -102,6 +102,21 @@ namespace OutlookPrivacyPlugin
 
 		public void OnEncryptButton(Office.IRibbonControl control, bool isPressed)
 		{
+			if (isPressed == true)
+			{
+				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+				if (mailItem != null)
+				{
+					var settings = new Properties.Settings();
+					if (settings.Default2PlainFormat)
+					{
+						string body = mailItem.Body;
+						mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
+						mailItem.Body = body;
+					}
+				}
+			}
+
 			EncryptButton.Checked = isPressed;
 			ribbon.InvalidateControl(EncryptButton.Id);
 		}

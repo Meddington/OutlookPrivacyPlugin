@@ -1,16 +1,4 @@
-﻿// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or any
-// later version.
-//
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
+﻿
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,15 +10,9 @@ using System.Text.RegularExpressions;
 using System.Reflection;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Office = Microsoft.Office.Core;
-
 using OutlookPrivacyPlugin.Properties;
-
-//using Microsoft.VisualStudio.Tools.Applications.Runtime;
-
 using Starksoft.Cryptography.OpenPGP;
 using Exception = System.Exception;
-
-// TODO: Refactor some of the checks to central places
 
 namespace OutlookPrivacyPlugin
 {
@@ -130,9 +112,10 @@ namespace OutlookPrivacyPlugin
 
 		string GetResourceText(string key)
 		{
-			byte[] buff = new byte[100 * 1024];
 			var a = Assembly.GetExecutingAssembly();
 			var s = a.GetManifestResourceStream(key);
+
+			byte[] buff = new byte[s.Length];
 			var cnt = s.Read(buff, 0, buff.Length);
 
 			return UTF8Encoding.UTF8.GetString(buff, 0, cnt);
@@ -825,51 +808,37 @@ namespace OutlookPrivacyPlugin
 			using (MemoryStream inputStream = new MemoryStream(data))
 			using (MemoryStream outputStream = new MemoryStream())
 			{
-				// Ready for two passes encryption.
-				foreach (string option in new string[] { "", "--trust-model always" })
+				_gnuPg.UserCmdOptions = "";
+				if (!_settings.GnuPgTrustModel)
 				{
-					_gnuPg.UserCmdOptions = option;
+					_gnuPg.UserCmdOptions = "--trust-model always";
+				}
 
-					if (_settings.Encrypt2Self == true)
-						_gnuPg.UserCmdOptions += " --encrypt-to " + _settings.DefaultKey;
+				if (_settings.Encrypt2Self == true)
+					_gnuPg.UserCmdOptions += " --encrypt-to " + _settings.DefaultKey;
 
-					inputStream.Position = 0;
-					_gnuPg.Passphrase = passphrase;
-					_gnuPg.Recipients = recipients;
-					_gnuPg.OutputStatus = false;
+				inputStream.Position = 0;
+				_gnuPg.Passphrase = passphrase;
+				_gnuPg.Recipients = recipients;
+				_gnuPg.OutputStatus = false;
 
-					try
-					{
-						_gnuPg.Encrypt(inputStream, outputStream);
-						break; // Stop two passes here on success.
-					}
-					catch (Exception ex)
-					{
-						if (string.IsNullOrEmpty(option) && ex.Message.StartsWith("gpg: C4771111"))
-						{
-							DialogResult res = MessageBox.Show(
-								ex.Message + Environment.NewLine + Environment.NewLine + "Encrypt mail anyway?",
-								"GnuPG Warning",
-								MessageBoxButtons.OKCancel,
-								MessageBoxIcon.Exclamation);
-							if (res == DialogResult.Cancel)
-								return _gnuPgErrorString;
-						}
-						else
-						{
-							MessageBox.Show(
-							ex.Message,
-								"GnuPG Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
+				try
+				{
+					_gnuPg.Encrypt(inputStream, outputStream);
+				}
+				catch (Exception ex)
+				{
+					MessageBox.Show(
+					ex.Message,
+						"GnuPG Error",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Error);
 
-							return _gnuPgErrorString;
-						}
-					}
-					finally
-					{
-						_gnuPg.UserCmdOptions = string.Empty;
-					}
+					return _gnuPgErrorString;
+				}
+				finally
+				{
+					_gnuPg.UserCmdOptions = string.Empty;
 				}
 
 				using (StreamReader reader = new StreamReader(outputStream))
@@ -890,52 +859,35 @@ namespace OutlookPrivacyPlugin
 			using (MemoryStream inputStream = new MemoryStream(data))
 			using (MemoryStream outputStream = new MemoryStream())
 			{
-				// Ready for two passes sign/encryption.
-				foreach (string option in new string[] { "", "--trust-model always" })
+				_gnuPg.UserCmdOptions = "";
+				if (!_settings.GnuPgTrustModel)
 				{
-					_gnuPg.UserCmdOptions = option;
+					_gnuPg.UserCmdOptions = "--trust-model always";
+				}
 
-					if (_settings.Encrypt2Self == true)
-						_gnuPg.UserCmdOptions += " --encrypt-to " + _settings.DefaultKey;
+				inputStream.Position = 0;
+				_gnuPg.Passphrase = passphrase;
+				_gnuPg.Recipients = recipients;
+				_gnuPg.Sender = key;
+				_gnuPg.OutputStatus = false;
 
-					inputStream.Position = 0;
-					_gnuPg.Passphrase = passphrase;
-					_gnuPg.Recipients = recipients;
-					_gnuPg.Sender = key;
-					_gnuPg.OutputStatus = false;
+				try
+				{
+					_gnuPg.SignAndEncrypt(inputStream, outputStream);
+				}
+				catch (Exception ex)
+				{
+					MessageBox.Show(
+						ex.Message,
+						"GnuPG Error",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Error);
 
-					try
-					{
-						_gnuPg.SignAndEncrypt(inputStream, outputStream);
-						break; // Stop two passes here on success.
-					}
-					catch (Exception ex)
-					{
-						if (string.IsNullOrEmpty(option) && ex.Message.StartsWith("gpg: C4771111"))
-						{
-							DialogResult res = MessageBox.Show(
-								ex.Message + Environment.NewLine + Environment.NewLine + "Sign and Encrypt the mail anyway?",
-								"GnuPG Warning",
-								MessageBoxButtons.OKCancel,
-								MessageBoxIcon.Exclamation);
-							if (res == DialogResult.Cancel)
-								return _gnuPgErrorString;
-						}
-						else
-						{
-							MessageBox.Show(
-								ex.Message,
-								"GnuPG Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return _gnuPgErrorString;
-						}
-					}
-					finally
-					{
-						_gnuPg.UserCmdOptions = string.Empty;
-					}
+					return _gnuPgErrorString;
+				}
+				finally
+				{
+					_gnuPg.UserCmdOptions = string.Empty;
 				}
 
 				using (StreamReader reader = new StreamReader(outputStream))
@@ -1369,6 +1321,8 @@ namespace OutlookPrivacyPlugin
 			_settings.AutoSign = settingsBox.AutoSign;
 			_settings.DefaultKey = settingsBox.DefaultKey;
 			_settings.DefaultDomain = settingsBox.DefaultDomain;
+			_settings.Default2PlainFormat = settingsBox.Default2PlainFormat;
+			_settings.GnuPgTrustModel = settingsBox.GnuPgTrustModel;
 			_settings.Save();
 
 			_gnuPg.BinaryPath = _settings.GnuPgPath;

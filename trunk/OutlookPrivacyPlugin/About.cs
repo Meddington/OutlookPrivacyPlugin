@@ -40,7 +40,7 @@ namespace OutlookPrivacyPlugin
       IconLabel.Links.Add(0, IconLabel.Text.Length, "http://www.famfamfam.com/");
       OpenPGPLink.Links.Add(0, OpenPGPLink.Text.Length, "http://www.starksoft.com/");
       ClipboardLink.Links.Add(0, ClipboardLink.Text.Length, "http://www.codeproject.com/KB/system/clipboard_backup_cs.aspx?display=Print");
-      ForkLabel.Links.Add(0, ForkLabel.Text.Length, "http://github.com/twalrant/OutlookGnuPG");
+      ForkLabel.Links.Add(0, ForkLabel.Text.Length, "http://www.dejavusecurity.com");
 
       Text = String.Format("About {0} ", AssemblyTitle);
 

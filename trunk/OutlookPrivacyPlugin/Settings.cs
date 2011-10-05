@@ -5,185 +5,200 @@ using System.Drawing;
 
 namespace OutlookPrivacyPlugin
 {
-  internal partial class Settings : Form
-  {
-    private readonly int _originalExeWidth;
+	internal partial class Settings : Form
+	{
+		private readonly int _originalExeWidth;
 
-    internal Settings(Properties.Settings settings)
-    {
-      InitializeComponent();
+		internal Settings(Properties.Settings settings)
+		{
+			InitializeComponent();
 
-      AutoDecrypt = settings.AutoDecrypt;
-      AutoVerify = settings.AutoVerify;
-      AutoEncrypt = settings.AutoEncrypt;
-      AutoSign = settings.AutoSign;
-      Encrypt2Self = settings.Encrypt2Self;
+			AutoDecrypt = settings.AutoDecrypt;
+			AutoVerify = settings.AutoVerify;
+			AutoEncrypt = settings.AutoEncrypt;
+			AutoSign = settings.AutoSign;
+			Encrypt2Self = settings.Encrypt2Self;
 
-      DefaultKey = settings.DefaultKey;
-      GnuPgPath = settings.GnuPgPath;
-      _originalExeWidth = GnuPgExe.Width;
-      DefaultDomain = settings.DefaultDomain;
+			DefaultKey = settings.DefaultKey;
+			GnuPgPath = settings.GnuPgPath;
+			_originalExeWidth = GnuPgExe.Width;
+			DefaultDomain = settings.DefaultDomain;
 
-      // Temporary disable all settings regarding auto-verify/decrypt
-      // MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
-    }
+			Default2PlainFormat = settings.Default2PlainFormat;
+			GnuPgTrustModel = settings.GnuPgTrustModel;
 
-    private string m_DefaultKey;
-    internal string DefaultKey { get { return m_DefaultKey; } set { m_DefaultKey = value; } }
+			// Temporary disable all settings regarding auto-verify/decrypt
+			// MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
+		}
 
-    internal bool AutoDecrypt
-    {
-      get { return DecryptCheckBox.Checked; }
-      private set { DecryptCheckBox.Checked = value; }
-    }
+		private string m_DefaultKey;
+		internal string DefaultKey { get { return m_DefaultKey; } set { m_DefaultKey = value; } }
 
-    internal bool AutoVerify
-    {
-      get { return VerifyCheckBox.Checked; }
-      private set { VerifyCheckBox.Checked = value; }
-    }
+		internal bool Default2PlainFormat
+		{
+			get { return Default2PlainTextCheckBox.Checked; }
+			set { Default2PlainTextCheckBox.Checked = value; }
+		}
 
-    internal bool AutoEncrypt
-    {
-      get { return EncryptCheckBox.Checked; }
-      private set { EncryptCheckBox.Checked = value; }
-    }
+		internal bool GnuPgTrustModel
+		{
+			get { return GnuPgTrustModelCheckBox.Checked; }
+			set { GnuPgTrustModelCheckBox.Checked = value; }
+		}
 
-    internal bool AutoSign
-    {
-      get { return SignCheckBox.Checked; }
-      private set { SignCheckBox.Checked = value; }
-    }
+		internal bool AutoDecrypt
+		{
+			get { return DecryptCheckBox.Checked; }
+			private set { DecryptCheckBox.Checked = value; }
+		}
 
-    internal bool Encrypt2Self
-    {
-      get { return Encrypt2SelfCheckBox.Checked; }
-      private set { Encrypt2SelfCheckBox.Checked = value; }
-    }
+		internal bool AutoVerify
+		{
+			get { return VerifyCheckBox.Checked; }
+			private set { VerifyCheckBox.Checked = value; }
+		}
 
-    internal string GnuPgPath
-    {
-      get { return GnuPgExe.Text; }
-      private set
-      {
-        GnuPgExe.Text = value;
+		internal bool AutoEncrypt
+		{
+			get { return EncryptCheckBox.Checked; }
+			private set { EncryptCheckBox.Checked = value; }
+		}
 
-        if (string.IsNullOrEmpty(value))
-        {
-          ComposeTab.Enabled = ReadTab.Enabled = false;
-          MainTabControl.TabPages.RemoveByKey(ComposeTab.Name);
-          //MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
-        }
-        else
-        {
-          ComposeTab.Enabled = ReadTab.Enabled = true;
+		internal bool AutoSign
+		{
+			get { return SignCheckBox.Checked; }
+			private set { SignCheckBox.Checked = value; }
+		}
 
-          if (!MainTabControl.TabPages.ContainsKey(ComposeTab.Name))
-            MainTabControl.TabPages.Add(ComposeTab);
+		internal bool Encrypt2Self
+		{
+			get { return Encrypt2SelfCheckBox.Checked; }
+			private set { Encrypt2SelfCheckBox.Checked = value; }
+		}
 
-          if (!MainTabControl.TabPages.ContainsKey(ReadTab.Name))
-              MainTabControl.TabPages.Add(ReadTab);
-        }
+		internal string GnuPgPath
+		{
+			get { return GnuPgExe.Text; }
+			private set
+			{
+				GnuPgExe.Text = value;
 
-        PopulatePrivateKeys(!string.IsNullOrEmpty(value));
-      }
-    }
+				if (string.IsNullOrEmpty(value))
+				{
+					ComposeTab.Enabled = ReadTab.Enabled = false;
+					MainTabControl.TabPages.RemoveByKey(ComposeTab.Name);
+					//MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
+				}
+				else
+				{
+					ComposeTab.Enabled = ReadTab.Enabled = true;
 
-    internal string DefaultDomain
-    {
-      get { return DefaultDomainTextBox.Text; }
-      set { DefaultDomainTextBox.Text = value; }
-    }
+					if (!MainTabControl.TabPages.ContainsKey(ComposeTab.Name))
+						MainTabControl.TabPages.Add(ComposeTab);
 
-    private void BrowseButton_Click(object sender, System.EventArgs e)
-    {
-      if (!string.IsNullOrEmpty(GnuPgPath))
-        GnuPgExeFolderDialog.SelectedPath = GnuPgPath;
+					if (!MainTabControl.TabPages.ContainsKey(ReadTab.Name))
+						MainTabControl.TabPages.Add(ReadTab);
+				}
 
-      DialogResult result = GnuPgExeFolderDialog.ShowDialog(this);
-      if (result != DialogResult.OK)
-        return;
+				PopulatePrivateKeys(!string.IsNullOrEmpty(value));
+			}
+		}
 
-      GnuPgPath = GnuPgExeFolderDialog.SelectedPath;
-      OkButton.Enabled = ValidateGnuPath();
-    }
+		internal string DefaultDomain
+		{
+			get { return DefaultDomainTextBox.Text; }
+			set { DefaultDomainTextBox.Text = value; }
+		}
 
-    private void PopulatePrivateKeys(bool gotGnu)
-    {
-      IList<GnuKey> keys = gotGnu ? Globals.OutlookPrivacyPlugin.GetPrivateKeys(GnuPgPath) : new List<GnuKey>();
+		private void BrowseButton_Click(object sender, System.EventArgs e)
+		{
+			if (!string.IsNullOrEmpty(GnuPgPath))
+				GnuPgExeFolderDialog.SelectedPath = GnuPgPath;
 
-      KeyBox.DataSource = keys;
-      KeyBox.DisplayMember = "KeyDisplay";
-      KeyBox.ValueMember = "Key";
+			DialogResult result = GnuPgExeFolderDialog.ShowDialog(this);
+			if (result != DialogResult.OK)
+				return;
 
-      if (KeyBox.Items.Count <= 0)
-        return;
+			GnuPgPath = GnuPgExeFolderDialog.SelectedPath;
+			OkButton.Enabled = ValidateGnuPath();
+		}
 
-      KeyBox.SelectedValue = DefaultKey;
+		private void PopulatePrivateKeys(bool gotGnu)
+		{
+			IList<GnuKey> keys = gotGnu ? Globals.OutlookPrivacyPlugin.GetPrivateKeys(GnuPgPath) : new List<GnuKey>();
 
-      // Enlarge dialog to fit the longest key
-      using (Graphics g = CreateGraphics())
-      {
-        int maxSize = Width;
-        foreach (GnuKey key in keys)
-        {
-          int textWidth = (int)g.MeasureString(key.KeyDisplay, KeyBox.Font).Width + 50 + 27;
-          if (textWidth > maxSize)
-            maxSize = textWidth;
-        }
-        Width = maxSize;
-        CenterToScreen();
-      }
-    }
+			KeyBox.DataSource = keys;
+			KeyBox.DisplayMember = "KeyDisplay";
+			KeyBox.ValueMember = "Key";
 
-    private void OkButton_Click(object sender, System.EventArgs e)
-    {
-      if (!ValidateGnuPath())
-        return;
+			if (KeyBox.Items.Count <= 0)
+				return;
 
-      DialogResult = DialogResult.OK;
-      Close();
-    }
+			KeyBox.SelectedValue = DefaultKey;
 
-    private bool ValidateGnuPath()
-    {
-      if (string.IsNullOrEmpty(GnuPgPath))
-      {
-        // No GnuPath provided, complain!
-        Errors.SetError(GnuPgExe, "No GnuPG provided!");
-        GnuPgExe.Dock = DockStyle.None;
-        GnuPgExe.Width = _originalExeWidth - 17;
-        return false;
-      }
+			// Enlarge dialog to fit the longest key
+			using (Graphics g = CreateGraphics())
+			{
+				int maxSize = Width;
+				foreach (GnuKey key in keys)
+				{
+					int textWidth = (int)g.MeasureString(key.KeyDisplay, KeyBox.Font).Width + 50 + 27;
+					if (textWidth > maxSize)
+						maxSize = textWidth;
+				}
+				Width = maxSize;
+				CenterToScreen();
+			}
+		}
 
-      if ( !Globals.OutlookPrivacyPlugin.ValidateGnuPath(GnuPgPath) )
-      {
-        // No gpg.exe found, complain!
-        Errors.SetError(GnuPgExe, "No gpg(2).exe found in directory!");
-        GnuPgExe.Dock = DockStyle.None;
-        GnuPgExe.Width = _originalExeWidth - 17;
-        return false;
-      }
+		private void OkButton_Click(object sender, System.EventArgs e)
+		{
+			if (!ValidateGnuPath())
+				return;
 
-      // All fine
-      Errors.SetError(GnuPgExe, string.Empty);
-      GnuPgExe.Dock = DockStyle.Fill;
-      GnuPgExe.Width = _originalExeWidth;
+			DialogResult = DialogResult.OK;
+			Close();
+		}
 
-      DefaultKey = (KeyBox.Items.Count > 0)
-          ? ((KeyBox.SelectedValue != null) ? KeyBox.SelectedValue.ToString() : string.Empty)
-          : string.Empty;
+		private bool ValidateGnuPath()
+		{
+			if (string.IsNullOrEmpty(GnuPgPath))
+			{
+				// No GnuPath provided, complain!
+				Errors.SetError(GnuPgExe, "No GnuPG provided!");
+				GnuPgExe.Dock = DockStyle.None;
+				GnuPgExe.Width = _originalExeWidth - 17;
+				return false;
+			}
 
-      return true;
-    }
+			if (!Globals.OutlookPrivacyPlugin.ValidateGnuPath(GnuPgPath))
+			{
+				// No gpg.exe found, complain!
+				Errors.SetError(GnuPgExe, "No gpg(2).exe found in directory!");
+				GnuPgExe.Dock = DockStyle.None;
+				GnuPgExe.Width = _originalExeWidth - 17;
+				return false;
+			}
 
-    private void GnuPgExe_TextChanged(object sender, System.EventArgs e)
-    {
-    }
+			// All fine
+			Errors.SetError(GnuPgExe, string.Empty);
+			GnuPgExe.Dock = DockStyle.Fill;
+			GnuPgExe.Width = _originalExeWidth;
 
-    private void DefaultDomainTextBox_TextChanged(object sender, System.EventArgs e)
-    {
-      DefaultDomain = DefaultDomainTextBox.Text;
-    }
-  }
+			DefaultKey = (KeyBox.Items.Count > 0)
+				? ((KeyBox.SelectedValue != null) ? KeyBox.SelectedValue.ToString() : string.Empty)
+				: string.Empty;
+
+			return true;
+		}
+
+		private void GnuPgExe_TextChanged(object sender, System.EventArgs e)
+		{
+		}
+
+		private void DefaultDomainTextBox_TextChanged(object sender, System.EventArgs e)
+		{
+			DefaultDomain = DefaultDomainTextBox.Text;
+		}
+	}
 }

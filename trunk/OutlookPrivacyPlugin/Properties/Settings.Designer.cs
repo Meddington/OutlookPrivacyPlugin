@@ -178,5 +178,29 @@ namespace OutlookPrivacyPlugin.Properties {
                 this["Encrypt2Self"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool Default2PlainFormat {
+            get {
+                return ((bool)(this["Default2PlainFormat"]));
+            }
+            set {
+                this["Default2PlainFormat"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool GnuPgTrustModel {
+            get {
+                return ((bool)(this["GnuPgTrustModel"]));
+            }
+            set {
+                this["GnuPgTrustModel"] = value;
+            }
+        }
     }
 }

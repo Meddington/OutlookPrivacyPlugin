@@ -43,6 +43,7 @@
 		this.Encrypt2SelfCheckBox = new System.Windows.Forms.CheckBox();
 		this.DefaultKeyLabel = new System.Windows.Forms.Label();
 		this.KeyBox = new System.Windows.Forms.ComboBox();
+		this.Default2PlainTextCheckBox = new System.Windows.Forms.CheckBox();
 		this.ReadTab = new System.Windows.Forms.TabPage();
 		this.ReadTableLayout = new System.Windows.Forms.TableLayoutPanel();
 		this.VerifyCheckBox = new System.Windows.Forms.CheckBox();
@@ -55,6 +56,8 @@
 		this.OkButton = new System.Windows.Forms.Button();
 		this.Errors = new System.Windows.Forms.ErrorProvider(this.components);
 		this.GnuPgExeFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
+		this.GnuPgTrustModelCheckBox = new System.Windows.Forms.CheckBox();
+		((System.ComponentModel.ISupportInitialize)(this.MainContainer)).BeginInit();
 		this.MainContainer.Panel1.SuspendLayout();
 		this.MainContainer.Panel2.SuspendLayout();
 		this.MainContainer.SuspendLayout();
@@ -67,6 +70,7 @@
 		this.ReadTableLayout.SuspendLayout();
 		this.ExchangeServerTab.SuspendLayout();
 		this.ExchangeServerTableLayout.SuspendLayout();
+		((System.ComponentModel.ISupportInitialize)(this.ButtonsContainer)).BeginInit();
 		this.ButtonsContainer.Panel2.SuspendLayout();
 		this.ButtonsContainer.SuspendLayout();
 		((System.ComponentModel.ISupportInitialize)(this.Errors)).BeginInit();
@@ -86,7 +90,7 @@
 		// MainContainer.Panel2
 		// 
 		this.MainContainer.Panel2.Controls.Add(this.ButtonsContainer);
-		this.MainContainer.Size = new System.Drawing.Size(262, 252);
+		this.MainContainer.Size = new System.Drawing.Size(307, 252);
 		this.MainContainer.SplitterDistance = 218;
 		this.MainContainer.TabIndex = 0;
 		// 
@@ -101,7 +105,7 @@
 		this.MainTabControl.Location = new System.Drawing.Point(0, 0);
 		this.MainTabControl.Name = "MainTabControl";
 		this.MainTabControl.SelectedIndex = 0;
-		this.MainTabControl.Size = new System.Drawing.Size(262, 218);
+		this.MainTabControl.Size = new System.Drawing.Size(307, 218);
 		this.MainTabControl.TabIndex = 0;
 		// 
 		// GeneralTab
@@ -110,7 +114,7 @@
 		this.GeneralTab.Location = new System.Drawing.Point(4, 22);
 		this.GeneralTab.Name = "GeneralTab";
 		this.GeneralTab.Padding = new System.Windows.Forms.Padding(3);
-		this.GeneralTab.Size = new System.Drawing.Size(254, 192);
+		this.GeneralTab.Size = new System.Drawing.Size(299, 192);
 		this.GeneralTab.TabIndex = 2;
 		this.GeneralTab.Text = "General";
 		this.GeneralTab.UseVisualStyleBackColor = true;
@@ -123,15 +127,17 @@
 		this.GeneralTableLayout.Controls.Add(this.GpgLocationLabel, 1, 0);
 		this.GeneralTableLayout.Controls.Add(this.GnuPgExe, 1, 1);
 		this.GeneralTableLayout.Controls.Add(this.BrowseButton, 1, 2);
+		this.GeneralTableLayout.Controls.Add(this.GnuPgTrustModelCheckBox, 1, 4);
 		this.GeneralTableLayout.Dock = System.Windows.Forms.DockStyle.Fill;
 		this.GeneralTableLayout.Location = new System.Drawing.Point(3, 3);
 		this.GeneralTableLayout.Name = "GeneralTableLayout";
-		this.GeneralTableLayout.RowCount = 4;
+		this.GeneralTableLayout.RowCount = 5;
 		this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 		this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 		this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-		this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-		this.GeneralTableLayout.Size = new System.Drawing.Size(248, 186);
+		this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
+		this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
+		this.GeneralTableLayout.Size = new System.Drawing.Size(293, 186);
 		this.GeneralTableLayout.TabIndex = 1;
 		// 
 		// GpgLocationLabel
@@ -141,7 +147,7 @@
 		this.GpgLocationLabel.Location = new System.Drawing.Point(21, 0);
 		this.GpgLocationLabel.Name = "GpgLocationLabel";
 		this.GpgLocationLabel.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-		this.GpgLocationLabel.Size = new System.Drawing.Size(226, 23);
+		this.GpgLocationLabel.Size = new System.Drawing.Size(269, 23);
 		this.GpgLocationLabel.TabIndex = 3;
 		this.GpgLocationLabel.Text = "Gpg.exe Location";
 		// 
@@ -153,7 +159,7 @@
 		this.Errors.SetIconPadding(this.GnuPgExe, 2);
 		this.GnuPgExe.Location = new System.Drawing.Point(21, 26);
 		this.GnuPgExe.Name = "GnuPgExe";
-		this.GnuPgExe.Size = new System.Drawing.Size(226, 20);
+		this.GnuPgExe.Size = new System.Drawing.Size(269, 20);
 		this.GnuPgExe.TabIndex = 1;
 		this.GnuPgExe.TextChanged += new System.EventHandler(this.GnuPgExe_TextChanged);
 		// 
@@ -163,7 +169,7 @@
 		this.BrowseButton.Dock = System.Windows.Forms.DockStyle.Fill;
 		this.BrowseButton.Location = new System.Drawing.Point(21, 52);
 		this.BrowseButton.Name = "BrowseButton";
-		this.BrowseButton.Size = new System.Drawing.Size(226, 23);
+		this.BrowseButton.Size = new System.Drawing.Size(269, 23);
 		this.BrowseButton.TabIndex = 4;
 		this.BrowseButton.Text = "Browse...";
 		this.BrowseButton.UseVisualStyleBackColor = true;
@@ -175,7 +181,7 @@
 		this.ComposeTab.Location = new System.Drawing.Point(4, 22);
 		this.ComposeTab.Name = "ComposeTab";
 		this.ComposeTab.Padding = new System.Windows.Forms.Padding(3);
-		this.ComposeTab.Size = new System.Drawing.Size(254, 192);
+		this.ComposeTab.Size = new System.Drawing.Size(299, 192);
 		this.ComposeTab.TabIndex = 0;
 		this.ComposeTab.Text = "Compose";
 		this.ComposeTab.UseVisualStyleBackColor = true;
@@ -188,18 +194,21 @@
 		this.ComposeTableLayout.Controls.Add(this.SignCheckBox, 1, 0);
 		this.ComposeTableLayout.Controls.Add(this.EncryptCheckBox, 1, 1);
 		this.ComposeTableLayout.Controls.Add(this.Encrypt2SelfCheckBox, 1, 2);
-		this.ComposeTableLayout.Controls.Add(this.DefaultKeyLabel, 1, 3);
-		this.ComposeTableLayout.Controls.Add(this.KeyBox, 1, 4);
+		this.ComposeTableLayout.Controls.Add(this.DefaultKeyLabel, 1, 4);
+		this.ComposeTableLayout.Controls.Add(this.KeyBox, 1, 6);
+		this.ComposeTableLayout.Controls.Add(this.Default2PlainTextCheckBox, 1, 3);
 		this.ComposeTableLayout.Dock = System.Windows.Forms.DockStyle.Fill;
 		this.ComposeTableLayout.Location = new System.Drawing.Point(3, 3);
 		this.ComposeTableLayout.Name = "ComposeTableLayout";
-		this.ComposeTableLayout.RowCount = 5;
+		this.ComposeTableLayout.RowCount = 6;
 		this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 		this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 		this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 		this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 		this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-		this.ComposeTableLayout.Size = new System.Drawing.Size(248, 186);
+		this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
+		this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+		this.ComposeTableLayout.Size = new System.Drawing.Size(293, 186);
 		this.ComposeTableLayout.TabIndex = 0;
 		// 
 		// SignCheckBox
@@ -236,10 +245,10 @@
 		// 
 		this.DefaultKeyLabel.AutoSize = true;
 		this.DefaultKeyLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-		this.DefaultKeyLabel.Location = new System.Drawing.Point(21, 69);
+		this.DefaultKeyLabel.Location = new System.Drawing.Point(21, 92);
 		this.DefaultKeyLabel.Name = "DefaultKeyLabel";
 		this.DefaultKeyLabel.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-		this.DefaultKeyLabel.Size = new System.Drawing.Size(226, 23);
+		this.DefaultKeyLabel.Size = new System.Drawing.Size(269, 23);
 		this.DefaultKeyLabel.TabIndex = 2;
 		this.DefaultKeyLabel.Text = "Default Key";
 		// 
@@ -251,10 +260,20 @@
 		this.KeyBox.Items.AddRange(new object[] {
             "Key1",
             "Key2"});
-		this.KeyBox.Location = new System.Drawing.Point(21, 95);
+		this.KeyBox.Location = new System.Drawing.Point(21, 118);
 		this.KeyBox.Name = "KeyBox";
-		this.KeyBox.Size = new System.Drawing.Size(226, 21);
+		this.KeyBox.Size = new System.Drawing.Size(269, 21);
 		this.KeyBox.TabIndex = 3;
+		// 
+		// Default2PlainTextCheckBox
+		// 
+		this.Default2PlainTextCheckBox.AutoSize = true;
+		this.Default2PlainTextCheckBox.Location = new System.Drawing.Point(21, 72);
+		this.Default2PlainTextCheckBox.Name = "Default2PlainTextCheckBox";
+		this.Default2PlainTextCheckBox.Size = new System.Drawing.Size(241, 17);
+		this.Default2PlainTextCheckBox.TabIndex = 4;
+		this.Default2PlainTextCheckBox.Text = "Automatically Change to Plain Format";
+		this.Default2PlainTextCheckBox.UseVisualStyleBackColor = true;
 		// 
 		// ReadTab
 		// 
@@ -262,7 +281,7 @@
 		this.ReadTab.Location = new System.Drawing.Point(4, 22);
 		this.ReadTab.Name = "ReadTab";
 		this.ReadTab.Padding = new System.Windows.Forms.Padding(3);
-		this.ReadTab.Size = new System.Drawing.Size(254, 192);
+		this.ReadTab.Size = new System.Drawing.Size(299, 192);
 		this.ReadTab.TabIndex = 1;
 		this.ReadTab.Text = "Read";
 		this.ReadTab.UseVisualStyleBackColor = true;
@@ -282,7 +301,7 @@
 		this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 		this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 		this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-		this.ReadTableLayout.Size = new System.Drawing.Size(248, 186);
+		this.ReadTableLayout.Size = new System.Drawing.Size(293, 186);
 		this.ReadTableLayout.TabIndex = 1;
 		// 
 		// VerifyCheckBox
@@ -311,7 +330,7 @@
 		this.ExchangeServerTab.Location = new System.Drawing.Point(4, 22);
 		this.ExchangeServerTab.Name = "ExchangeServerTab";
 		this.ExchangeServerTab.Padding = new System.Windows.Forms.Padding(3);
-		this.ExchangeServerTab.Size = new System.Drawing.Size(254, 192);
+		this.ExchangeServerTab.Size = new System.Drawing.Size(299, 192);
 		this.ExchangeServerTab.TabIndex = 3;
 		this.ExchangeServerTab.Text = "Exchange Server";
 		this.ExchangeServerTab.UseVisualStyleBackColor = true;
@@ -364,8 +383,8 @@
 		// ButtonsContainer.Panel2
 		// 
 		this.ButtonsContainer.Panel2.Controls.Add(this.OkButton);
-		this.ButtonsContainer.Size = new System.Drawing.Size(262, 30);
-		this.ButtonsContainer.SplitterDistance = 125;
+		this.ButtonsContainer.Size = new System.Drawing.Size(307, 30);
+		this.ButtonsContainer.SplitterDistance = 146;
 		this.ButtonsContainer.SplitterWidth = 5;
 		this.ButtonsContainer.TabIndex = 0;
 		// 
@@ -375,7 +394,7 @@
 		this.OkButton.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 		this.OkButton.Location = new System.Drawing.Point(0, 0);
 		this.OkButton.Name = "OkButton";
-		this.OkButton.Size = new System.Drawing.Size(132, 30);
+		this.OkButton.Size = new System.Drawing.Size(156, 30);
 		this.OkButton.TabIndex = 0;
 		this.OkButton.Text = "Ok";
 		this.OkButton.UseVisualStyleBackColor = true;
@@ -390,12 +409,22 @@
 		// 
 		this.GnuPgExeFolderDialog.ShowNewFolderButton = false;
 		// 
+		// GnuPgTrustModelCheckBox
+		// 
+		this.GnuPgTrustModelCheckBox.AutoSize = true;
+		this.GnuPgTrustModelCheckBox.Location = new System.Drawing.Point(21, 81);
+		this.GnuPgTrustModelCheckBox.Name = "GnuPgTrustModelCheckBox";
+		this.GnuPgTrustModelCheckBox.Size = new System.Drawing.Size(177, 17);
+		this.GnuPgTrustModelCheckBox.TabIndex = 5;
+		this.GnuPgTrustModelCheckBox.Text = "Enable GnuPG Trust Model";
+		this.GnuPgTrustModelCheckBox.UseVisualStyleBackColor = true;
+		// 
 		// Settings
 		// 
 		this.AcceptButton = this.OkButton;
 		this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 13F);
 		this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-		this.ClientSize = new System.Drawing.Size(262, 252);
+		this.ClientSize = new System.Drawing.Size(307, 252);
 		this.Controls.Add(this.MainContainer);
 		this.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 		this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -404,6 +433,7 @@
 		this.Text = "Settings";
 		this.MainContainer.Panel1.ResumeLayout(false);
 		this.MainContainer.Panel2.ResumeLayout(false);
+		((System.ComponentModel.ISupportInitialize)(this.MainContainer)).EndInit();
 		this.MainContainer.ResumeLayout(false);
 		this.MainTabControl.ResumeLayout(false);
 		this.GeneralTab.ResumeLayout(false);
@@ -419,6 +449,7 @@
 		this.ExchangeServerTableLayout.ResumeLayout(false);
 		this.ExchangeServerTableLayout.PerformLayout();
 		this.ButtonsContainer.Panel2.ResumeLayout(false);
+		((System.ComponentModel.ISupportInitialize)(this.ButtonsContainer)).EndInit();
 		this.ButtonsContainer.ResumeLayout(false);
 		((System.ComponentModel.ISupportInitialize)(this.Errors)).EndInit();
 		this.ResumeLayout(false);
@@ -437,8 +468,7 @@
     private System.Windows.Forms.CheckBox SignCheckBox;
     private System.Windows.Forms.CheckBox EncryptCheckBox;
     private System.Windows.Forms.CheckBox Encrypt2SelfCheckBox;
-    private System.Windows.Forms.Label DefaultKeyLabel;
-    private System.Windows.Forms.ComboBox KeyBox;
+	private System.Windows.Forms.Label DefaultKeyLabel;
     private System.Windows.Forms.TableLayoutPanel ReadTableLayout;
     private System.Windows.Forms.CheckBox VerifyCheckBox;
     private System.Windows.Forms.CheckBox DecryptCheckBox;
@@ -453,5 +483,8 @@
     private System.Windows.Forms.TableLayoutPanel ExchangeServerTableLayout;
     private System.Windows.Forms.Label DefaultDomainLabel;
     private System.Windows.Forms.TextBox DefaultDomainTextBox;
+	private System.Windows.Forms.ComboBox KeyBox;
+	private System.Windows.Forms.CheckBox Default2PlainTextCheckBox;
+	private System.Windows.Forms.CheckBox GnuPgTrustModelCheckBox;
   }
 }
