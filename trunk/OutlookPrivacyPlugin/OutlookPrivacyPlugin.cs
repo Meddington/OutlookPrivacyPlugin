@@ -332,14 +332,14 @@ namespace OutlookPrivacyPlugin
 				// Look for PGP headers
 				Match match = null;
 				if(mailItem.Body != null)
-					Regex.Match(mailItem.Body, _pgpHeaderPattern);
+					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
 
 				if (match != null && (_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
 				{
 					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
 						StringBuilder body = new StringBuilder(mailItem.Body);
-						mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
+						//mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
 
 						Stack<int> indexes = new Stack<int>();
 						for (int cnt = 0; cnt < body.Length; cnt++)
@@ -449,7 +449,8 @@ namespace OutlookPrivacyPlugin
 			SharpMessage msg = new SharpMessage(ASCIIEncoding.ASCII.GetString(cleardata));
 			string body = mailItem.Body;
 			mailItem.Body = msg.Body;
-			mailItem.HTMLBody = "<html><body>" + msg.Body + "</body></html>";
+			mailItem.HTMLBody = "<html><body>" + 
+				System.Security.SecurityElement.Escape(msg.Body) + "</body></html>";
 
 			// Note: Don't update BodyFormat or message will not display correctly the first
 			// time it's opened.
@@ -874,7 +875,9 @@ namespace OutlookPrivacyPlugin
 
 			// Update the new content
 			if (mail != _gnuPgErrorString)
+			{
 				mailItem.Body = mail;
+			}
 			else
 				Cancel = true;
 		}
@@ -1024,16 +1027,16 @@ namespace OutlookPrivacyPlugin
 			string mail = mailItem.Body;
 			Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
 
-			if (mailType != Outlook.OlBodyFormat.olFormatPlain)
-			{
-				MessageBox.Show(
-					"OutlookGnuPG can only verify plain text mails.",
-					"Invalid Mail Format",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+			//if (mailType != Outlook.OlBodyFormat.olFormatPlain)
+			//{
+			//    MessageBox.Show(
+			//        "OutlookGnuPG can only verify plain text mails.",
+			//        "Invalid Mail Format",
+			//        MessageBoxButtons.OK,
+			//        MessageBoxIcon.Error);
 
-				return;
-			}
+			//    return;
+			//}
 
 			if (Regex.IsMatch(mailItem.Body, _pgpSignedHeader) == false)
 			{
@@ -1143,24 +1146,10 @@ namespace OutlookPrivacyPlugin
 
 		internal void DecryptEmail(Outlook.MailItem mailItem)
 		{
-			string mail = mailItem.Body;
-			Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
-
-			if (mailType != Outlook.OlBodyFormat.olFormatPlain)
-			{
-				MessageBox.Show(
-					"OutlookGnuPG can only decrypt plain text mails.",
-					"Invalid Mail Format",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
-				return;
-			}
-
 			if (Regex.IsMatch(mailItem.Body, _pgpEncryptedHeader) == false)
 			{
 				MessageBox.Show(
-					"OutlookGnuPG cannot help here.",
+					"Outlook Privacy Plugin cannot help here.",
 					"Mail is not encrypted",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Exclamation);
@@ -1168,8 +1157,13 @@ namespace OutlookPrivacyPlugin
 			}
 
 			byte[] cleardata = DecryptAndVerify(ASCIIEncoding.ASCII.GetBytes(mailItem.Body));
-			if(cleardata != null)
+			if (cleardata != null)
+			{
 				mailItem.Body = UTF8Encoding.UTF8.GetString(cleardata);
+				mailItem.HTMLBody = "<html><body>" +
+					System.Security.SecurityElement.Escape(UTF8Encoding.UTF8.GetString(cleardata)) + "</body></html>";
+				mailItem.Save();
+			}
 		}
 		#endregion
 
@@ -1183,7 +1177,7 @@ namespace OutlookPrivacyPlugin
 			if (string.IsNullOrEmpty(_settings.GnuPgPath))
 			{
 				MessageBox.Show(
-					"OutlookGnuPG can only decrypt when you provide a valid gpg.exe path. Please open Settings and configure it.",
+					"Outlook Privacy Plugin can only decrypt when you provide a valid gpg.exe path. Please open Settings and configure it.",
 					"Invalid GnuPG Executable",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
@@ -1210,7 +1204,7 @@ namespace OutlookPrivacyPlugin
 			if (string.IsNullOrEmpty(privateKey))
 			{
 				MessageBox.Show(
-					"OutlookGnuPG needs a private key for decrypting. No keys were detected.",
+					"Outlook Privacy Plugin needs a private key for decrypting. No keys were detected.",
 					"Invalid Private Key",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
@@ -1269,7 +1263,8 @@ namespace OutlookPrivacyPlugin
 					{
 						string error = ex.Message;
 
-						if (error.Contains("gpg: no valid OpenPGP data found."))
+						if (error.Contains("gpg: no valid OpenPGP data found.") ||
+							error.Contains("gpg: verify signatures failed: Unexpected error"))
 						{
 							// Ignore
 							break;
