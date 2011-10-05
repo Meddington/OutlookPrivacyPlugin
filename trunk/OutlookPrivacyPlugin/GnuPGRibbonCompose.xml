@@ -3,7 +3,7 @@
     <tabs>
       <tab idMso="TabNewMailMessage">
         <group id="GnuPGGroupNew"
-               label="GnuPG">
+               label="OpenPGP">
           <toggleButton id="signButton" 
                         size="normal"
                         label="Sign"
@@ -23,7 +23,7 @@
           <button id="settingsButtonNew" 
                   size="normal"
                   label="Settings"
-                  screentip="GnuPG Settings"
+                  screentip="OpenPGP Settings"
                   onAction="OnSettingsButtonNew" 
                   getImage="GetCustomImage" />
           <separator id="separatorNew"/>

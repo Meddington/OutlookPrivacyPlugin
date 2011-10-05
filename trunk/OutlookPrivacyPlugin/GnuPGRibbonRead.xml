@@ -3,7 +3,7 @@
     <tabs>
       <tab idMso="TabReadMessage">
         <group id="GnuPGGroupRead"
-               label="GnuPG">
+               label="OpenPGP">
           <button id="verifyButton" 
                   size="normal"
                   label="Verify"
@@ -23,7 +23,7 @@
           <button id="settingsButtonRead" 
                   size="normal"
                   label="Settings"
-                  screentip="GnuPG Settings"
+                  screentip="OpenPGP Settings"
                   onAction="OnSettingsButtonRead" 
                   getImage="GetCustomImage" />
           <separator id="separatorRead"/>

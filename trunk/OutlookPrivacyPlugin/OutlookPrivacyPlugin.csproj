@@ -41,7 +41,7 @@
     <PublishUrl>publish\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.2</ApplicationVersion>
+    <ApplicationVersion>1.0.0.3</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
@@ -346,7 +346,7 @@
       <FlavorProperties GUID="{BAA0C2D2-18E2-41B9-852F-F413020CAA33}">
         <ProjectProperties HostName="Outlook" HostPackage="{20A848B8-E01F-4801-962E-25DB0FF57389}" OfficeVersion="14.0" VstxVersion="4.0" ApplicationType="Outlook" Language="cs" TemplatesPath="VSTOTemplates" DebugInfoExeName="#Software\Microsoft\Office\14.0\Outlook\InstallRoot\Path#Outlook.exe" AddItemTemplatesGuid="{A58A78EB-1C92-4DDD-80CF-E8BD872ABFC4}" />
         <Host Name="Outlook" GeneratedCodeNamespace="OutlookPrivacyPlugin" PublishedHash="69C324AB27932AA2FBF2B7EA72250886FF164DE6" IconIndex="0">
-          <HostItem Name="ThisAddIn" Code="OutlookPrivacyPlugin.cs" CanonicalName="AddIn" CanActivate="false" IconIndex="1" Blueprint="OutlookPrivacyPlugin.Designer.xml" GeneratedCode="OutlookPrivacyPlugin.Designer.cs" PublishedHash="F46E1CE7C7908009D747A72123DE1379B21B2411" />
+          <HostItem Name="ThisAddIn" Code="OutlookPrivacyPlugin.cs" CanonicalName="AddIn" PublishedHash="F46E1CE7C7908009D747A72123DE1379B21B2411" CanActivate="false" IconIndex="1" Blueprint="OutlookPrivacyPlugin.Designer.xml" GeneratedCode="OutlookPrivacyPlugin.Designer.cs" />
         </Host>
       </FlavorProperties>
     </VisualStudio>
