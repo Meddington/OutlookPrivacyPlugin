@@ -14,6 +14,7 @@ using OutlookPrivacyPlugin.Properties;
 using Starksoft.Cryptography.OpenPGP;
 using Exception = System.Exception;
 using anmar.SharpMimeTools;
+using System.Timers;
 
 namespace OutlookPrivacyPlugin
 {
@@ -40,6 +41,11 @@ namespace OutlookPrivacyPlugin
 		private const string _gnuPgErrorString = "[@##$$##@|!GNUPGERROR!|@##$$##@]"; // Hacky way of dealing with exceptions
 		private Outlook.Explorers _explorers;
 		private Outlook.Inspectors _inspectors;        // Outlook inspectors collection
+
+		System.Timers.Timer _timer = null;   // Will clear passphrase every N min.
+
+		string passphrase = null;
+		string privateKey = null;
 
 		// This dictionary holds our Wrapped Inspectors, Explorers, MailItems
 		private Dictionary<Guid, object> _WrappedObjects;
@@ -91,6 +97,17 @@ namespace OutlookPrivacyPlugin
 			// Initialize the outlook inspectors
 			_inspectors = this.Application.Inspectors;
 			_inspectors.NewInspector += new Outlook.InspectorsEvents_NewInspectorEventHandler(OutlookGnuPG_NewInspector);
+
+			_timer = new System.Timers.Timer();
+			_timer.Interval = 1000 * 60 * 5; // Run every 5 min.
+			_timer.Elapsed += new ElapsedEventHandler(_timer_Elapsed);
+			_timer.Start();
+		}
+
+		// Clear phasephrase every 5 min
+		void _timer_Elapsed(object sender, ElapsedEventArgs e)
+		{
+			passphrase = string.Empty;
 		}
 
 		/// <summary>
@@ -358,7 +375,7 @@ namespace OutlookPrivacyPlugin
 						}
 
 						mailItem.Body = body.ToString();
-						mailItem.Save();
+						//mailItem.Save();
 					}
 
 					_autoDecrypt = false;
@@ -390,7 +407,7 @@ namespace OutlookPrivacyPlugin
 						}
 
 						mailItem.Body = body.ToString();
-						mailItem.Save();
+						//mailItem.Save();
 					}
 
 					VerifyEmail(mailItem);
@@ -441,8 +458,8 @@ namespace OutlookPrivacyPlugin
 			foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
 				attachments.Add(attachment);
 
-			foreach(var attachment in attachments)
-				attachment.Delete();
+			//foreach(var attachment in attachments)
+			//    attachment.Delete();
 
 			// Extract files from MIME data
 
@@ -469,7 +486,7 @@ namespace OutlookPrivacyPlugin
 				mailItem.Attachments.Add(tempFile, Outlook.OlAttachmentType.olByValue, 1, fileName);
 			}
 
-			mailItem.Save();
+			//mailItem.Save();
 		}
 
 		/// <summary>
@@ -694,60 +711,15 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			// Still no gpg.exe path... Annoy the user once again, maybe he'll get it ;)
-			if (string.IsNullOrEmpty(_settings.GnuPgPath))
-				Settings();
-
-			// Stubborn, give up
-			if (string.IsNullOrEmpty(_settings.GnuPgPath))
+			if (!PromptForPasswordAndKey())
 			{
-				MessageBox.Show(
-					"OutlookGnuPG can only sign/encrypt when you provide a valid gpg.exe path. Please open Settings and configure it.",
-					"Invalid GnuPG Executable",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
-				Cancel = true; // Prevent sending the mail
+				Cancel = true;
 				return;
 			}
 
-			string passphrase = string.Empty;
-			string privateKey = string.Empty;
-			if (needToSign)
-			{
-				// Popup UI to select the passphrase and private key.
-				Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Sign");
-				DialogResult passphraseResult = passphraseDialog.ShowDialog();
-				if (passphraseResult != DialogResult.OK)
-				{
-					// The user closed the passphrase dialog, prevent sending the mail
-					Cancel = true;
-					return;
-				}
-
-				passphrase = passphraseDialog.EnteredPassphrase;
-				privateKey = passphraseDialog.SelectedKey;
-				passphraseDialog.Close();
-
-				if (string.IsNullOrEmpty(privateKey))
-				{
-					MessageBox.Show(
-						"OutlookGnuPG needs a private key for signing. No keys were detected.",
-						"Invalid Private Key",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Error);
-
-					Cancel = true; // Prevent sending the mail
-					return;
-				}
-			}
-
-#if VS2008
-      IList<string> recipients = new List<string> { string.Empty };
-#else
 			IList<string> recipients = new List<string>();
 			recipients.Add(string.Empty);
-#endif
+
 			if (needToEncrypt)
 			{
 				// Popup UI to select the encryption targets 
@@ -788,7 +760,11 @@ namespace OutlookPrivacyPlugin
 			{
 				mail = SignAndEncryptEmail(mail, privateKey, passphrase, recipients);
 
+				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
 				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+					mailAttachments.Add(attachment);
+
+				foreach (var attachment in mailAttachments)
 				{
 					Attachment a = new Attachment();
 
@@ -816,7 +792,11 @@ namespace OutlookPrivacyPlugin
 				// Sign the plaintext mail if needed
 				mail = SignEmail(mail, privateKey, passphrase);
 
+				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
 				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+					mailAttachments.Add(attachment);
+
+				foreach (var attachment in mailAttachments)
 				{
 					Attachment a = new Attachment();
 
@@ -844,7 +824,11 @@ namespace OutlookPrivacyPlugin
 				// Encrypt the plaintext mail if needed
 				mail = EncryptEmail(mail, passphrase, recipients);
 
+				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
 				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+					mailAttachments.Add(attachment);
+
+				foreach (var attachment in mailAttachments)
 				{
 					Attachment a = new Attachment();
 
@@ -1048,19 +1032,8 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			// Still no gpg.exe path... Annoy the user once again, maybe he'll get it ;)
-			if (string.IsNullOrEmpty(_settings.GnuPgPath))
-				Settings();
-
-			// Stubborn, give up
-			if (string.IsNullOrEmpty(_settings.GnuPgPath))
+			if (!PromptForPasswordAndKey())
 			{
-				MessageBox.Show(
-					"OutlookGnuPG can only verify when you provide a valid gpg.exe path. Please open Settings and configure it.",
-					"Invalid GnuPG Executable",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
 				return;
 			}
 
@@ -1162,13 +1135,50 @@ namespace OutlookPrivacyPlugin
 				mailItem.Body = UTF8Encoding.UTF8.GetString(cleardata);
 				mailItem.HTMLBody = "<html><body>" +
 					System.Security.SecurityElement.Escape(UTF8Encoding.UTF8.GetString(cleardata)) + "</body></html>";
-				mailItem.Save();
+
+				// Decrypt all attachments
+				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
+				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+					mailAttachments.Add(attachment);
+
+				List<Attachment> attachments = new List<Attachment>();
+
+				foreach (var attachment in mailAttachments)
+				{
+					Attachment a = new Attachment();
+
+					a.TempFile = Path.GetTempPath();
+					a.FileName = Regex.Replace(attachment.FileName, @"\.(pgp\.asc|gpg\.asc|pgp|gpg|asc)$", "");
+					a.DisplayName = attachment.DisplayName;
+					a.AttachmentType = attachment.Type;
+
+					a.TempFile = Path.Combine(a.TempFile, a.FileName);
+
+					attachment.SaveAsFile(a.TempFile);
+					//attachment.Delete();
+
+					// Encrypt file
+					var cyphertext = File.ReadAllBytes(a.TempFile);
+					var plaintext = DecryptAndVerify(cyphertext);
+
+					File.WriteAllBytes(a.TempFile, plaintext);
+
+					attachments.Add(a);
+				}
+
+				foreach (var attachment in attachments)
+					mailItem.Attachments.Add(attachment.TempFile, attachment.AttachmentType, 1, attachment.FileName);
+
+				//mailItem.Save();
 			}
 		}
 		#endregion
 
-		byte[] DecryptAndVerify(byte [] data)
+		bool PromptForPasswordAndKey()
 		{
+			_timer.Stop();
+			_timer.Start();
+
 			// Still no gpg.exe path... Annoy the user once again, maybe he'll get it ;)
 			if (string.IsNullOrEmpty(_settings.GnuPgPath))
 				Settings();
@@ -1182,35 +1192,46 @@ namespace OutlookPrivacyPlugin
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
-				return null;
+				return false;
 			}
 
-			string passphrase = string.Empty;
-			string privateKey = string.Empty;
-
-			// Popup UI to select the passphrase and private key.
-			Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Decrypt");
-			DialogResult passphraseResult = passphraseDialog.ShowDialog();
-			if (passphraseResult != DialogResult.OK)
+			if (string.IsNullOrEmpty(passphrase) || string.IsNullOrEmpty(privateKey))
 			{
-				// The user closed the passphrase dialog, prevent sending the mail
-				return null;
-			}
+				// Popup UI to select the passphrase and private key.
+				Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Password and Key");
+				DialogResult passphraseResult = passphraseDialog.ShowDialog();
+				if (passphraseResult != DialogResult.OK)
+				{
+					// The user closed the passphrase dialog, prevent sending the mail
+					return false;
+				}
 
-			passphrase = passphraseDialog.EnteredPassphrase;
-			privateKey = passphraseDialog.SelectedKey;
-			passphraseDialog.Close();
+				passphrase = passphraseDialog.EnteredPassphrase;
+				privateKey = passphraseDialog.SelectedKey;
+				passphraseDialog.Close();
+			}
 
 			if (string.IsNullOrEmpty(privateKey))
 			{
 				MessageBox.Show(
-					"Outlook Privacy Plugin needs a private key for decrypting. No keys were detected.",
+					"Outlook Privacy Plugin needs a private key. No keys were detected.",
 					"Invalid Private Key",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
-				return null;
+				return false;
 			}
+
+			if (string.IsNullOrEmpty(passphrase) || string.IsNullOrEmpty(privateKey))
+				return false;
+
+			return true;
+		}
+
+		byte[] DecryptAndVerify(byte [] data)
+		{
+			if (!PromptForPasswordAndKey())
+				return null;
 
 			// Decrypt without fd-status (might already blow up, early out)
 			// Decrypt with fd-status and cut out the stdout of normal decrypt (prevents BAD/GOODMC messages in message confusing us)
