@@ -466,8 +466,9 @@ namespace OutlookPrivacyPlugin
 			SharpMessage msg = new SharpMessage(ASCIIEncoding.ASCII.GetString(cleardata));
 			string body = mailItem.Body;
 			mailItem.Body = msg.Body;
-			mailItem.HTMLBody = "<html><body>" + 
-				System.Security.SecurityElement.Escape(msg.Body) + "</body></html>";
+			var html = System.Security.SecurityElement.Escape(msg.Body);
+			html = html.Replace("\n", "<br/>");
+			mailItem.HTMLBody = "<html><body>" + html + "</body></html>";
 
 			// Note: Don't update BodyFormat or message will not display correctly the first
 			// time it's opened.
@@ -1133,8 +1134,9 @@ namespace OutlookPrivacyPlugin
 			if (cleardata != null)
 			{
 				mailItem.Body = UTF8Encoding.UTF8.GetString(cleardata);
-				mailItem.HTMLBody = "<html><body>" +
-					System.Security.SecurityElement.Escape(UTF8Encoding.UTF8.GetString(cleardata)) + "</body></html>";
+				var html = System.Security.SecurityElement.Escape(UTF8Encoding.UTF8.GetString(cleardata));
+				html = html.Replace("\n", "<br/>");
+				mailItem.HTMLBody = "<html><body>" + html + "</body></html>";
 
 				// Decrypt all attachments
 				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
