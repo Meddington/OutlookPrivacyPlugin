@@ -39,7 +39,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="Encrypt2Self" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="Default2PlainFormat" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>

@@ -712,10 +712,14 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			if (!PromptForPasswordAndKey())
+			// Password only needed if we are signing the email.
+			if (needToSign)
 			{
-				Cancel = true;
-				return;
+				if (!PromptForPasswordAndKey())
+				{
+					Cancel = true;
+					return;
+				}
 			}
 
 			IList<string> recipients = new List<string>();
@@ -792,33 +796,6 @@ namespace OutlookPrivacyPlugin
 			{
 				// Sign the plaintext mail if needed
 				mail = SignEmail(mail, privateKey, passphrase);
-
-				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
-				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
-					mailAttachments.Add(attachment);
-
-				foreach (var attachment in mailAttachments)
-				{
-					Attachment a = new Attachment();
-
-					a.TempFile = Path.GetTempPath();
-					a.FileName = attachment.FileName;
-					a.DisplayName = attachment.DisplayName;
-					a.AttachmentType = attachment.Type;
-
-					a.TempFile = Path.Combine(a.TempFile, a.FileName);
-					a.TempFile = a.TempFile + ".pgp";
-					attachment.SaveAsFile(a.TempFile);
-					attachment.Delete();
-
-					// Encrypt file
-					byte[] cleartext = File.ReadAllBytes(a.TempFile);
-					string cyphertext = EncryptEmail(cleartext, passphrase, recipients);
-					File.WriteAllText(a.TempFile, cyphertext);
-
-					a.Encrypted = true;
-					attachments.Add(a);
-				}
 			}
 			else if (needToEncrypt)
 			{
@@ -894,6 +871,9 @@ namespace OutlookPrivacyPlugin
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
 
+					// Uncache passphrase in case it's incorrect
+					passphrase = string.Empty;
+
 					return _gnuPgErrorString;
 				}
 
@@ -925,7 +905,7 @@ namespace OutlookPrivacyPlugin
 					_gnuPg.UserCmdOptions += " --encrypt-to " + _settings.DefaultKey;
 
 				inputStream.Position = 0;
-				_gnuPg.Passphrase = passphrase;
+				//_gnuPg.Passphrase = passphrase;
 				_gnuPg.Recipients = recipients;
 				_gnuPg.OutputStatus = false;
 
@@ -940,6 +920,9 @@ namespace OutlookPrivacyPlugin
 						"GnuPG Error",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
+
+					// Uncache passphrase in case it's incorrect
+					passphrase = string.Empty;
 
 					return _gnuPgErrorString;
 				}
@@ -989,6 +972,9 @@ namespace OutlookPrivacyPlugin
 						"GnuPG Error",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
+
+					// Uncache passphrase in case it's incorrect
+					passphrase = string.Empty;
 
 					return _gnuPgErrorString;
 				}
@@ -1176,6 +1162,35 @@ namespace OutlookPrivacyPlugin
 		}
 		#endregion
 
+		///// <summary>
+		///// Use File Magic to determine extention for file.
+		///// </summary>
+		///// <param name="filename"></param>
+		///// <returns></returns>
+		//string FileMagic(string filename)
+		//{
+		//    FileStream fin = File.OpenRead(filename);
+		//    byte[] buff = new byte[1024];
+		//    fin.Read(buff, 0, 1024);
+
+		//    if (buff[0] == 0x50 && buff[1] == 0x4b && buff[2] == 0x03 && buff[3] == 0x04 && buff[32] == 0x43 &&
+		//        buff[33] == 0x6f && buff[34] == 0x6e)
+		//        return "docx";
+
+		//    //Test for ZIP
+		//    if (buff[0] == 0x50 && buff[1] == 0x4b && buff[2] == 0x03 && buff[3] == 0x04)
+		//        return "zip";
+
+		//    if (buff[0] == 0x25 && buff[1] == 0x50 && buff[2] == 0x44 && buff[3] == 0x46)
+		//        return "pdf";
+
+		//    // TODO - This might match doc, xls, && ppt.  need to check on that :)
+		//    if (buff[0] == 0xd0 && buff[1] == 0xcf && buff[2] == 0x11 && buff[3] == 0xe0)
+		//        return "doc";
+
+		//    return null;
+		//}
+
 		bool PromptForPasswordAndKey()
 		{
 			_timer.Stop();
@@ -1260,6 +1275,9 @@ namespace OutlookPrivacyPlugin
 							MessageBoxButtons.OK,
 							MessageBoxIcon.Error);
 
+						// Uncache passphrase in case it's incorrect
+						passphrase = string.Empty;
+
 						return null;
 					}
 				}
@@ -1342,6 +1360,8 @@ namespace OutlookPrivacyPlugin
 						"Invalid Signature",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
+
+					return cleardata;
 				}
 				else if (verifyResult.Contains("GOODMDC"))
 				{
