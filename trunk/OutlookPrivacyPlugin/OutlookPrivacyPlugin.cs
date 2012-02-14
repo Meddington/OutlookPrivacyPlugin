@@ -1116,11 +1116,24 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			byte[] cleardata = DecryptAndVerify(ASCIIEncoding.ASCII.GetBytes(mailItem.Body));
+			// Sometimes messages could contain multiple message blocks.  In that case just use the 
+			// very first one.
+
+			string firstPgpBlock = mailItem.Body;
+			int endMessagePosition = firstPgpBlock.IndexOf("-----END PGP MESSAGE-----") + "-----END PGP MESSAGE-----".Length;
+			if(endMessagePosition != -1)
+				firstPgpBlock = firstPgpBlock.Substring(0, endMessagePosition);
+
+			byte[] cleardata = DecryptAndVerify(ASCIIEncoding.ASCII.GetBytes(firstPgpBlock));
 			if (cleardata != null)
 			{
 				mailItem.Body = UTF8Encoding.UTF8.GetString(cleardata);
-				var html = System.Security.SecurityElement.Escape(UTF8Encoding.UTF8.GetString(cleardata));
+
+				// Don't HMTL encode or we will encode emails already in HTML format.
+				// Office has a safe html module they use to prevent security issues.
+				// Not encoding here should be no worse then reading a standard HTML
+				// email.
+				var html = UTF8Encoding.UTF8.GetString(cleardata);
 				html = html.Replace("\n", "<br/>");
 				mailItem.HTMLBody = "<html><body>" + html + "</body></html>";
 
@@ -1133,8 +1146,14 @@ namespace OutlookPrivacyPlugin
 
 				foreach (var attachment in mailAttachments)
 				{
-					Attachment a = new Attachment();
+					//Outlook.PropertyAccessor pa = attachment.PropertyAccessor;
 
+					//var v = pa.GetProperties(new string[] { "urn:schemas:mailheader" });
+					//var value = pa.GetProperty("content-id");
+					//var value2 = pa.GetProperty("urn:schemas:mailheader:content-id");
+
+					Attachment a = new Attachment();
+					
 					a.TempFile = Path.GetTempPath();
 					a.FileName = Regex.Replace(attachment.FileName, @"\.(pgp\.asc|gpg\.asc|pgp|gpg|asc)$", "");
 					a.DisplayName = attachment.DisplayName;
@@ -1145,7 +1164,7 @@ namespace OutlookPrivacyPlugin
 					attachment.SaveAsFile(a.TempFile);
 					//attachment.Delete();
 
-					// Encrypt file
+					// Decrypt file
 					var cyphertext = File.ReadAllBytes(a.TempFile);
 					var plaintext = DecryptAndVerify(cyphertext);
 
@@ -1157,6 +1176,7 @@ namespace OutlookPrivacyPlugin
 				foreach (var attachment in attachments)
 					mailItem.Attachments.Add(attachment.TempFile, attachment.AttachmentType, 1, attachment.FileName);
 
+				// Warning: Saving could save the message back to the server, not just locally
 				//mailItem.Save();
 			}
 		}
