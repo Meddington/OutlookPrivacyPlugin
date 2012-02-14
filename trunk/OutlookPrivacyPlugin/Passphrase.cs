@@ -29,6 +29,8 @@ namespace OutlookPrivacyPlugin
 
 			OkButton.Text = buttonText;
 			PrivateKey.Focus();
+			ActiveControl = PrivateKey;
+			AcceptButton = OkButton;
 		}
 
 		private void Passphrase_Load(object sender, EventArgs e)
@@ -62,24 +64,26 @@ namespace OutlookPrivacyPlugin
 			}
 
 			KeyBox.SelectedValue = _defaultKey;
+			PrivateKey.Focus();
+			ActiveControl = PrivateKey;
 		}
 
 		private void EmptyPrivateKeyField(Control focusControl)
 		{
-			PrivateKey.PasswordChar = (char)0;
-			PrivateKey.Text = _enterPhrase;
-			PrivateKey.TextAlign = HorizontalAlignment.Center;
-			PrivateKey.ForeColor = Color.LightGray;
+			//PrivateKey.PasswordChar = (char)0;
+			//PrivateKey.Text = _enterPhrase;
+			//PrivateKey.TextAlign = HorizontalAlignment.Center;
+			//PrivateKey.ForeColor = Color.LightGray;
 
-			focusControl.Focus();
+			//focusControl.Focus();
 		}
 
 		private void PreparePrivateKeyField()
 		{
-			PrivateKey.PasswordChar = _passwordChar;
-			PrivateKey.Text = string.Empty;
-			PrivateKey.TextAlign = HorizontalAlignment.Left;
-			PrivateKey.ForeColor = Color.Black;
+			//PrivateKey.PasswordChar = _passwordChar;
+			//PrivateKey.Text = string.Empty;
+			//PrivateKey.TextAlign = HorizontalAlignment.Left;
+			//PrivateKey.ForeColor = Color.Black;
 		}
 
 		private void PrivateKey_Enter(object sender, EventArgs e)
