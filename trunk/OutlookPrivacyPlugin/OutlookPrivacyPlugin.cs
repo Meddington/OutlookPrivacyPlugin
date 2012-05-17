@@ -724,6 +724,7 @@ namespace OutlookPrivacyPlugin
 
 			IList<string> recipients = new List<string>();
 			recipients.Add(string.Empty);
+			recipients.Add(privateKey);
 
 			if (needToEncrypt)
 			{
