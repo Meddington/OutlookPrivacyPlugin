@@ -235,9 +235,11 @@ namespace OutlookPrivacyPlugin
 			Outlook.Selection Selection = explorer.Selection;
 			if (Selection.Count != 1)
 				return;
+
 			Outlook.MailItem mailItem = Selection[1] as Outlook.MailItem;
 			if (mailItem == null || mailItem.Body == null)
 				return;
+
 			if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
 			{
 				Match match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
@@ -303,6 +305,9 @@ namespace OutlookPrivacyPlugin
 			_WrappedObjects.Remove(id);
 		}
 
+		string LastConversationId = "";
+		bool LastConversationEncrypted = false;
+
 		/// <summary>
 		/// WrapperEvent fired when a mailItem is opened.
 		/// This handler is designed to initialize the state of the compose button
@@ -339,10 +344,23 @@ namespace OutlookPrivacyPlugin
 				{
 					ribbon.EncryptButton.Checked = (bool)EncryptProperpty.Value;
 				}
+
+				if (mailItem.Subject.Contains(LastConversationId) && LastConversationEncrypted)
+				{
+					ribbon.EncryptButton.Checked = true;
+					ribbon.InvalidateButtons();
+				}
+				else
+					LastConversationId = "";
+
+				if(ribbon.EncryptButton.Checked || ribbon.SignButton.Checked)
+					mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
 			}
 			else
 			// Read mail
 			{
+				LastConversationId = "";
+
 				// Default: disable read-buttons
 				ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
 
@@ -378,6 +396,9 @@ namespace OutlookPrivacyPlugin
 						//mailItem.Save();
 					}
 
+					LastConversationId = mailItem.Subject;
+					LastConversationEncrypted = true;
+
 					_autoDecrypt = false;
 					DecryptEmail(mailItem);
 					// Update match again, in case decryption failed/cancelled.
@@ -406,6 +427,9 @@ namespace OutlookPrivacyPlugin
 							body.Remove(index, 1);
 						}
 
+						LastConversationId = mailItem.Subject;
+						LastConversationEncrypted = true;
+
 						mailItem.Body = body.ToString();
 						//mailItem.Save();
 					}
@@ -429,6 +453,9 @@ namespace OutlookPrivacyPlugin
 
 					if (foundPgpMime && encryptedMime != null)
 					{
+						LastConversationId = mailItem.Subject;
+						LastConversationEncrypted = true;
+
 						HandlePgpMime(mailItem, encryptedMime);
 					}
 				}
@@ -437,8 +464,26 @@ namespace OutlookPrivacyPlugin
 				{
 					ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
 					ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
+
+					if (match.Value == _pgpEncryptedHeader || match.Value == _pgpSignedHeader)
+					{
+						LastConversationId = mailItem.Subject;
+						LastConversationEncrypted = true;
+					}
 				}
 			}
+
+			// So silly!
+			LastConversationId = LastConversationId.Replace("Re: ", "");
+			LastConversationId = LastConversationId.Replace("re: ", "");
+			LastConversationId = LastConversationId.Replace("RE: ", "");
+			LastConversationId = LastConversationId.Replace("Fw: ", "");
+			LastConversationId = LastConversationId.Replace("FW: ", "");
+			LastConversationId = LastConversationId.Replace("fw: ", "");
+			LastConversationId = LastConversationId.Replace("Fwd: ", "");
+			LastConversationId = LastConversationId.Replace("fwd: ", "");
+			LastConversationId = LastConversationId.Replace("FWD: ", "");
+
 			ribbon.InvalidateButtons();
 		}
 
