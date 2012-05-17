@@ -2,6 +2,17 @@
 Change Log
 ==========
 
+2012-05-17    <mike@dejavusecurity.com>
+
+	* We now add ourselves to the key list when encrypting
+	* When replying to an encrypted mail we should now default to encryt
+
+2012-02-13    <mike@dejavusecurity.com>
+
+	* Changed passphrase dialog to default on text entry
+	* Fixed bug when two messages are in email body.  Now we pick the
+	  first one to decrypt/verify.
+
 2011-09-29    <mike@dejavusecurity.com>
 
 	* Ported project to Office 2010 and renamed to Outlook Privacy Plugin
