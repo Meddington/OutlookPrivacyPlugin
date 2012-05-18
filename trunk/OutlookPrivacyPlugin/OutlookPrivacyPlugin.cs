@@ -351,7 +351,10 @@ namespace OutlookPrivacyPlugin
 					ribbon.InvalidateButtons();
 				}
 				else
+				{
 					LastConversationId = "";
+					LastConversationEncrypted = false;
+				}
 
 				if(ribbon.EncryptButton.Checked || ribbon.SignButton.Checked)
 					mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
@@ -360,6 +363,7 @@ namespace OutlookPrivacyPlugin
 			// Read mail
 			{
 				LastConversationId = "";
+				LastConversationEncrypted = false;
 
 				// Default: disable read-buttons
 				ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
