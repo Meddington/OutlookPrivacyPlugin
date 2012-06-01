@@ -345,7 +345,7 @@ namespace OutlookPrivacyPlugin
 					ribbon.EncryptButton.Checked = (bool)EncryptProperpty.Value;
 				}
 
-				if (mailItem.Subject.Contains(LastConversationId) && LastConversationEncrypted)
+				if (mailItem.Subject != null && mailItem.Subject.Contains(LastConversationId) && LastConversationEncrypted)
 				{
 					ribbon.EncryptButton.Checked = true;
 					ribbon.InvalidateButtons();
@@ -772,7 +772,6 @@ namespace OutlookPrivacyPlugin
 			}
 
 			IList<string> recipients = new List<string>();
-			recipients.Add(string.Empty);
 			recipients.Add(privateKey);
 
 			if (needToEncrypt)
@@ -792,7 +791,9 @@ namespace OutlookPrivacyPlugin
 					return;
 				}
 
-				recipients = recipientDialog.SelectedKeys;
+				foreach (string r in recipientDialog.SelectedKeys)
+					recipients.Add(r);
+
 				recipientDialog.Close();
 
 				if (recipients.Count == 0)
