@@ -287,7 +287,13 @@ namespace OutlookPrivacyPlugin
 			wrappedMailItem.MyClose += new MailItemInspectorCloseDelegate(mailItem_Close);
 			wrappedMailItem.Open += new MailItemInspectorOpenDelegate(mailItem_Open);
 			wrappedMailItem.Save += new MailItemInspectorSaveDelegate(mailItem_Save);
+			wrappedMailItem.Close += new InspectorCloseDelegate(wrappedMailItem_Close);
 			_WrappedObjects[wrappedMailItem.Id] = inspector;
+		}
+
+		void wrappedMailItem_Close(Outlook.Inspector inspector)
+		{
+			string a = "A";
 		}
 
 		/// <summary>
@@ -407,6 +413,12 @@ namespace OutlookPrivacyPlugin
 					DecryptEmail(mailItem);
 					// Update match again, in case decryption failed/cancelled.
 					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+
+					Outlook.UserProperty DecryptedProperpty = mailItem.UserProperties["GnuPGSetting.Decrypted"];
+					if (DecryptedProperpty == null)
+						DecryptedProperpty = mailItem.UserProperties.Add("GnuPGSetting.Decrypted", Outlook.OlUserPropertyType.olYesNo, false, null);
+					DecryptedProperpty.Value = true;
+
 				}
 				else if (match != null && _settings.AutoVerify && match.Value == _pgpSignedHeader)
 				{
@@ -461,6 +473,11 @@ namespace OutlookPrivacyPlugin
 						LastConversationEncrypted = true;
 
 						HandlePgpMime(mailItem, encryptedMime);
+
+						Outlook.UserProperty DecryptedProperpty = mailItem.UserProperties["GnuPGSetting.Decrypted"];
+						if (DecryptedProperpty == null)
+							DecryptedProperpty = mailItem.UserProperties.Add("GnuPGSetting.Decrypted", Outlook.OlUserPropertyType.olYesNo, false, null);
+						DecryptedProperpty.Value = true;
 					}
 				}
 
@@ -595,6 +612,14 @@ namespace OutlookPrivacyPlugin
 					}
 #endif
 				}
+				else
+				{
+					Outlook.UserProperty SignProperpty = mailItem.UserProperties["GnuPGSetting.Decrypted"];
+					if (SignProperpty != null && (bool)SignProperpty.Value)
+					{
+						mailItem.Close(Microsoft.Office.Interop.Outlook.OlInspectorClose.olDiscard);
+					}
+				}
 			}
 			catch
 			{
@@ -614,7 +639,7 @@ namespace OutlookPrivacyPlugin
 		{
 			if (mailItem == null)
 				return;
-
+			
 			// New mail (Compose)
 			if (mailItem.Sent == false)
 			{
