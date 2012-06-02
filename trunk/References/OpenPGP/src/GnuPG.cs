@@ -632,7 +632,6 @@ namespace Starksoft.Cryptography.OpenPGP
 
 			//  create a process info object with command line options
 			ProcessStartInfo procInfo = new ProcessStartInfo(_gpgExe, GetCmdLineSwitches(action));
-			File.WriteAllText("c:\\opp_cmdline.txt", GetCmdLineSwitches(action));
 
 			//  init the procInfo object
 			procInfo.CreateNoWindow = true;
