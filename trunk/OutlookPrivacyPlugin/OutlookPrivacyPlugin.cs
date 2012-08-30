@@ -444,7 +444,7 @@ namespace OutlookPrivacyPlugin
 						}
 
 						LastConversationId = mailItem.Subject;
-						LastConversationEncrypted = true;
+						LastConversationEncrypted = false;
 
 						mailItem.Body = body.ToString();
 						//mailItem.Save();
@@ -486,10 +486,15 @@ namespace OutlookPrivacyPlugin
 					ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
 					ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
 
-					if (match.Value == _pgpEncryptedHeader || match.Value == _pgpSignedHeader)
+					if (match.Value == _pgpEncryptedHeader)
 					{
 						LastConversationId = mailItem.Subject;
 						LastConversationEncrypted = true;
+					}
+					else
+					{
+						LastConversationId = mailItem.Subject;
+						LastConversationEncrypted = false;
 					}
 				}
 			}
@@ -1095,10 +1100,10 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			if (!PromptForPasswordAndKey())
-			{
-				return;
-			}
+			//if (!PromptForPasswordAndKey())
+			//{
+			//    return;
+			//}
 
 			string verifyResult = string.Empty;
 			string errorResult = string.Empty;
