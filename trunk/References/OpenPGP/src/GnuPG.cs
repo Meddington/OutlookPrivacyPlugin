@@ -546,8 +546,11 @@ namespace Starksoft.Cryptography.OpenPGP
 			if (_homePath != null && _homePath.Length != 0)
 				options.Append(String.Format(CultureInfo.InvariantCulture, "--homedir \"{0}\" ", _homePath));
 
-			//  read the passphrase from the standard input
-			options.Append("--passphrase-fd 0 ");
+			if (action != ActionTypes.Encrypt)
+			{
+				//  read the passphrase from the standard input
+				options.Append("--passphrase-fd 0 ");
+			}
 
 			//  turn off verbose statements
 			options.Append("--no-verbose ");

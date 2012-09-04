@@ -802,7 +802,6 @@ namespace OutlookPrivacyPlugin
 			}
 
 			IList<string> recipients = new List<string>();
-			recipients.Add(privateKey);
 
 			if (needToEncrypt)
 			{
@@ -837,6 +836,11 @@ namespace OutlookPrivacyPlugin
 					Cancel = true; // Prevent sending the mail
 					return;
 				}
+
+				if (privateKey != null)
+					recipients.Add(privateKey);
+				else if(_settings.DefaultKey != null)
+					recipients.Add(_settings.DefaultKey);
 			}
 
 			List<Attachment> attachments = new List<Attachment>();
@@ -986,7 +990,7 @@ namespace OutlookPrivacyPlugin
 					_gnuPg.UserCmdOptions += " --encrypt-to " + _settings.DefaultKey;
 
 				inputStream.Position = 0;
-				//_gnuPg.Passphrase = passphrase;
+				_gnuPg.Passphrase = null;
 				_gnuPg.Recipients = recipients;
 				_gnuPg.OutputStatus = false;
 
