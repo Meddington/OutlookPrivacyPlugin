@@ -24,6 +24,8 @@ namespace OutlookPrivacyPlugin
 
 		internal Passphrase(string defaultKey, string buttonText)
 		{
+			TopMost = true;
+
 			_defaultKey = defaultKey;
 			InitializeComponent();
 

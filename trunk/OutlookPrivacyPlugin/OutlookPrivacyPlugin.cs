@@ -1321,6 +1321,7 @@ namespace OutlookPrivacyPlugin
 			{
 				// Popup UI to select the passphrase and private key.
 				Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Password and Key");
+				passphraseDialog.TopMost = true;
 				DialogResult passphraseResult = passphraseDialog.ShowDialog();
 				if (passphraseResult != DialogResult.OK)
 				{
