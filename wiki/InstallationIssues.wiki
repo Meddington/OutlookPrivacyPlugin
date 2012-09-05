@@ -1,0 +1,15 @@
+#summary How to resolve installation issues
+#labels Featured,Phase-Support
+
+= Certificate Trust Issues =
+
+This is typically caused by downloads being marked as untrusted.  To fix follow these steps:
+
+# Download ZIP file
+# Right-Click -> Properties on ZIP file
+# At bottom of Properties window click "Unblock"
+# Click OK to close Properties window
+# Unzip archive
+# Run setup.exe
+
+If problems persist please open a support ticket and attach a screenshot of the error(s).
