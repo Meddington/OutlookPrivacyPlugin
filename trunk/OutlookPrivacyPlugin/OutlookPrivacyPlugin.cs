@@ -293,7 +293,7 @@ namespace OutlookPrivacyPlugin
 
 		void wrappedMailItem_Close(Outlook.Inspector inspector)
 		{
-			string a = "A";
+			//string a = "A";
 		}
 
 		/// <summary>
@@ -811,6 +811,7 @@ namespace OutlookPrivacyPlugin
 					mailRecipients.Add(GetAddressCN(((Outlook.Recipient)mailRecipient).Address));
 
 				Recipient recipientDialog = new Recipient(mailRecipients); // Passing in the first addres, maybe it matches
+				recipientDialog.TopMost = true;
 				DialogResult recipientResult = recipientDialog.ShowDialog();
 
 				if (recipientResult != DialogResult.OK)
@@ -1511,12 +1512,14 @@ namespace OutlookPrivacyPlugin
 		internal void About()
 		{
 			About aboutBox = new About();
+			aboutBox.TopMost = true;
 			aboutBox.ShowDialog();
 		}
 
 		internal void Settings()
 		{
 			Settings settingsBox = new Settings(_settings);
+			settingsBox.TopMost = true;
 			DialogResult result = settingsBox.ShowDialog();
 
 			if (result != DialogResult.OK)
