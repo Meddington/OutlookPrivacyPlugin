@@ -11,10 +11,10 @@ using System.Reflection;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Office = Microsoft.Office.Core;
 using OutlookPrivacyPlugin.Properties;
-using Starksoft.Cryptography.OpenPGP;
 using Exception = System.Exception;
 using anmar.SharpMimeTools;
 using System.Timers;
+using Libgpgme;
 
 namespace OutlookPrivacyPlugin
 {
@@ -35,7 +35,6 @@ namespace OutlookPrivacyPlugin
 		#endregion
 
 		private Properties.Settings _settings;
-		private GnuPG _gnuPg;
 		private GnuPGCommandBar _gpgCommandBar = null;
 		private bool _autoDecrypt = false;
 		private const string _gnuPgErrorString = "[@##$$##@|!GNUPGERROR!|@##$$##@]"; // Hacky way of dealing with exceptions
@@ -59,22 +58,6 @@ namespace OutlookPrivacyPlugin
 		private void OutlookGnuPG_Startup(object sender, EventArgs e)
 		{
 			_settings = new Properties.Settings();
-
-			if (string.IsNullOrEmpty(_settings.GnuPgPath))
-			{
-				_gnuPg = new GnuPG();
-				Settings(); // Prompt for GnuPG Path
-			}
-			else
-			{
-				_gnuPg = new GnuPG(null, _settings.GnuPgPath);
-				if (!_gnuPg.BinaryExists())
-				{
-					_settings.GnuPgPath = string.Empty;
-					Settings(); // Prompt for GnuPG Path
-				}
-			}
-			_gnuPg.OutputType = OutputTypes.AsciiArmor;
 
 			_WrappedObjects = new Dictionary<Guid, object>();
 
@@ -935,38 +918,84 @@ namespace OutlookPrivacyPlugin
 			return SignEmail(UTF8Encoding.UTF8.GetBytes(data), key, passphrase);
 		}
 
+		private PassphraseResult GetPasswordCallback(Context ctx, PassphraseInfo info, ref char[] passphrase)
+		{
+			passphrase = this.passphrase.ToCharArray();
+			return PassphraseResult.Success;
+		}
+
 		private string SignEmail(byte[] data, string key, string passphrase)
 		{
-			using (MemoryStream inputStream = new MemoryStream(data))
-			using (MemoryStream outputStream = new MemoryStream())
+			Context ctx = new Context();
+			if (ctx.Protocol != Protocol.OpenPGP)
+				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
+
+			var keyring = ctx.KeyStore;
+			Key[] senderKeys = keyring.GetKeyList(key, false);
+			if (senderKeys == null || senderKeys.Length == 0)
 			{
-				inputStream.Position = 0;
-				_gnuPg.Passphrase = passphrase;
-				_gnuPg.Sender = key;
+		        MessageBox.Show(
+		            "Error, Unable to locate sender key \""+key+"\".",
+		            "Outlook Privacy Error",
+		            MessageBoxButtons.OK,
+		            MessageBoxIcon.Error);
 
-				try
+				return null;
+			}
+
+			PgpKey senderKey = (PgpKey)senderKeys[0];
+			if (senderKey.Uid == null || senderKey.Fingerprint == null)
+			{
+				MessageBox.Show(
+					"Error, Sender key appears to be corrupt \"" + key + "\".",
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+
+				return null;
+			}
+
+			using(var sin = new MemoryStream(data))
+			using (var sout = new MemoryStream())
+			{
+				using (var origin = new GpgmeStreamData(sin))
+				using (var detachsig = new GpgmeStreamData(sout))
 				{
-					_gnuPg.OutputStatus = false;
-					_gnuPg.Sign(inputStream, outputStream);
+
+					ctx.Signers.Clear();
+					ctx.Signers.Add(senderKey);
+					ctx.Armor = true;
+					ctx.SetPassphraseFunction(GetPasswordCallback);
+
+					var sigresult = ctx.Sign(origin, detachsig, SignatureMode.Detach);
+
+					if (sigresult.InvalidSigners != null)
+					{
+						MessageBox.Show(
+							"Error, invalid signers were found.",
+							"Outlook Privacy Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
+
+						return null;
+					}
+
+					if (sigresult.Signatures == null)
+					{
+						MessageBox.Show(
+							"Error, no signatures were found.",
+							"Outlook Privacy Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
+
+						return null;
+					}
 				}
-				catch (Exception ex)
+
+				sout.Position = 0;
+				using (var reader = new StreamReader(sout))
 				{
-					MessageBox.Show(
-						ex.Message,
-						"GnuPG Error",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Error);
-
-					// Uncache passphrase in case it's incorrect
-					passphrase = string.Empty;
-
-					return _gnuPgErrorString;
-				}
-
-				using (StreamReader reader = new StreamReader(outputStream))
-				{
-					outputStream.Position = 0;
-					return reader.ReadToEnd();
+					return reader.ReadLine();
 				}
 			}
 		}
@@ -978,48 +1007,69 @@ namespace OutlookPrivacyPlugin
 
 		private string EncryptEmail(byte[] data, string passphrase, IList<string> recipients)
 		{
-			using (MemoryStream inputStream = new MemoryStream(data))
-			using (MemoryStream outputStream = new MemoryStream())
+			List<Key> encryptKeys = new List<Key>();
+
+			Context ctx = new Context();
+			if (ctx.Protocol != Protocol.OpenPGP)
+				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
+
+			var keyring = ctx.KeyStore;
+
+			foreach (var recip in recipients)
 			{
-				_gnuPg.UserCmdOptions = "";
-				if (!_settings.GnuPgTrustModel)
-				{
-					_gnuPg.UserCmdOptions = "--trust-model always";
-				}
-
-				if (_settings.Encrypt2Self == true)
-					_gnuPg.UserCmdOptions += " --encrypt-to " + _settings.DefaultKey;
-
-				inputStream.Position = 0;
-				_gnuPg.Passphrase = null;
-				_gnuPg.Recipients = recipients;
-				_gnuPg.OutputStatus = false;
-
-				try
-				{
-					_gnuPg.Encrypt(inputStream, outputStream);
-				}
-				catch (Exception ex)
+				Key[] keys = keyring.GetKeyList(recip, false);
+				if (keys == null || keys.Length == 0)
 				{
 					MessageBox.Show(
-					ex.Message,
-						"GnuPG Error",
+						"Error, Unable to locate recipient key \"" + recip + "\".",
+						"Outlook Privacy Error",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
 
-					// Uncache passphrase in case it's incorrect
-					passphrase = string.Empty;
-
-					return _gnuPgErrorString;
-				}
-				finally
-				{
-					_gnuPg.UserCmdOptions = string.Empty;
+					return null;
 				}
 
-				using (StreamReader reader = new StreamReader(outputStream))
+				PgpKey key = (PgpKey)keys[0];
+				if (key.Uid == null || key.Fingerprint == null)
 				{
-					outputStream.Position = 0;
+					MessageBox.Show(
+						"Error, Recipient key appears to be corrupt \"" + recip + "\".",
+						"Outlook Privacy Error",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Error);
+
+					return null;
+				}
+
+				encryptKeys.Add(key);
+			}
+
+			using (var sin = new MemoryStream(data))
+			using (var sout = new MemoryStream())
+			{
+				using (var plain = new GpgmeStreamData(sin))
+				using (var cipher = new GpgmeStreamData(sout))
+				{
+					ctx.Armor = true;
+					ctx.SetPassphraseFunction(GetPasswordCallback);
+
+					var result = ctx.Encrypt(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
+					
+					if (result.InvalidRecipients != null)
+					{
+						MessageBox.Show(
+							"Error, encryption failed, invalid recipients found.",
+							"Outlook Privacy Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
+
+						return null;
+					}
+				}
+
+				sout.Position = 0;
+				using (var reader = new StreamReader(sout))
+				{
 					return reader.ReadToEnd();
 				}
 			}
@@ -1032,46 +1082,95 @@ namespace OutlookPrivacyPlugin
 
 		private string SignAndEncryptEmail(byte[] data, string key, string passphrase, IList<string> recipients)
 		{
-			using (MemoryStream inputStream = new MemoryStream(data))
-			using (MemoryStream outputStream = new MemoryStream())
+			List<Key> encryptKeys = new List<Key>();
+
+			Context ctx = new Context();
+			if (ctx.Protocol != Protocol.OpenPGP)
+				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
+
+			var keyring = ctx.KeyStore;
+
+			foreach (var recip in recipients)
 			{
-				_gnuPg.UserCmdOptions = "";
-				if (!_settings.GnuPgTrustModel)
-				{
-					_gnuPg.UserCmdOptions = "--trust-model always";
-				}
-
-				inputStream.Position = 0;
-				_gnuPg.Passphrase = passphrase;
-				_gnuPg.Recipients = recipients;
-				_gnuPg.Sender = key;
-				_gnuPg.OutputStatus = false;
-
-				try
-				{
-					_gnuPg.SignAndEncrypt(inputStream, outputStream);
-				}
-				catch (Exception ex)
+				Key[] rkeys = keyring.GetKeyList(recip, false);
+				if (rkeys == null || rkeys.Length == 0)
 				{
 					MessageBox.Show(
-						ex.Message,
-						"GnuPG Error",
+						"Error, Unable to locate recipient key \"" + recip + "\".",
+						"Outlook Privacy Error",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
 
-					// Uncache passphrase in case it's incorrect
-					passphrase = string.Empty;
-
-					return _gnuPgErrorString;
-				}
-				finally
-				{
-					_gnuPg.UserCmdOptions = string.Empty;
+					return null;
 				}
 
-				using (StreamReader reader = new StreamReader(outputStream))
+				PgpKey rkey = (PgpKey)rkeys[0];
+				if (rkey.Uid == null || rkey.Fingerprint == null)
 				{
-					outputStream.Position = 0;
+					MessageBox.Show(
+						"Error, Recipient key appears to be corrupt \"" + recip + "\".",
+						"Outlook Privacy Error",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Error);
+
+					return null;
+				}
+
+				encryptKeys.Add(rkey);
+			}
+
+			Key[] senderKeys = keyring.GetKeyList(key, false);
+			if (senderKeys == null || senderKeys.Length == 0)
+			{
+				MessageBox.Show(
+					"Error, Unable to locate sender key \"" + key + "\".",
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+
+				return null;
+			}
+
+			PgpKey senderKey = (PgpKey)senderKeys[0];
+			if (senderKey.Uid == null || senderKey.Fingerprint == null)
+			{
+				MessageBox.Show(
+					"Error, Sender key appears to be corrupt \"" + key + "\".",
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+
+				return null;
+			}
+
+			using (var sin = new MemoryStream(data))
+			using (var sout = new MemoryStream())
+			{
+				using (var plain = new GpgmeStreamData(sin))
+				using (var cipher = new GpgmeStreamData(sout))
+				{
+					ctx.Signers.Clear();
+					ctx.Signers.Add(senderKey);
+					ctx.Armor = true;
+					ctx.SetPassphraseFunction(GetPasswordCallback);
+
+					var result = ctx.EncryptAndSign(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
+
+					if (result.InvalidRecipients != null)
+					{
+						MessageBox.Show(
+							"Error, encryption failed, invalid recipients found.",
+							"Outlook Privacy Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
+
+						return null;
+					}
+				}
+
+				sout.Position = 0;
+				using (var reader = new StreamReader(sout))
+				{
 					return reader.ReadToEnd();
 				}
 			}
@@ -1084,110 +1183,149 @@ namespace OutlookPrivacyPlugin
 			string mail = mailItem.Body;
 			Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
 
-			//if (mailType != Outlook.OlBodyFormat.olFormatPlain)
-			//{
-			//    MessageBox.Show(
-			//        "OutlookGnuPG can only verify plain text mails.",
-			//        "Invalid Mail Format",
-			//        MessageBoxButtons.OK,
-			//        MessageBoxIcon.Error);
-
-			//    return;
-			//}
-
 			if (Regex.IsMatch(mailItem.Body, _pgpSignedHeader) == false)
 			{
 				MessageBox.Show(
-					"OutlookGnuPG cannot help here.",
+					"Outlook Privacy cannot help here.",
 					"Mail is not signed",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Exclamation);
+
+				return;
+			}
+			
+			Context ctx = new Context();
+			if (ctx.Protocol != Protocol.OpenPGP)
+				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
+
+			var keyring = ctx.KeyStore;
+			Key[] senderKeys = keyring.GetKeyList(privateKey, false);
+			if (senderKeys == null || senderKeys.Length == 0)
+			{
+				MessageBox.Show(
+					"Error, Unable to locate sender key \"" + privateKey + "\".",
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+
 				return;
 			}
 
-			//if (!PromptForPasswordAndKey())
-			//{
-			//    return;
-			//}
-
-			string verifyResult = string.Empty;
-			string errorResult = string.Empty;
-			using (MemoryStream inputStream = new MemoryStream(mail.Length))
-			using (MemoryStream outputStream = new MemoryStream())
-			using (MemoryStream errorStream = new MemoryStream())
+			PgpKey senderKey = (PgpKey)senderKeys[0];
+			if (senderKey.Uid == null || senderKey.Fingerprint == null)
 			{
-				using (StreamWriter writer = new StreamWriter(inputStream))
-				{
-					writer.Write(mail);
-					writer.Flush();
-					inputStream.Position = 0;
-
-					try
-					{
-						_gnuPg.OutputStatus = true;
-						_gnuPg.Verify(inputStream, outputStream, errorStream);
-					}
-					catch (Exception ex)
-					{
-						string error = ex.Message;
-
-						// We deal with bad signature later
-						if (!error.ToLowerInvariant().Contains("bad signature"))
-						{
-							MessageBox.Show(
-								error,
-								"GnuPG Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return;
-						}
-					}
-				}
-
-				using (StreamReader reader = new StreamReader(outputStream))
-				{
-					outputStream.Position = 0;
-					verifyResult = reader.ReadToEnd();
-				}
-
-				using (StreamReader reader = new StreamReader(errorStream))
-				{
-					errorStream.Position = 0;
-					errorResult = reader.ReadToEnd();
-				}
-			}
-
-			if (verifyResult.Contains("BADSIG"))
-			{
-				errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
 				MessageBox.Show(
-					errorResult,
-					"Invalid Signature",
+					"Error, Sender key appears to be corrupt \"" + privateKey + "\".",
+					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
-			}
-			else if (verifyResult.Contains("GOODSIG"))
-			{
-				errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
 
-				MessageBox.Show(
-					errorResult,
-					"Valid Signature",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Information);
+				return;
 			}
-			else
-			{
-				errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
 
-				MessageBox.Show(
-					errorResult,
-					"Unknown Signature",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Exclamation);
+			using (var sin = new MemoryStream(UTF8Encoding.UTF8.GetBytes(mail)))
+			{
+				using (var origin = new GpgmeStreamData(sin))
+				{
+
+					ctx.Signers.Clear();
+					ctx.Signers.Add(senderKey);
+					ctx.Armor = true;
+					ctx.SetPassphraseFunction(GetPasswordCallback);
+
+					var result = ctx.Verify(null, origin, null);
+
+					if (result.Signature == null || result.Signature.Validity != Validity.Full)
+					{
+						MessageBox.Show(
+							"Error, signature could not be validated.",
+							"Outlook Privacy Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
+
+						return;
+					}
+				}
 			}
+
+			//string verifyResult = string.Empty;
+			//string errorResult = string.Empty;
+			//using (MemoryStream inputStream = new MemoryStream(mail.Length))
+			//using (MemoryStream outputStream = new MemoryStream())
+			//using (MemoryStream errorStream = new MemoryStream())
+			//{
+			//    using (StreamWriter writer = new StreamWriter(inputStream))
+			//    {
+			//        writer.Write(mail);
+			//        writer.Flush();
+			//        inputStream.Position = 0;
+
+			//        try
+			//        {
+			//            _gnuPg.OutputStatus = true;
+			//            _gnuPg.Verify(inputStream, outputStream, errorStream);
+			//        }
+			//        catch (Exception ex)
+			//        {
+			//            string error = ex.Message;
+
+			//            // We deal with bad signature later
+			//            if (!error.ToLowerInvariant().Contains("bad signature"))
+			//            {
+			//                MessageBox.Show(
+			//                    error,
+			//                    "GnuPG Error",
+			//                    MessageBoxButtons.OK,
+			//                    MessageBoxIcon.Error);
+
+			//                return;
+			//            }
+			//        }
+			//    }
+
+			//    using (StreamReader reader = new StreamReader(outputStream))
+			//    {
+			//        outputStream.Position = 0;
+			//        verifyResult = reader.ReadToEnd();
+			//    }
+
+			//    using (StreamReader reader = new StreamReader(errorStream))
+			//    {
+			//        errorStream.Position = 0;
+			//        errorResult = reader.ReadToEnd();
+			//    }
+			//}
+
+			//if (verifyResult.Contains("BADSIG"))
+			//{
+			//    errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
+
+			//    MessageBox.Show(
+			//        errorResult,
+			//        "Invalid Signature",
+			//        MessageBoxButtons.OK,
+			//        MessageBoxIcon.Error);
+			//}
+			//else if (verifyResult.Contains("GOODSIG"))
+			//{
+			//    errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
+
+			//    MessageBox.Show(
+			//        errorResult,
+			//        "Valid Signature",
+			//        MessageBoxButtons.OK,
+			//        MessageBoxIcon.Information);
+			//}
+			//else
+			//{
+			//    errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
+
+			//    MessageBox.Show(
+			//        errorResult,
+			//        "Unknown Signature",
+			//        MessageBoxButtons.OK,
+			//        MessageBoxIcon.Exclamation);
+			//}
 		}
 
 		internal void DecryptEmail(Outlook.MailItem mailItem)
@@ -1357,155 +1495,118 @@ namespace OutlookPrivacyPlugin
 			if (!PromptForPasswordAndKey())
 				return null;
 
-			// Decrypt without fd-status (might already blow up, early out)
-			// Decrypt with fd-status and cut out the stdout of normal decrypt (prevents BAD/GOODMC messages in message confusing us)
-			byte[] cleardata = null;
-			using (MemoryStream inputStream = new MemoryStream(data))
-			using (MemoryStream outputStream = new MemoryStream())
+			Context ctx = new Context();
+			if (ctx.Protocol != Protocol.OpenPGP)
+				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
+
+			var keyring = ctx.KeyStore;
+			Key[] senderKeys = keyring.GetKeyList(privateKey, false);
+			if (senderKeys == null || senderKeys.Length == 0)
 			{
-				try
-				{
-					_gnuPg.OutputStatus = false;
-					_gnuPg.Passphrase = passphrase;
-					_gnuPg.Decrypt(inputStream, outputStream, new MemoryStream());
-				}
-				catch (Exception ex)
-				{
-					string error = ex.Message;
+				MessageBox.Show(
+					"Error, Unable to locate sender key \"" + privateKey + "\".",
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
 
-					// We deal with bad signature later
-					if (!error.ToLowerInvariant().Contains("bad signature"))
-					{
-						MessageBox.Show(
-							error,
-							"GnuPG Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
-
-						// Uncache passphrase in case it's incorrect
-						passphrase = string.Empty;
-
-						return null;
-					}
-				}
-
-				// Decrypted data
-				cleardata = outputStream.ToArray();
+				return null;
 			}
 
-			do
+			PgpKey senderKey = (PgpKey)senderKeys[0];
+			if (senderKey.Uid == null || senderKey.Fingerprint == null)
 			{
-				string verifyResult = string.Empty;
-				string errorResult = string.Empty;
-				using (MemoryStream inputStream = new MemoryStream(data))
-				using (MemoryStream outputStream = new MemoryStream())
-				using (MemoryStream errorStream = new MemoryStream())
+				MessageBox.Show(
+					"Error, Sender key appears to be corrupt \"" + privateKey + "\".",
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+
+				return null;
+			}
+
+			using (var sin = new MemoryStream(data))
+			using (var sout = new MemoryStream())
+			{
+				using (var cipher = new GpgmeStreamData(sin))
+				using (var plain = new GpgmeStreamData(sout))
 				{
+					ctx.Signers.Clear();
+					ctx.Signers.Add(senderKey);
+					ctx.Armor = true;
+					ctx.SetPassphraseFunction(GetPasswordCallback);
+
 					try
 					{
-						_gnuPg.OutputStatus = true;
-						_gnuPg.Passphrase = passphrase;
-						_gnuPg.Verify(inputStream, outputStream, errorStream);
-					}
-					catch (Exception ex)
-					{
-						string error = ex.Message;
+						var result = ctx.DecryptAndVerify(cipher, plain);
 
-						if (error.Contains("gpg: no valid OpenPGP data found.") ||
-							error.Contains("gpg: verify signatures failed: Unexpected error"))
-						{
-							// Ignore
-							break;
-						}
-
-						// We deal with bad signature later
-						else if (!error.ToLowerInvariant().Contains("bad signature"))
+						if (result.DecryptionResult.WrongKeyUsage)
 						{
 							MessageBox.Show(
-								error,
-								"GnuPG Error",
+								"Error, decryption failed due to wrong key usage.",
+								"Outlook Privacy Error",
 								MessageBoxButtons.OK,
 								MessageBoxIcon.Error);
 
 							return null;
 						}
+
+						if (result.DecryptionResult.UnsupportedAlgorithm != null)
+						{
+							MessageBox.Show(
+								"Error, decryption failed due to unsupported algorithm.",
+								"Outlook Privacy Error",
+								MessageBoxButtons.OK,
+								MessageBoxIcon.Error);
+
+							return null;
+						}
+
+						if (result.VerificationResult.Signature != null && result.VerificationResult.Signature.Validity != Validity.Full)
+						{
+							MessageBox.Show(
+								"Error, signature validation failed.",
+								"Outlook Privacy Error",
+								MessageBoxButtons.OK,
+								MessageBoxIcon.Error);
+
+							//return null;
+						}
 					}
-
-					using (StreamReader reader = new StreamReader(outputStream))
+					catch (DecryptionFailedException ex)
 					{
-						outputStream.Position = 0;
-						verifyResult = reader.ReadToEnd();
-					}
-
-					using (StreamReader reader = new StreamReader(errorStream))
-					{
-						errorStream.Position = 0;
-						errorResult = reader.ReadToEnd();
-					}
-				}
-
-				// Verify: status-fd
-				// stdOut: the message
-				// error: gpg error/status
-
-				if (verifyResult.Contains("BADMDC"))
-				{
-					errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
-					MessageBox.Show(
-						errorResult,
-						"Invalid Encryption",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Error);
-				}
-				else if (verifyResult.Contains("GOODMDC") && verifyResult.Contains("BADSIG"))
-				{
-					errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
-					MessageBox.Show(
-						errorResult,
-						"Invalid Signature",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Error);
-
-					return cleardata;
-				}
-				else if (verifyResult.Contains("GOODMDC"))
-				{
-					if (verifyResult.Contains("GOODSIG"))
-					{
-						errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
 						MessageBox.Show(
-							errorResult,
-							"Valid Signature",
+							"Error, decryption failed: " + ex.Message,
+							"Outlook Privacy Error",
 							MessageBoxButtons.OK,
-							MessageBoxIcon.Information);
+							MessageBoxIcon.Error);
 
+						return null;
 					}
+					catch (BadPassphraseException)
+					{
+						MessageBox.Show(
+							"Error, decryption failed due to incorrect password.",
+							"Outlook Privacy Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
 
-					return cleardata;
+						return null;
+					}
+					catch (GeneralErrorException ex)
+					{
+						MessageBox.Show(
+							"Error, decryption failed: " + ex.Message,
+							"Outlook Privacy Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
+
+						return null;
+					}
 				}
-				else
-				{
-					errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-					errorResult = errorResult.Replace("WARNING", Environment.NewLine + "WARNING");
 
-					DialogResult res = MessageBox.Show(
-						errorResult + Environment.NewLine + "Decrypt mail anyway?",
-						"Unknown Encryption",
-						MessageBoxButtons.OKCancel,
-						MessageBoxIcon.Exclamation);
-
-					if (res == DialogResult.OK)
-						return cleardata;
-				}
-
-				return null;
+				sout.Position = 0;
+				return sout.ToArray();
 			}
-			while (true);
-
-			return cleardata;
 		}
 
 		#region General Logic
@@ -1537,7 +1638,7 @@ namespace OutlookPrivacyPlugin
 			_settings.GnuPgTrustModel = settingsBox.GnuPgTrustModel;
 			_settings.Save();
 
-			_gnuPg.BinaryPath = _settings.GnuPgPath;
+			//_gnuPg.BinaryPath = _settings.GnuPgPath;
 		}
 
 		#endregion
@@ -1545,14 +1646,20 @@ namespace OutlookPrivacyPlugin
 		#region Key Management
 		internal IList<GnuKey> GetPrivateKeys()
 		{
-			GnuPGKeyCollection privateKeys = _gnuPg.GetSecretKeys();
+			Context ctx = new Context();
+			if (ctx.Protocol != Protocol.OpenPGP)
+				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
 
 			List<GnuKey> keys = new List<GnuKey>();
-			foreach (GnuPGKey privateKey in privateKeys)
+			foreach (Key key in ctx.KeyStore.GetKeyList("", true))
 			{
 				GnuKey k = new GnuKey();
-				k.Key = privateKey.UserId;
-				k.KeyDisplay = string.Format("{0} <{1}>", privateKey.UserName, privateKey.UserId);
+				k.Key = key.Uid.Email;
+				k.KeyDisplay = string.Format("{0} <{1}>", key.Uid.Name, key.Uid.Email);
+
+				if (k.Key == null)
+					continue;
+
 				keys.Add(k);
 			}
 
@@ -1561,23 +1668,29 @@ namespace OutlookPrivacyPlugin
 
 		internal IList<GnuKey> GetPrivateKeys(string gnuPgPath)
 		{
-			_gnuPg.BinaryPath = gnuPgPath;
-			if (_gnuPg.BinaryExists())
+			//_gnuPg.BinaryPath = gnuPgPath;
+			//if (_gnuPg.BinaryExists())
 				return GetPrivateKeys();
-			else
-				return new List<GnuKey>();
+			//else
+			//    return new List<GnuKey>();
 		}
 
 		public IList<GnuKey> GetKeys()
 		{
-			GnuPGKeyCollection privateKeys = _gnuPg.GetKeys();
+			Context ctx = new Context();
+			if (ctx.Protocol != Protocol.OpenPGP)
+				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
 
 			List<GnuKey> keys = new List<GnuKey>();
-			foreach (GnuPGKey privateKey in privateKeys)
+			foreach (Key key in ctx.KeyStore.GetKeyList("", false))
 			{
 				GnuKey k = new GnuKey();
-				k.Key = privateKey.UserId;
-				k.KeyDisplay = string.Format("{0} <{1}>", privateKey.UserName, privateKey.UserId);
+				k.Key = key.Uid.Email;
+				k.KeyDisplay = string.Format("{0} <{1}>", key.Uid.Name, key.Uid.Email);
+
+				if (k.Key == null)
+					continue;
+
 				keys.Add(k);
 			}
 
@@ -1626,10 +1739,12 @@ namespace OutlookPrivacyPlugin
 
 		public bool ValidateGnuPath(string gnuPath)
 		{
-			if (_gnuPg != null)
-				return _gnuPg.BinaryExists(gnuPath);
-			else
-				return false;
+			//if (_gnuPg != null)
+			//    return _gnuPg.BinaryExists(gnuPath);
+			//else
+			//    return false;
+
+			return true;
 		}
 
 		#endregion

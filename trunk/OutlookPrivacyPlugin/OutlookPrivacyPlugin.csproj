@@ -305,9 +305,9 @@
     <None Include="Resources\database_gear.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\References\OpenPGP\src\Starksoft.Cryptography.OpenPGP.csproj">
-      <Project>{ED351287-F7EA-4AF8-B331-DF06FBBE5023}</Project>
-      <Name>Starksoft.Cryptography.OpenPGP</Name>
+    <ProjectReference Include="..\3rdParty\gpgme-sharp\gpgme-sharp\gpgme-sharp.csproj">
+      <Project>{5523357F-F3CA-4E25-B6EC-30EE3F5D769D}</Project>
+      <Name>gpgme-sharp</Name>
     </ProjectReference>
     <ProjectReference Include="..\References\SharpMimeTools\SharpMimeTools.csproj">
       <Project>{D5CEEE86-95B6-4F17-B19A-BCF3CB2B1E0B}</Project>
