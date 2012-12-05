@@ -20,8 +20,6 @@ namespace OutlookPrivacyPlugin
 			Encrypt2Self = settings.Encrypt2Self;
 
 			DefaultKey = settings.DefaultKey;
-			GnuPgPath = settings.GnuPgPath;
-			_originalExeWidth = GnuPgExe.Width;
 			DefaultDomain = settings.DefaultDomain;
 
 			Default2PlainFormat = settings.Default2PlainFormat;
@@ -76,34 +74,6 @@ namespace OutlookPrivacyPlugin
 			private set { Encrypt2SelfCheckBox.Checked = value; }
 		}
 
-		internal string GnuPgPath
-		{
-			get { return GnuPgExe.Text; }
-			private set
-			{
-				GnuPgExe.Text = value;
-
-				if (string.IsNullOrEmpty(value))
-				{
-					ComposeTab.Enabled = ReadTab.Enabled = false;
-					MainTabControl.TabPages.RemoveByKey(ComposeTab.Name);
-					//MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
-				}
-				else
-				{
-					ComposeTab.Enabled = ReadTab.Enabled = true;
-
-					if (!MainTabControl.TabPages.ContainsKey(ComposeTab.Name))
-						MainTabControl.TabPages.Add(ComposeTab);
-
-					if (!MainTabControl.TabPages.ContainsKey(ReadTab.Name))
-						MainTabControl.TabPages.Add(ReadTab);
-				}
-
-				PopulatePrivateKeys(!string.IsNullOrEmpty(value));
-			}
-		}
-
 		internal string DefaultDomain
 		{
 			get { return DefaultDomainTextBox.Text; }
@@ -112,20 +82,11 @@ namespace OutlookPrivacyPlugin
 
 		private void BrowseButton_Click(object sender, System.EventArgs e)
 		{
-			if (!string.IsNullOrEmpty(GnuPgPath))
-				GnuPgExeFolderDialog.SelectedPath = GnuPgPath;
-
-			DialogResult result = GnuPgExeFolderDialog.ShowDialog(this);
-			if (result != DialogResult.OK)
-				return;
-
-			GnuPgPath = GnuPgExeFolderDialog.SelectedPath;
-			OkButton.Enabled = ValidateGnuPath();
 		}
 
 		private void PopulatePrivateKeys(bool gotGnu)
 		{
-			IList<GnuKey> keys = gotGnu ? Globals.OutlookPrivacyPlugin.GetPrivateKeys(GnuPgPath) : new List<GnuKey>();
+			IList<GnuKey> keys = gotGnu ? Globals.OutlookPrivacyPlugin.GetPrivateKeys() : new List<GnuKey>();
 
 			KeyBox.DataSource = keys;
 			KeyBox.DisplayMember = "KeyDisplay";
@@ -162,32 +123,6 @@ namespace OutlookPrivacyPlugin
 
 		private bool ValidateGnuPath()
 		{
-			if (string.IsNullOrEmpty(GnuPgPath))
-			{
-				// No GnuPath provided, complain!
-				Errors.SetError(GnuPgExe, "No GnuPG provided!");
-				GnuPgExe.Dock = DockStyle.None;
-				GnuPgExe.Width = _originalExeWidth - 17;
-				return false;
-			}
-
-			if (!Globals.OutlookPrivacyPlugin.ValidateGnuPath(GnuPgPath))
-			{
-				// No gpg.exe found, complain!
-				Errors.SetError(GnuPgExe, "No gpg(2).exe found in directory!");
-				GnuPgExe.Dock = DockStyle.None;
-				GnuPgExe.Width = _originalExeWidth - 17;
-				return false;
-			}
-
-			// All fine
-			Errors.SetError(GnuPgExe, string.Empty);
-			GnuPgExe.Dock = DockStyle.Fill;
-			GnuPgExe.Width = _originalExeWidth;
-
-			DefaultKey = (KeyBox.Items.Count > 0)
-				? ((KeyBox.SelectedValue != null) ? KeyBox.SelectedValue.ToString() : string.Empty)
-				: string.Empty;
 
 			return true;
 		}

@@ -292,10 +292,6 @@
       <Link>Copyright.txt</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\References\OpenPGP\openpgp-license.txt">
-      <Link>openpgp-license.txt</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Include="Resources\verify.bmp" />
     <None Include="app.config" />
     <None Include="Resources\GpgLogo.png" />

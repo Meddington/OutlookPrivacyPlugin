@@ -41,9 +41,7 @@ namespace OutlookPrivacyPlugin
 		private Outlook.Explorers _explorers;
 		private Outlook.Inspectors _inspectors;        // Outlook inspectors collection
 
-		System.Timers.Timer _timer = null;   // Will clear passphrase every N min.
-
-		string passphrase = null;
+		//string passphrase = null;
 		string privateKey = null;
 
 		// This dictionary holds our Wrapped Inspectors, Explorers, MailItems
@@ -81,16 +79,16 @@ namespace OutlookPrivacyPlugin
 			_inspectors = this.Application.Inspectors;
 			_inspectors.NewInspector += new Outlook.InspectorsEvents_NewInspectorEventHandler(OutlookGnuPG_NewInspector);
 
-			_timer = new System.Timers.Timer();
-			_timer.Interval = 1000 * 60 * 5; // Run every 5 min.
-			_timer.Elapsed += new ElapsedEventHandler(_timer_Elapsed);
-			_timer.Start();
+			//_timer = new System.Timers.Timer();
+			//_timer.Interval = 1000 * 60 * 5; // Run every 5 min.
+			//_timer.Elapsed += new ElapsedEventHandler(_timer_Elapsed);
+			//_timer.Start();
 		}
 
 		// Clear phasephrase every 5 min
 		void _timer_Elapsed(object sender, ElapsedEventArgs e)
 		{
-			passphrase = string.Empty;
+			//passphrase = string.Empty;
 		}
 
 		/// <summary>
@@ -503,7 +501,7 @@ namespace OutlookPrivacyPlugin
 			var tempfile = Path.GetTempFileName();
 			encryptedMime.SaveAsFile(tempfile);
 			var encrypteddata = File.ReadAllBytes(tempfile);
-			var cleardata = DecryptAndVerify(encrypteddata);
+			var cleardata = DecryptAndVerify(mailItem.To, encrypteddata);
 			if (cleardata == null)
 				return;
 
@@ -832,7 +830,7 @@ namespace OutlookPrivacyPlugin
 			// Sign and encrypt the plaintext mail
 			if ((needToSign) && (needToEncrypt))
 			{
-				mail = SignAndEncryptEmail(mail, privateKey, passphrase, recipients);
+				mail = SignAndEncryptEmail(mail, mailItem.SenderEmailAddress, null, recipients);
 
 				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
 				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
@@ -854,7 +852,7 @@ namespace OutlookPrivacyPlugin
 
 					// Encrypt file
 					byte[] cleartext = File.ReadAllBytes(a.TempFile);
-					string cyphertext = EncryptEmail(cleartext, passphrase, recipients);
+					string cyphertext = EncryptEmail(cleartext, null, recipients);
 					File.WriteAllText(a.TempFile, cyphertext);
 
 					a.Encrypted = true;
@@ -864,12 +862,12 @@ namespace OutlookPrivacyPlugin
 			else if (needToSign)
 			{
 				// Sign the plaintext mail if needed
-				mail = SignEmail(mail, privateKey, passphrase);
+				mail = SignEmail(mail, privateKey);
 			}
 			else if (needToEncrypt)
 			{
 				// Encrypt the plaintext mail if needed
-				mail = EncryptEmail(mail, passphrase, recipients);
+				mail = EncryptEmail(mail, null, recipients);
 
 				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
 				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
@@ -891,7 +889,7 @@ namespace OutlookPrivacyPlugin
 
 					// Encrypt file
 					byte[] cleartext = File.ReadAllBytes(a.TempFile);
-					string cyphertext = EncryptEmail(cleartext, passphrase, recipients);
+					string cyphertext = EncryptEmail(cleartext, null, recipients);
 					File.WriteAllText(a.TempFile, cyphertext);
 
 					a.Encrypted = true;
@@ -913,18 +911,12 @@ namespace OutlookPrivacyPlugin
 				Cancel = true;
 		}
 
-		private string SignEmail(string data, string key, string passphrase)
+		private string SignEmail(string data, string key)
 		{
-			return SignEmail(UTF8Encoding.UTF8.GetBytes(data), key, passphrase);
+			return SignEmail(UTF8Encoding.UTF8.GetBytes(data), key);
 		}
 
-		private PassphraseResult GetPasswordCallback(Context ctx, PassphraseInfo info, ref char[] passphrase)
-		{
-			passphrase = this.passphrase.ToCharArray();
-			return PassphraseResult.Success;
-		}
-
-		private string SignEmail(byte[] data, string key, string passphrase)
+		private string SignEmail(byte[] data, string key)
 		{
 			Context ctx = new Context();
 			if (ctx.Protocol != Protocol.OpenPGP)
@@ -965,7 +957,7 @@ namespace OutlookPrivacyPlugin
 					ctx.Signers.Clear();
 					ctx.Signers.Add(senderKey);
 					ctx.Armor = true;
-					ctx.SetPassphraseFunction(GetPasswordCallback);
+					//ctx.SetPassphraseFunction(GetPasswordCallback);
 
 					var sigresult = ctx.Sign(origin, detachsig, SignatureMode.Detach);
 
@@ -1051,7 +1043,7 @@ namespace OutlookPrivacyPlugin
 				using (var cipher = new GpgmeStreamData(sout))
 				{
 					ctx.Armor = true;
-					ctx.SetPassphraseFunction(GetPasswordCallback);
+					//ctx.SetPassphraseFunction(GetPasswordCallback);
 
 					var result = ctx.Encrypt(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
 					
@@ -1152,7 +1144,7 @@ namespace OutlookPrivacyPlugin
 					ctx.Signers.Clear();
 					ctx.Signers.Add(senderKey);
 					ctx.Armor = true;
-					ctx.SetPassphraseFunction(GetPasswordCallback);
+					//ctx.SetPassphraseFunction(GetPasswordCallback);
 
 					var result = ctx.EncryptAndSign(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
 
@@ -1231,7 +1223,7 @@ namespace OutlookPrivacyPlugin
 					ctx.Signers.Clear();
 					ctx.Signers.Add(senderKey);
 					ctx.Armor = true;
-					ctx.SetPassphraseFunction(GetPasswordCallback);
+					//ctx.SetPassphraseFunction(GetPasswordCallback);
 
 					var result = ctx.Verify(null, origin, null);
 
@@ -1348,7 +1340,7 @@ namespace OutlookPrivacyPlugin
 			if(endMessagePosition != -1)
 				firstPgpBlock = firstPgpBlock.Substring(0, endMessagePosition);
 
-			byte[] cleardata = DecryptAndVerify(ASCIIEncoding.ASCII.GetBytes(firstPgpBlock));
+			byte[] cleardata = DecryptAndVerify(mailItem.To, ASCIIEncoding.ASCII.GetBytes(firstPgpBlock));
 			if (cleardata != null)
 			{
 				mailItem.Body = UTF8Encoding.UTF8.GetString(cleardata);
@@ -1390,7 +1382,7 @@ namespace OutlookPrivacyPlugin
 
 					// Decrypt file
 					var cyphertext = File.ReadAllBytes(a.TempFile);
-					var plaintext = DecryptAndVerify(cyphertext);
+					var plaintext = DecryptAndVerify(mailItem.To, cyphertext);
 
 					File.WriteAllBytes(a.TempFile, plaintext);
 
@@ -1437,29 +1429,10 @@ namespace OutlookPrivacyPlugin
 
 		bool PromptForPasswordAndKey()
 		{
-			_timer.Stop();
-			_timer.Start();
-
-			// Still no gpg.exe path... Annoy the user once again, maybe he'll get it ;)
-			if (string.IsNullOrEmpty(_settings.GnuPgPath))
-				Settings();
-
-			// Stubborn, give up
-			if (string.IsNullOrEmpty(_settings.GnuPgPath))
-			{
-				MessageBox.Show(
-					"Outlook Privacy Plugin can only decrypt when you provide a valid gpg.exe path. Please open Settings and configure it.",
-					"Invalid GnuPG Executable",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
-				return false;
-			}
-
-			if (string.IsNullOrEmpty(passphrase) || string.IsNullOrEmpty(privateKey))
+			if (string.IsNullOrEmpty(privateKey))
 			{
 				// Popup UI to select the passphrase and private key.
-				Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Password and Key");
+				Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Key");
 				passphraseDialog.TopMost = true;
 				DialogResult passphraseResult = passphraseDialog.ShowDialog();
 				if (passphraseResult != DialogResult.OK)
@@ -1468,7 +1441,7 @@ namespace OutlookPrivacyPlugin
 					return false;
 				}
 
-				passphrase = passphraseDialog.EnteredPassphrase;
+				//passphrase = passphraseDialog.EnteredPassphrase;
 				privateKey = passphraseDialog.SelectedKey;
 				passphraseDialog.Close();
 			}
@@ -1484,23 +1457,20 @@ namespace OutlookPrivacyPlugin
 				return false;
 			}
 
-			if (string.IsNullOrEmpty(passphrase) || string.IsNullOrEmpty(privateKey))
+			if (string.IsNullOrEmpty(privateKey))
 				return false;
 
 			return true;
 		}
 
-		byte[] DecryptAndVerify(byte [] data)
+		byte[] DecryptAndVerify(string to, byte [] data)
 		{
-			if (!PromptForPasswordAndKey())
-				return null;
-
 			Context ctx = new Context();
 			if (ctx.Protocol != Protocol.OpenPGP)
 				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
 
 			var keyring = ctx.KeyStore;
-			Key[] senderKeys = keyring.GetKeyList(privateKey, false);
+			Key[] senderKeys = keyring.GetKeyList(to, false);
 			if (senderKeys == null || senderKeys.Length == 0)
 			{
 				MessageBox.Show(
@@ -1533,7 +1503,6 @@ namespace OutlookPrivacyPlugin
 					ctx.Signers.Clear();
 					ctx.Signers.Add(senderKey);
 					ctx.Armor = true;
-					ctx.SetPassphraseFunction(GetPasswordCallback);
 
 					try
 					{
@@ -1626,7 +1595,6 @@ namespace OutlookPrivacyPlugin
 			if (result != DialogResult.OK)
 				return;
 
-			_settings.GnuPgPath = settingsBox.GnuPgPath;
 			_settings.Encrypt2Self = settingsBox.Encrypt2Self;
 			_settings.AutoDecrypt = settingsBox.AutoDecrypt;
 			_settings.AutoVerify = settingsBox.AutoVerify;
