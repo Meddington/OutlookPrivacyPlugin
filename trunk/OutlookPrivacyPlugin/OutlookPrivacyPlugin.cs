@@ -37,13 +37,9 @@ namespace OutlookPrivacyPlugin
 		private Properties.Settings _settings;
 		private GnuPGCommandBar _gpgCommandBar = null;
 		private bool _autoDecrypt = false;
-		private const string _gnuPgErrorString = "[@##$$##@|!GNUPGERROR!|@##$$##@]"; // Hacky way of dealing with exceptions
 		private Outlook.Explorers _explorers;
 		private Outlook.Inspectors _inspectors;        // Outlook inspectors collection
-
-		//string passphrase = null;
-		string privateKey = null;
-
+		private System.Text.Encoding iso_8859_1 = System.Text.Encoding.GetEncoding("iso-8859-1");
 		// This dictionary holds our Wrapped Inspectors, Explorers, MailItems
 		private Dictionary<Guid, object> _WrappedObjects;
 
@@ -78,17 +74,6 @@ namespace OutlookPrivacyPlugin
 			// Initialize the outlook inspectors
 			_inspectors = this.Application.Inspectors;
 			_inspectors.NewInspector += new Outlook.InspectorsEvents_NewInspectorEventHandler(OutlookGnuPG_NewInspector);
-
-			//_timer = new System.Timers.Timer();
-			//_timer.Interval = 1000 * 60 * 5; // Run every 5 min.
-			//_timer.Elapsed += new ElapsedEventHandler(_timer_Elapsed);
-			//_timer.Start();
-		}
-
-		// Clear phasephrase every 5 min
-		void _timer_Elapsed(object sender, ElapsedEventArgs e)
-		{
-			//passphrase = string.Empty;
 		}
 
 		/// <summary>
@@ -515,7 +500,7 @@ namespace OutlookPrivacyPlugin
 
 			// Extract files from MIME data
 
-			SharpMessage msg = new SharpMessage(ASCIIEncoding.ASCII.GetString(cleardata));
+			SharpMessage msg = new SharpMessage(this.iso_8859_1.GetString(cleardata));
 			string body = mailItem.Body;
 			mailItem.Body = msg.Body;
 			var html = System.Security.SecurityElement.Escape(msg.Body);
@@ -772,16 +757,6 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			// Password only needed if we are signing the email.
-			if (needToSign)
-			{
-				if (!PromptForPasswordAndKey())
-				{
-					Cancel = true;
-					return;
-				}
-			}
-
 			IList<string> recipients = new List<string>();
 
 			if (needToEncrypt)
@@ -819,10 +794,7 @@ namespace OutlookPrivacyPlugin
 					return;
 				}
 
-				if (privateKey != null)
-					recipients.Add(privateKey);
-				else if(_settings.DefaultKey != null)
-					recipients.Add(_settings.DefaultKey);
+				recipients.Add(mailItem.SendUsingAccount.CurrentUser.Address);
 			}
 
 			List<Attachment> attachments = new List<Attachment>();
@@ -862,7 +834,7 @@ namespace OutlookPrivacyPlugin
 			else if (needToSign)
 			{
 				// Sign the plaintext mail if needed
-				mail = SignEmail(mail, privateKey);
+				mail = SignEmail(mail, mailItem.SendUsingAccount.CurrentUser.Address);
 			}
 			else if (needToEncrypt)
 			{
@@ -902,18 +874,12 @@ namespace OutlookPrivacyPlugin
 				mailItem.Attachments.Add(a.TempFile, a.AttachmentType, 1, a.DisplayName);
 			}
 
-			// Update the new content
-			if (mail != _gnuPgErrorString)
-			{
-				mailItem.Body = mail;
-			}
-			else
-				Cancel = true;
+			mailItem.Body = mail;
 		}
 
 		private string SignEmail(string data, string key)
 		{
-			return SignEmail(UTF8Encoding.UTF8.GetBytes(data), key);
+			return SignEmail(this.iso_8859_1.GetBytes(data), key);
 		}
 
 		private string SignEmail(byte[] data, string key)
@@ -957,25 +923,41 @@ namespace OutlookPrivacyPlugin
 					ctx.Signers.Clear();
 					ctx.Signers.Add(senderKey);
 					ctx.Armor = true;
-					//ctx.SetPassphraseFunction(GetPasswordCallback);
 
-					var sigresult = ctx.Sign(origin, detachsig, SignatureMode.Detach);
-
-					if (sigresult.InvalidSigners != null)
+					try
 					{
-						MessageBox.Show(
-							"Error, invalid signers were found.",
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
+						var sigresult = ctx.Sign(origin, detachsig, SignatureMode.Detach);
 
+						if (sigresult.InvalidSigners != null)
+						{
+							MessageBox.Show(
+								"Error, invalid signers were found.",
+								"Outlook Privacy Error",
+								MessageBoxButtons.OK,
+								MessageBoxIcon.Error);
+
+							return null;
+						}
+
+						if (sigresult.Signatures == null)
+						{
+							MessageBox.Show(
+								"Error, no signatures were found.",
+								"Outlook Privacy Error",
+								MessageBoxButtons.OK,
+								MessageBoxIcon.Error);
+
+							return null;
+						}
+					}
+					catch (BadPassphraseException)
+					{
 						return null;
 					}
-
-					if (sigresult.Signatures == null)
+					catch (Exception ex)
 					{
 						MessageBox.Show(
-							"Error, no signatures were found.",
+							"Error signing message: " + ex.Message,
 							"Outlook Privacy Error",
 							MessageBoxButtons.OK,
 							MessageBoxIcon.Error);
@@ -994,7 +976,7 @@ namespace OutlookPrivacyPlugin
 
 		private string EncryptEmail(string mail, string passphrase, IList<string> recipients)
 		{
-			return EncryptEmail(UTF8Encoding.UTF8.GetBytes(mail), passphrase, recipients);
+			return EncryptEmail(this.iso_8859_1.GetBytes(mail), passphrase, recipients);
 		}
 
 		private string EncryptEmail(byte[] data, string passphrase, IList<string> recipients)
@@ -1043,14 +1025,30 @@ namespace OutlookPrivacyPlugin
 				using (var cipher = new GpgmeStreamData(sout))
 				{
 					ctx.Armor = true;
-					//ctx.SetPassphraseFunction(GetPasswordCallback);
 
-					var result = ctx.Encrypt(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
-					
-					if (result.InvalidRecipients != null)
+					try
+					{
+						var result = ctx.Encrypt(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
+
+						if (result.InvalidRecipients != null)
+						{
+							MessageBox.Show(
+								"Error, encryption failed, invalid recipients found.",
+								"Outlook Privacy Error",
+								MessageBoxButtons.OK,
+								MessageBoxIcon.Error);
+
+							return null;
+						}
+					}
+					catch (BadPassphraseException)
+					{
+						return null;
+					}
+					catch (Exception ex)
 					{
 						MessageBox.Show(
-							"Error, encryption failed, invalid recipients found.",
+							"Error, encryption failed:" + ex.Message,
 							"Outlook Privacy Error",
 							MessageBoxButtons.OK,
 							MessageBoxIcon.Error);
@@ -1069,7 +1067,7 @@ namespace OutlookPrivacyPlugin
 
 		private string SignAndEncryptEmail(string data, string key, string passphrase, IList<string> recipients)
 		{
-			return SignAndEncryptEmail(UTF8Encoding.UTF8.GetBytes(data), key, passphrase, recipients);
+			return SignAndEncryptEmail(this.iso_8859_1.GetBytes(data), key, passphrase, recipients);
 		}
 
 		private string SignAndEncryptEmail(byte[] data, string key, string passphrase, IList<string> recipients)
@@ -1144,14 +1142,30 @@ namespace OutlookPrivacyPlugin
 					ctx.Signers.Clear();
 					ctx.Signers.Add(senderKey);
 					ctx.Armor = true;
-					//ctx.SetPassphraseFunction(GetPasswordCallback);
 
-					var result = ctx.EncryptAndSign(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
+					try
+					{
+						var result = ctx.EncryptAndSign(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
 
-					if (result.InvalidRecipients != null)
+						if (result.InvalidRecipients != null)
+						{
+							MessageBox.Show(
+								"Error, encryption failed, invalid recipients found.",
+								"Outlook Privacy Error",
+								MessageBoxButtons.OK,
+								MessageBoxIcon.Error);
+
+							return null;
+						}
+					}
+					catch (BadPassphraseException)
+					{
+						return null;
+					}
+					catch (Exception ex)
 					{
 						MessageBox.Show(
-							"Error, encryption failed, invalid recipients found.",
+							"Error, encryption failed: " + ex.Message,
 							"Outlook Privacy Error",
 							MessageBoxButtons.OK,
 							MessageBoxIcon.Error);
@@ -1191,11 +1205,19 @@ namespace OutlookPrivacyPlugin
 				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
 
 			var keyring = ctx.KeyStore;
-			Key[] senderKeys = keyring.GetKeyList(privateKey, false);
+			Key[] senderKeys = null;
+
+			foreach(string toEmail in mailItem.To.Split(';'))
+			{
+				senderKeys = keyring.GetKeyList(toEmail, false);
+				if (senderKeys != null && senderKeys.Length > 0)
+					break;
+			}
+
 			if (senderKeys == null || senderKeys.Length == 0)
 			{
 				MessageBox.Show(
-					"Error, Unable to locate sender key \"" + privateKey + "\".",
+					"Error, Unable to locate sender key in \"" + mailItem.To + "\".",
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
@@ -1207,7 +1229,7 @@ namespace OutlookPrivacyPlugin
 			if (senderKey.Uid == null || senderKey.Fingerprint == null)
 			{
 				MessageBox.Show(
-					"Error, Sender key appears to be corrupt \"" + privateKey + "\".",
+					"Error, Sender key appears to be corrupt \"" + mailItem.To + "\".",
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
@@ -1215,7 +1237,7 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			using (var sin = new MemoryStream(UTF8Encoding.UTF8.GetBytes(mail)))
+			using (var sin = new MemoryStream(this.iso_8859_1.GetBytes(mail)))
 			{
 				using (var origin = new GpgmeStreamData(sin))
 				{
@@ -1223,14 +1245,36 @@ namespace OutlookPrivacyPlugin
 					ctx.Signers.Clear();
 					ctx.Signers.Add(senderKey);
 					ctx.Armor = true;
-					//ctx.SetPassphraseFunction(GetPasswordCallback);
 
-					var result = ctx.Verify(null, origin, null);
+					try
+					{
+						var result = ctx.Verify(null, origin, null);
 
-					if (result.Signature == null || result.Signature.Validity != Validity.Full)
+						if (result.Signature == null || result.Signature.Validity != Validity.Full)
+						{
+							MessageBox.Show(
+								"Error, signature could not be validated.",
+								"Outlook Privacy Error",
+								MessageBoxButtons.OK,
+								MessageBoxIcon.Error);
+
+							return;
+						}
+					}
+					catch (BadPassphraseException)
 					{
 						MessageBox.Show(
-							"Error, signature could not be validated.",
+							"Error, signature could not be validated due to bad passphrase.",
+							"Outlook Privacy Error",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
+
+						return;
+					}
+					catch (Exception ex)
+					{
+						MessageBox.Show(
+							"Error, signature could not be validated: " + ex.Message,
 							"Outlook Privacy Error",
 							MessageBoxButtons.OK,
 							MessageBoxIcon.Error);
@@ -1239,85 +1283,6 @@ namespace OutlookPrivacyPlugin
 					}
 				}
 			}
-
-			//string verifyResult = string.Empty;
-			//string errorResult = string.Empty;
-			//using (MemoryStream inputStream = new MemoryStream(mail.Length))
-			//using (MemoryStream outputStream = new MemoryStream())
-			//using (MemoryStream errorStream = new MemoryStream())
-			//{
-			//    using (StreamWriter writer = new StreamWriter(inputStream))
-			//    {
-			//        writer.Write(mail);
-			//        writer.Flush();
-			//        inputStream.Position = 0;
-
-			//        try
-			//        {
-			//            _gnuPg.OutputStatus = true;
-			//            _gnuPg.Verify(inputStream, outputStream, errorStream);
-			//        }
-			//        catch (Exception ex)
-			//        {
-			//            string error = ex.Message;
-
-			//            // We deal with bad signature later
-			//            if (!error.ToLowerInvariant().Contains("bad signature"))
-			//            {
-			//                MessageBox.Show(
-			//                    error,
-			//                    "GnuPG Error",
-			//                    MessageBoxButtons.OK,
-			//                    MessageBoxIcon.Error);
-
-			//                return;
-			//            }
-			//        }
-			//    }
-
-			//    using (StreamReader reader = new StreamReader(outputStream))
-			//    {
-			//        outputStream.Position = 0;
-			//        verifyResult = reader.ReadToEnd();
-			//    }
-
-			//    using (StreamReader reader = new StreamReader(errorStream))
-			//    {
-			//        errorStream.Position = 0;
-			//        errorResult = reader.ReadToEnd();
-			//    }
-			//}
-
-			//if (verifyResult.Contains("BADSIG"))
-			//{
-			//    errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
-			//    MessageBox.Show(
-			//        errorResult,
-			//        "Invalid Signature",
-			//        MessageBoxButtons.OK,
-			//        MessageBoxIcon.Error);
-			//}
-			//else if (verifyResult.Contains("GOODSIG"))
-			//{
-			//    errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
-			//    MessageBox.Show(
-			//        errorResult,
-			//        "Valid Signature",
-			//        MessageBoxButtons.OK,
-			//        MessageBoxIcon.Information);
-			//}
-			//else
-			//{
-			//    errorResult = RemoveInvalidAka(errorResult.Replace("gpg: ", string.Empty));
-
-			//    MessageBox.Show(
-			//        errorResult,
-			//        "Unknown Signature",
-			//        MessageBoxButtons.OK,
-			//        MessageBoxIcon.Exclamation);
-			//}
 		}
 
 		internal void DecryptEmail(Outlook.MailItem mailItem)
@@ -1343,13 +1308,13 @@ namespace OutlookPrivacyPlugin
 			byte[] cleardata = DecryptAndVerify(mailItem.To, ASCIIEncoding.ASCII.GetBytes(firstPgpBlock));
 			if (cleardata != null)
 			{
-				mailItem.Body = UTF8Encoding.UTF8.GetString(cleardata);
+				mailItem.Body = this.iso_8859_1.GetString(cleardata);
 
 				// Don't HMTL encode or we will encode emails already in HTML format.
 				// Office has a safe html module they use to prevent security issues.
 				// Not encoding here should be no worse then reading a standard HTML
 				// email.
-				var html = UTF8Encoding.UTF8.GetString(cleardata);
+				var html = this.iso_8859_1.GetString(cleardata);
 				html = html.Replace("\n", "<br/>");
 				mailItem.HTMLBody = "<html><body>" + html + "</body></html>";
 
@@ -1427,24 +1392,23 @@ namespace OutlookPrivacyPlugin
 		//    return null;
 		//}
 
-		bool PromptForPasswordAndKey()
+		string PromptForPasswordAndKey()
 		{
-			if (string.IsNullOrEmpty(privateKey))
-			{
-				// Popup UI to select the passphrase and private key.
-				Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Key");
-				passphraseDialog.TopMost = true;
-				DialogResult passphraseResult = passphraseDialog.ShowDialog();
-				if (passphraseResult != DialogResult.OK)
-				{
-					// The user closed the passphrase dialog, prevent sending the mail
-					return false;
-				}
+			string privateKey = null;
 
-				//passphrase = passphraseDialog.EnteredPassphrase;
-				privateKey = passphraseDialog.SelectedKey;
-				passphraseDialog.Close();
+			// Popup UI to select the passphrase and private key.
+			Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Key");
+			passphraseDialog.TopMost = true;
+			DialogResult passphraseResult = passphraseDialog.ShowDialog();
+			if (passphraseResult != DialogResult.OK)
+			{
+				// The user closed the passphrase dialog, prevent sending the mail
+				return null;
 			}
+
+			//passphrase = passphraseDialog.EnteredPassphrase;
+			privateKey = passphraseDialog.SelectedKey;
+			passphraseDialog.Close();
 
 			if (string.IsNullOrEmpty(privateKey))
 			{
@@ -1454,13 +1418,10 @@ namespace OutlookPrivacyPlugin
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
-				return false;
+				return null;
 			}
 
-			if (string.IsNullOrEmpty(privateKey))
-				return false;
-
-			return true;
+			return privateKey;
 		}
 
 		byte[] DecryptAndVerify(string to, byte [] data)
@@ -1470,11 +1431,18 @@ namespace OutlookPrivacyPlugin
 				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
 
 			var keyring = ctx.KeyStore;
-			Key[] senderKeys = keyring.GetKeyList(to, false);
+			Key[] senderKeys = null;
+			foreach (var toEmail in to.Split(';'))
+			{
+				senderKeys = keyring.GetKeyList(toEmail, false);
+				if (senderKeys != null && senderKeys.Length > 0)
+					break;
+			}
+
 			if (senderKeys == null || senderKeys.Length == 0)
 			{
 				MessageBox.Show(
-					"Error, Unable to locate sender key \"" + privateKey + "\".",
+					"Error, Unable to locate sender key in \"" + to + "\".",
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
@@ -1486,7 +1454,7 @@ namespace OutlookPrivacyPlugin
 			if (senderKey.Uid == null || senderKey.Fingerprint == null)
 			{
 				MessageBox.Show(
-					"Error, Sender key appears to be corrupt \"" + privateKey + "\".",
+					"Error, Sender key appears to be corrupt \"" + to + "\".",
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);

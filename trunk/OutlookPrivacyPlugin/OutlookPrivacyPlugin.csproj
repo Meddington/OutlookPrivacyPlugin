@@ -27,7 +27,7 @@
     <RootNamespace>OutlookPrivacyPlugin</RootNamespace>
     <AssemblyName>OutlookPrivacyPlugin</AssemblyName>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\OutlookGnuPG.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>OutlookGnuPG_TemporaryKey.pfx</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <OfficeApplication>Outlook</OfficeApplication>
     <FileUpgradeFlags>
@@ -41,7 +41,7 @@
     <PublishUrl>publish\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.19</ApplicationVersion>
+    <ApplicationVersion>1.0.0.22</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
@@ -135,10 +135,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>OutlookGnuPG_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>OutlookPrivacyPlugin_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>8D75005E1157BCC79D13AE8B815B612509E10813</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>B50D70D422DFDFDA15E29CECDE586B9647AEBAB0</ManifestCertificateThumbprint>
   </PropertyGroup>
   <!--
     This section specifies references for the project.
@@ -251,6 +251,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="OutlookGnuPG_TemporaryKey.pfx" />
+    <None Include="OutlookPrivacyPlugin_TemporaryKey.pfx" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

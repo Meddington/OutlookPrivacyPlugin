@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
+using Libgpgme;
 
 namespace OutlookPrivacyPlugin
 {
@@ -53,7 +54,7 @@ namespace OutlookPrivacyPlugin
       // of the assembly version is a julian date with 0 = 1 Jan 2000
       DateTime buildDate = new DateTime(2000,1,1).AddDays( AssemblyVersion.Build );
       BuildLabel.Text = string.Format("Build {0}, {1}", AssemblyVersion.Build, buildDate.ToLongDateString());
-    }
+	}
 
     private void ClickLink(object sender, LinkLabelLinkClickedEventArgs e)
     {

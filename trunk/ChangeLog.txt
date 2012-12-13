@@ -1,6 +1,11 @@
 
 Change Log
 ==========
+2012-12-12    <mike@dejavusecurity.com>
+
+	* Changed default character set to iso_8859_1.  Seems to have fixed
+	  our character encoding issues for now.
+
 2012-12-04    <mike@dejavusecurity.com>
 
 	* Switched to gpgpme based crypto library
