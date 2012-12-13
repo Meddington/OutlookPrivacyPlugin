@@ -1,6 +1,12 @@
 #summary How to resolve installation issues
 #labels Featured,Phase-Support
 
+==Pre Installation==
+
+You must have GPG4WIN *already* installed.
+
+http://www.gpg4win.org/
+
 ==Certificate Trust Issues==
 
 This is typically caused by downloads being marked as untrusted.  To fix follow these steps:
