@@ -1,6 +1,16 @@
 #summary How to resolve installation issues
 #labels Featured,Phase-Support
 
+==Outlook 32bit vs 64bit==
+
+This plugin relies on gpg4win which is currently only shipping a 32bit installer.  So for now the plugin only works with 32bit versions of Outlook.
+
+==Incorrect Version of .NET==
+
+This plugin is built against the Microsoft Framework v4.0.  
+
+http://www.microsoft.com/en-us/download/details.aspx?id=17851
+
 ==Pre Installation==
 
 You must have GPG4WIN *already* installed.
