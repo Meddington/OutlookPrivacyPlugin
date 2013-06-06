@@ -1,0 +1,9 @@
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\bin\Debug\Org.BouncyCastle.dll
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\bin\Debug\Org.BouncyCastle.pdb
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\bin\Debug\crypto.xml
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\bin\Debug\nunit.core.dll
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\bin\Debug\nunit.core.interfaces.dll
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\bin\Debug\nunit.framework.dll
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\obj\Debug\Org.BouncyCastle.dll
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\obj\Debug\Org.BouncyCastle.pdb
+C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\obj\Debug\Org.BouncyCastle.csprojResolveAssemblyReference.cache
