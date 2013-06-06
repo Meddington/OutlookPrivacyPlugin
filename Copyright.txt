@@ -1,0 +1,39 @@
+================================================================================
+Outlook Privacy Plugin is a fork of OutlookGnuPg by Thierry Walrant
+
+Outlook Privacy Plugin, Copyright (c) 2011 Deja vu Security
+  (http://www.dejavusecurity.com)
+
+OutlookGnuPG is a fork of CC.OutlookGnuPG by David Cumps.
+
+OutlookGnuPG, Copyright (c) 2009 Thierry Walrant
+  (http://github.com/twalrant/OutlookGnuPG)
+
+CC.OutlookGnuPG, Copyright (c) 2009 David Cumps
+  (http://www.cumps.be/gpg-in-outlook-2007-outlookgnupg/)
+
+================================================================================
+Other resources used by this project:
+ 
+OpenPGP Library for GnuPG, Copyright (c) 2007-2009 Starksoft, LLC
+  (http://www.starksoft.com)
+  This resource has its own license, see References/OpenPGP/openpgp-license.txt
+Icons by Mark James (http://www.famfamfam.com/lab/icons/silk/)
+Clipboard Wrapper by Alessio Deiana
+  (http://www.codeproject.com/KB/system/clipboard_backup_cs.aspx)
+
+================================================================================
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or any
+later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+================================================================================
