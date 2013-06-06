@@ -27,7 +27,7 @@
     <RootNamespace>OutlookPrivacyPlugin</RootNamespace>
     <AssemblyName>OutlookPrivacyPlugin</AssemblyName>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>OutlookGnuPG_TemporaryKey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\OutlookGnuPG.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <OfficeApplication>Outlook</OfficeApplication>
     <FileUpgradeFlags>
@@ -41,7 +41,7 @@
     <PublishUrl>publish\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.22</ApplicationVersion>
+    <ApplicationVersion>1.0.0.28</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>true</UpdateEnabled>
     <UpdateInterval>7</UpdateInterval>
@@ -208,6 +208,7 @@
     <Compile Include="GnuPGRibbon.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="GpgMePgp.cs" />
     <Compile Include="OutlookWrapper.cs" />
     <Compile Include="Passphrase.cs">
       <SubType>Form</SubType>
@@ -250,8 +251,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include="OutlookGnuPG_TemporaryKey.pfx" />
-    <None Include="OutlookPrivacyPlugin_TemporaryKey.pfx" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -302,9 +301,9 @@
     <None Include="Resources\database_gear.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\3rdParty\gpgme-sharp\gpgme-sharp\gpgme-sharp.csproj">
-      <Project>{5523357F-F3CA-4E25-B6EC-30EE3F5D769D}</Project>
-      <Name>gpgme-sharp</Name>
+    <ProjectReference Include="..\Deja.Crypto\Deja.Crypto.csproj">
+      <Project>{228E6B06-76AC-42AE-8EE6-035DA96043EC}</Project>
+      <Name>Deja.Crypto</Name>
     </ProjectReference>
     <ProjectReference Include="..\References\SharpMimeTools\SharpMimeTools.csproj">
       <Project>{D5CEEE86-95B6-4F17-B19A-BCF3CB2B1E0B}</Project>

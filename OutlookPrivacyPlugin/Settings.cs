@@ -7,8 +7,6 @@ namespace OutlookPrivacyPlugin
 {
 	internal partial class Settings : Form
 	{
-		private readonly int _originalExeWidth;
-
 		internal Settings(Properties.Settings settings)
 		{
 			InitializeComponent();
@@ -23,7 +21,6 @@ namespace OutlookPrivacyPlugin
 			DefaultDomain = settings.DefaultDomain;
 
 			Default2PlainFormat = settings.Default2PlainFormat;
-			GnuPgTrustModel = settings.GnuPgTrustModel;
 
 			// Temporary disable all settings regarding auto-verify/decrypt
 			// MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
@@ -36,12 +33,6 @@ namespace OutlookPrivacyPlugin
 		{
 			get { return Default2PlainTextCheckBox.Checked; }
 			set { Default2PlainTextCheckBox.Checked = value; }
-		}
-
-		internal bool GnuPgTrustModel
-		{
-			get { return GnuPgTrustModelCheckBox.Checked; }
-			set { GnuPgTrustModelCheckBox.Checked = value; }
 		}
 
 		internal bool AutoDecrypt
@@ -84,51 +75,38 @@ namespace OutlookPrivacyPlugin
 		{
 		}
 
-		private void PopulatePrivateKeys(bool gotGnu)
-		{
-			IList<GnuKey> keys = gotGnu ? Globals.OutlookPrivacyPlugin.GetPrivateKeys() : new List<GnuKey>();
+		//private void PopulatePrivateKeys(bool gotGnu)
+		//{
+		//    IList<GnuKey> keys = gotGnu ? Globals.OutlookPrivacyPlugin.GetPrivateKeys() : new List<GnuKey>();
 
-			KeyBox.DataSource = keys;
-			KeyBox.DisplayMember = "KeyDisplay";
-			KeyBox.ValueMember = "Key";
+		//    KeyBox.DataSource = keys;
+		//    KeyBox.DisplayMember = "KeyDisplay";
+		//    KeyBox.ValueMember = "Key";
 
-			if (KeyBox.Items.Count <= 0)
-				return;
+		//    if (KeyBox.Items.Count <= 0)
+		//        return;
 
-			KeyBox.SelectedValue = DefaultKey;
+		//    KeyBox.SelectedValue = DefaultKey;
 
-			// Enlarge dialog to fit the longest key
-			using (Graphics g = CreateGraphics())
-			{
-				int maxSize = Width;
-				foreach (GnuKey key in keys)
-				{
-					int textWidth = (int)g.MeasureString(key.KeyDisplay, KeyBox.Font).Width + 50 + 27;
-					if (textWidth > maxSize)
-						maxSize = textWidth;
-				}
-				Width = maxSize;
-				CenterToScreen();
-			}
-		}
+		//    // Enlarge dialog to fit the longest key
+		//    using (Graphics g = CreateGraphics())
+		//    {
+		//        int maxSize = Width;
+		//        foreach (GnuKey key in keys)
+		//        {
+		//            int textWidth = (int)g.MeasureString(key.KeyDisplay, KeyBox.Font).Width + 50 + 27;
+		//            if (textWidth > maxSize)
+		//                maxSize = textWidth;
+		//        }
+		//        Width = maxSize;
+		//        CenterToScreen();
+		//    }
+		//}
 
 		private void OkButton_Click(object sender, System.EventArgs e)
 		{
-			if (!ValidateGnuPath())
-				return;
-
 			DialogResult = DialogResult.OK;
 			Close();
-		}
-
-		private bool ValidateGnuPath()
-		{
-
-			return true;
-		}
-
-		private void GnuPgExe_TextChanged(object sender, System.EventArgs e)
-		{
 		}
 
 		private void DefaultDomainTextBox_TextChanged(object sender, System.EventArgs e)

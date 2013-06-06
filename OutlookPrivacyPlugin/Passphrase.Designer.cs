@@ -31,8 +31,8 @@
 			this.components = new System.ComponentModel.Container();
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.OkButton = new System.Windows.Forms.Button();
-			this.label1 = new System.Windows.Forms.Label();
-			this.KeyBox = new System.Windows.Forms.ComboBox();
+			this.PrivateKey = new System.Windows.Forms.TextBox();
+			this.label2 = new System.Windows.Forms.Label();
 			this.Errors = new System.Windows.Forms.ErrorProvider(this.components);
 			this.tableLayoutPanel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.Errors)).BeginInit();
@@ -43,8 +43,8 @@
 			this.tableLayoutPanel1.ColumnCount = 1;
 			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
 			this.tableLayoutPanel1.Controls.Add(this.OkButton, 0, 6);
-			this.tableLayoutPanel1.Controls.Add(this.label1, 0, 0);
-			this.tableLayoutPanel1.Controls.Add(this.KeyBox, 0, 1);
+			this.tableLayoutPanel1.Controls.Add(this.PrivateKey, 0, 4);
+			this.tableLayoutPanel1.Controls.Add(this.label2, 0, 0);
 			this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
 			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -56,7 +56,7 @@
 			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.tableLayoutPanel1.Size = new System.Drawing.Size(284, 86);
+			this.tableLayoutPanel1.Size = new System.Drawing.Size(284, 80);
 			this.tableLayoutPanel1.TabIndex = 0;
 			// 
 			// OkButton
@@ -67,37 +67,33 @@
 			this.OkButton.DialogResult = System.Windows.Forms.DialogResult.OK;
 			this.OkButton.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.OkButton.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.OkButton.Location = new System.Drawing.Point(3, 52);
+			this.OkButton.Location = new System.Drawing.Point(3, 51);
 			this.OkButton.Name = "OkButton";
-			this.OkButton.Size = new System.Drawing.Size(278, 31);
-			this.OkButton.TabIndex = 4;
-			this.OkButton.Text = "Sign";
+			this.OkButton.Size = new System.Drawing.Size(278, 26);
+			this.OkButton.TabIndex = 1;
+			this.OkButton.Text = "OK";
 			this.OkButton.UseVisualStyleBackColor = true;
 			// 
-			// label1
+			// PrivateKey
 			// 
-			this.label1.AutoSize = true;
-			this.label1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.label1.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label1.Location = new System.Drawing.Point(3, 0);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(278, 22);
-			this.label1.TabIndex = 3;
-			this.label1.Text = "Select a private key";
-			this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			this.PrivateKey.CausesValidation = false;
+			this.PrivateKey.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.Errors.SetIconPadding(this.PrivateKey, 2);
+			this.PrivateKey.Location = new System.Drawing.Point(3, 25);
+			this.PrivateKey.Name = "PrivateKey";
+			this.PrivateKey.PasswordChar = '*';
+			this.PrivateKey.Size = new System.Drawing.Size(278, 20);
+			this.PrivateKey.TabIndex = 0;
+			this.PrivateKey.Enter += new System.EventHandler(this.PrivateKey_Enter);
 			// 
-			// KeyBox
+			// label2
 			// 
-			this.KeyBox.CausesValidation = false;
-			this.KeyBox.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.KeyBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.KeyBox.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.KeyBox.FormattingEnabled = true;
-			this.KeyBox.Location = new System.Drawing.Point(3, 25);
-			this.KeyBox.Name = "KeyBox";
-			this.KeyBox.Size = new System.Drawing.Size(278, 21);
-			this.KeyBox.TabIndex = 1;
-			this.KeyBox.Enter += new System.EventHandler(this.KeyBox_Enter);
+			this.label2.AutoSize = true;
+			this.label2.Location = new System.Drawing.Point(3, 0);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(65, 13);
+			this.label2.TabIndex = 5;
+			this.label2.Text = "Passphrase:";
 			// 
 			// Errors
 			// 
@@ -108,12 +104,12 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(284, 86);
+			this.ClientSize = new System.Drawing.Size(284, 80);
 			this.Controls.Add(this.tableLayoutPanel1);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
 			this.Name = "Passphrase";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-			this.Text = "Key Selection";
+			this.Text = "Enter Passphrase";
 			this.Load += new System.EventHandler(this.Passphrase_Load);
 			this.tableLayoutPanel1.ResumeLayout(false);
 			this.tableLayoutPanel1.PerformLayout();
@@ -125,9 +121,9 @@
     #endregion
 
 	private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-    private System.Windows.Forms.Label label1;
-	private System.Windows.Forms.ComboBox KeyBox;
     private System.Windows.Forms.ErrorProvider Errors;
-	private System.Windows.Forms.Button OkButton;
+        private System.Windows.Forms.Button OkButton;
+		private System.Windows.Forms.TextBox PrivateKey;
+        private System.Windows.Forms.Label label2;
   }
 }

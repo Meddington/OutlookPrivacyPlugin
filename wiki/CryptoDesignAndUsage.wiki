@@ -1,9 +1,0 @@
-#summary How we call perform crypto operations
-
-= OPP Crypto =
-
-The original plugin tried to call gpg.exe directly using streams.  This was sketchy at best.  I have recently re-written the crypto code to use the gpgme-sharp library.  This is a wrapper around the GPGME library.
-
-Currently to my knowledge, GPGME is the recommended way to use GPG.  This is the same library used by the GPG4WIN project.
-
-The current code is very clean and should not introduce any injection, oracle, or timing related attacks that are not already present in GPGME.

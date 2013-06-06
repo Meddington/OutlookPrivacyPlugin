@@ -5,6 +5,9 @@ Change Log
 
 	* Changed default character set to iso_8859_1.  Seems to have fixed
 	  our character encoding issues for now.
+	* Now support multiple email accounts using sender/account email
+	  to find keys
+	* Fixed bug where email could be send empty on error
 
 2012-12-04    <mike@dejavusecurity.com>
 

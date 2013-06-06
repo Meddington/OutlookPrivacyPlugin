@@ -14,7 +14,8 @@ using OutlookPrivacyPlugin.Properties;
 using Exception = System.Exception;
 using anmar.SharpMimeTools;
 using System.Timers;
-using Libgpgme;
+
+using Deja.Crypto.BcPgp;
 
 namespace OutlookPrivacyPlugin
 {
@@ -39,9 +40,11 @@ namespace OutlookPrivacyPlugin
 		private bool _autoDecrypt = false;
 		private Outlook.Explorers _explorers;
 		private Outlook.Inspectors _inspectors;        // Outlook inspectors collection
-		private System.Text.Encoding iso_8859_1 = System.Text.Encoding.GetEncoding("iso-8859-1");
+		private System.Text.Encoding _encoding = UTF8Encoding.UTF8;
 		// This dictionary holds our Wrapped Inspectors, Explorers, MailItems
 		private Dictionary<Guid, object> _WrappedObjects;
+
+		char[] Passphrase { get; set; }
 
 		// PGP Headers
 		// http://www.ietf.org/rfc/rfc4880.txt page 54
@@ -277,9 +280,6 @@ namespace OutlookPrivacyPlugin
 			_WrappedObjects.Remove(id);
 		}
 
-		string LastConversationId = "";
-		bool LastConversationEncrypted = false;
-
 		/// <summary>
 		/// WrapperEvent fired when a mailItem is opened.
 		/// This handler is designed to initialize the state of the compose button
@@ -297,36 +297,20 @@ namespace OutlookPrivacyPlugin
 			// New mail (Compose)
 			if (mailItem.Sent == false)
 			{
-				Outlook.UserProperty SignProperpty = mailItem.UserProperties["GnuPGSetting.Sign"];
-				if (SignProperpty == null)
-				{
-					ribbon.SignButton.Checked = _settings.AutoSign;
-				}
-				else
-				{
-					ribbon.SignButton.Checked = (bool)SignProperpty.Value;
-				}
+				ribbon.SignButton.Checked = _settings.AutoSign;
+				ribbon.EncryptButton.Checked = _settings.AutoEncrypt;
 
-				Outlook.UserProperty EncryptProperpty = mailItem.UserProperties["GnuPGSetting.Encrypt"];
-				if (EncryptProperpty == null)
+				if (mailItem.Body.IndexOf("\n** Message decrypted. Valid signature") > -1)
 				{
-					ribbon.EncryptButton.Checked = _settings.AutoEncrypt;
+					ribbon.SignButton.Checked = true;
+					ribbon.EncryptButton.Checked = true;
 				}
-				else
-				{
-					ribbon.EncryptButton.Checked = (bool)EncryptProperpty.Value;
-				}
-
-				if (mailItem.Subject != null && mailItem.Subject.Contains(LastConversationId) && LastConversationEncrypted)
+				else if (mailItem.Body.IndexOf("\n** Message decrypted.") > -1)
 				{
 					ribbon.EncryptButton.Checked = true;
-					ribbon.InvalidateButtons();
 				}
-				else
-				{
-					LastConversationId = "";
-					LastConversationEncrypted = false;
-				}
+
+				ribbon.InvalidateButtons();
 
 				if(ribbon.EncryptButton.Checked || ribbon.SignButton.Checked)
 					mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
@@ -334,9 +318,6 @@ namespace OutlookPrivacyPlugin
 			else
 			// Read mail
 			{
-				LastConversationId = "";
-				LastConversationEncrypted = false;
-
 				// Default: disable read-buttons
 				ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
 
@@ -372,9 +353,6 @@ namespace OutlookPrivacyPlugin
 						//mailItem.Save();
 					}
 
-					LastConversationId = mailItem.Subject;
-					LastConversationEncrypted = true;
-
 					_autoDecrypt = false;
 					DecryptEmail(mailItem);
 					// Update match again, in case decryption failed/cancelled.
@@ -409,9 +387,6 @@ namespace OutlookPrivacyPlugin
 							body.Remove(index, 1);
 						}
 
-						LastConversationId = mailItem.Subject;
-						LastConversationEncrypted = false;
-
 						mailItem.Body = body.ToString();
 						//mailItem.Save();
 					}
@@ -435,9 +410,6 @@ namespace OutlookPrivacyPlugin
 
 					if (foundPgpMime && encryptedMime != null)
 					{
-						LastConversationId = mailItem.Subject;
-						LastConversationEncrypted = true;
-
 						HandlePgpMime(mailItem, encryptedMime);
 
 						Outlook.UserProperty DecryptedProperpty = mailItem.UserProperties["GnuPGSetting.Decrypted"];
@@ -451,30 +423,8 @@ namespace OutlookPrivacyPlugin
 				{
 					ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
 					ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
-
-					if (match.Value == _pgpEncryptedHeader)
-					{
-						LastConversationId = mailItem.Subject;
-						LastConversationEncrypted = true;
-					}
-					else
-					{
-						LastConversationId = mailItem.Subject;
-						LastConversationEncrypted = false;
-					}
 				}
 			}
-
-			// So silly!
-			LastConversationId = LastConversationId.Replace("Re: ", "");
-			LastConversationId = LastConversationId.Replace("re: ", "");
-			LastConversationId = LastConversationId.Replace("RE: ", "");
-			LastConversationId = LastConversationId.Replace("Fw: ", "");
-			LastConversationId = LastConversationId.Replace("FW: ", "");
-			LastConversationId = LastConversationId.Replace("fw: ", "");
-			LastConversationId = LastConversationId.Replace("Fwd: ", "");
-			LastConversationId = LastConversationId.Replace("fwd: ", "");
-			LastConversationId = LastConversationId.Replace("FWD: ", "");
 
 			ribbon.InvalidateButtons();
 		}
@@ -500,7 +450,7 @@ namespace OutlookPrivacyPlugin
 
 			// Extract files from MIME data
 
-			SharpMessage msg = new SharpMessage(this.iso_8859_1.GetString(cleardata));
+			SharpMessage msg = new SharpMessage(this._encoding.GetString(cleardata));
 			string body = mailItem.Body;
 			mailItem.Body = msg.Body;
 			var html = System.Security.SecurityElement.Escape(msg.Body);
@@ -557,21 +507,21 @@ namespace OutlookPrivacyPlugin
 					if (toSave == true)
 					{
 #if DISABLED
-        BoolEventArgs ev = e as BoolEventArgs;
-        DialogResult res = MessageBox.Show("Do you want to save changes?",
-                                           "OutlookGnuPG",
-                                           MessageBoxButtons.YesNoCancel, MessageBoxIcon.Exclamation);
-        if (res == DialogResult.Yes)
-        {
-          // Must call mailItem.Write event handler (mailItem_Save) explicitely as it is not always called
-          // from the mailItem.Save() method. Mail is effectly saved only if a property changed.
-          mailItem_Save(sender, EventArgs.Empty);
-          mailItem.Save();
-        }
-        if (res == DialogResult.Cancel)
-        {
-          ev.Value = true;
-        }
+		BoolEventArgs ev = e as BoolEventArgs;
+		DialogResult res = MessageBox.Show("Do you want to save changes?",
+										   "OutlookGnuPG",
+										   MessageBoxButtons.YesNoCancel, MessageBoxIcon.Exclamation);
+		if (res == DialogResult.Yes)
+		{
+		  // Must call mailItem.Write event handler (mailItem_Save) explicitely as it is not always called
+		  // from the mailItem.Save() method. Mail is effectly saved only if a property changed.
+		  mailItem_Save(sender, EventArgs.Empty);
+		  mailItem.Save();
+		}
+		if (res == DialogResult.Cancel)
+		{
+		  ev.Value = true;
+		}
 #else
 						// Invalidate the mailItem to force Outlook to ask to save the mailItem, hence calling
 						// the mailItem_Save() handler to record the buttons state.
@@ -716,6 +666,35 @@ namespace OutlookPrivacyPlugin
 		}
 		#endregion
 
+		private string GetSMTPAddress(Outlook.MailItem mailItem)
+		{
+			if (mailItem.SenderEmailAddress != null)
+				return mailItem.SenderEmailAddress;
+
+			if(mailItem.SendUsingAccount != null &&
+				mailItem.SendUsingAccount.CurrentUser != null &&
+				mailItem.SendUsingAccount.CurrentUser.Address != null)
+				return mailItem.SendUsingAccount.CurrentUser.Address;
+
+			if (mailItem.SenderEmailType == null)
+				throw new Exception("Error, unable to determin senders address.");
+
+			Microsoft.Office.Interop.Outlook.Recipient recip;
+			Outlook.ExchangeUser exUser;
+			Microsoft.Office.Interop.Outlook.Application oOutlook =
+				   new Microsoft.Office.Interop.Outlook.Application();
+			Outlook.NameSpace oNS = oOutlook.GetNamespace("MAPI");
+			
+			if (mailItem.SenderEmailType.ToUpper().Equals("EX"))
+			{
+				recip = oNS.CreateRecipient(mailItem.SenderName);
+				exUser = recip.AddressEntry.GetExchangeUser();
+				return exUser.PrimarySmtpAddress;
+			}
+
+			throw new Exception("Error, unable to determin senders address.");
+		}
+
 		#region Send Logic
 		private void Application_ItemSend(object Item, ref bool Cancel)
 		{
@@ -724,15 +703,7 @@ namespace OutlookPrivacyPlugin
 			if (mailItem == null)
 				return;
 
-#if VS2008
-      //var inspector = Application.ActiveInspector();
-      var inspector = mailItem.GetInspector;
-      var currentRibbons = Globals.Ribbons[inspector];
-      var currentRibbon = currentRibbons.GnuPGRibbonCompose;
-#else
 			GnuPGRibbon currentRibbon = ribbon;
-#endif
-
 			if (currentRibbon == null)
 				return;
 
@@ -745,48 +716,17 @@ namespace OutlookPrivacyPlugin
 			if (!needToEncrypt && !needToSign)
 				return;
 
-			if (mailType != Outlook.OlBodyFormat.olFormatPlain)
+			// DEFAULT TO CANCEL
+			Cancel = true;
+
+			try
 			{
-				MessageBox.Show(
-					"OutlookGnuPG can only sign/encrypt plain text mails. Please change the format, or disable signing/encrypting for this mail.",
-					"Invalid Mail Format",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
 
-				Cancel = true; // Prevent sending the mail
-				return;
-			}
-
-			IList<string> recipients = new List<string>();
-
-			if (needToEncrypt)
-			{
-				// Popup UI to select the encryption targets 
-				List<string> mailRecipients = new List<string>();
-				foreach (Outlook.Recipient mailRecipient in mailItem.Recipients)
-					mailRecipients.Add(GetAddressCN(((Outlook.Recipient)mailRecipient).Address));
-
-				Recipient recipientDialog = new Recipient(mailRecipients); // Passing in the first addres, maybe it matches
-				recipientDialog.TopMost = true;
-				DialogResult recipientResult = recipientDialog.ShowDialog();
-
-				if (recipientResult != DialogResult.OK)
-				{
-					// The user closed the recipient dialog, prevent sending the mail
-					Cancel = true;
-					return;
-				}
-
-				foreach (string r in recipientDialog.SelectedKeys)
-					recipients.Add(r);
-
-				recipientDialog.Close();
-
-				if (recipients.Count == 0)
+				if (mailType != Outlook.OlBodyFormat.olFormatPlain)
 				{
 					MessageBox.Show(
-						"OutlookGnuPG needs a recipient when encrypting. No keys were detected/selected.",
-						"Invalid Recipient Key",
+						"OutlookGnuPG can only sign/encrypt plain text mails. Please change the format, or disable signing/encrypting for this mail.",
+						"Invalid Mail Format",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
 
@@ -794,391 +734,263 @@ namespace OutlookPrivacyPlugin
 					return;
 				}
 
-				recipients.Add(mailItem.SendUsingAccount.CurrentUser.Address);
-			}
+				IList<string> recipients = new List<string>();
 
-			List<Attachment> attachments = new List<Attachment>();
-
-			// Sign and encrypt the plaintext mail
-			if ((needToSign) && (needToEncrypt))
-			{
-				mail = SignAndEncryptEmail(mail, mailItem.SenderEmailAddress, null, recipients);
-
-				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
-				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
-					mailAttachments.Add(attachment);
-
-				foreach (var attachment in mailAttachments)
+				if (needToEncrypt)
 				{
-					Attachment a = new Attachment();
+					// Popup UI to select the encryption targets 
+					List<string> mailRecipients = new List<string>();
+					foreach (Outlook.Recipient mailRecipient in mailItem.Recipients)
+						mailRecipients.Add(GetAddressCN(((Outlook.Recipient)mailRecipient).Address));
 
-					a.TempFile = Path.GetTempPath();
-					a.FileName = attachment.FileName;
-					a.DisplayName = attachment.DisplayName;
-					a.AttachmentType = attachment.Type;
+					Recipient recipientDialog = new Recipient(mailRecipients); // Passing in the first addres, maybe it matches
+					recipientDialog.TopMost = true;
+					DialogResult recipientResult = recipientDialog.ShowDialog();
 
-					a.TempFile = Path.Combine(a.TempFile, a.FileName);
-					a.TempFile = a.TempFile + ".pgp";
-					attachment.SaveAsFile(a.TempFile);
-					attachment.Delete();
+					if (recipientResult != DialogResult.OK)
+					{
+						// The user closed the recipient dialog, prevent sending the mail
+						Cancel = true;
+						return;
+					}
 
-					// Encrypt file
-					byte[] cleartext = File.ReadAllBytes(a.TempFile);
-					string cyphertext = EncryptEmail(cleartext, null, recipients);
-					File.WriteAllText(a.TempFile, cyphertext);
+					foreach (string r in recipientDialog.SelectedKeys)
+						recipients.Add(r);
 
-					a.Encrypted = true;
-					attachments.Add(a);
+					recipientDialog.Close();
+
+					if (recipients.Count == 0)
+					{
+						MessageBox.Show(
+							"OutlookGnuPG needs a recipient when encrypting. No keys were detected/selected.",
+							"Invalid Recipient Key",
+							MessageBoxButtons.OK,
+							MessageBoxIcon.Error);
+
+						Cancel = true; // Prevent sending the mail
+						return;
+					}
+
+					recipients.Add(GetSMTPAddress(mailItem));
+				}
+
+				List<Attachment> attachments = new List<Attachment>();
+
+				// Sign and encrypt the plaintext mail
+				if ((needToSign) && (needToEncrypt))
+				{
+					mail = SignAndEncryptEmail(mail, GetSMTPAddress(mailItem), recipients);
+					if (mail == null)
+						return;
+
+					List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
+					foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+						mailAttachments.Add(attachment);
+
+					foreach (var attachment in mailAttachments)
+					{
+						Attachment a = new Attachment();
+
+						a.TempFile = Path.GetTempPath();
+						a.FileName = attachment.FileName;
+						a.DisplayName = attachment.DisplayName;
+						a.AttachmentType = attachment.Type;
+
+						a.TempFile = Path.Combine(a.TempFile, a.FileName);
+						a.TempFile = a.TempFile + ".pgp";
+						attachment.SaveAsFile(a.TempFile);
+						attachment.Delete();
+
+						// Encrypt file
+						byte[] cleartext = File.ReadAllBytes(a.TempFile);
+						string cyphertext = EncryptEmail(cleartext, recipients);
+						File.WriteAllText(a.TempFile, cyphertext);
+
+						a.Encrypted = true;
+						attachments.Add(a);
+					}
+				}
+				else if (needToSign)
+				{
+					// Sign the plaintext mail if needed
+					mail = SignEmail(mail, GetSMTPAddress(mailItem));
+					if (mail == null)
+						return;
+				}
+				else if (needToEncrypt)
+				{
+					// Encrypt the plaintext mail if needed
+					mail = EncryptEmail(mail, recipients);
+					if (mail == null)
+						return;
+
+					List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
+					foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+						mailAttachments.Add(attachment);
+
+					foreach (var attachment in mailAttachments)
+					{
+						Attachment a = new Attachment();
+
+						a.TempFile = Path.GetTempPath();
+						a.FileName = attachment.FileName;
+						a.DisplayName = attachment.DisplayName;
+						a.AttachmentType = attachment.Type;
+
+						a.TempFile = Path.Combine(a.TempFile, a.FileName);
+						a.TempFile = a.TempFile + ".pgp";
+						attachment.SaveAsFile(a.TempFile);
+						attachment.Delete();
+
+						// Encrypt file
+						byte[] cleartext = File.ReadAllBytes(a.TempFile);
+						string cyphertext = EncryptEmail(cleartext, recipients);
+						File.WriteAllText(a.TempFile, cyphertext);
+
+						a.Encrypted = true;
+						attachments.Add(a);
+					}
+				}
+
+				foreach (var a in attachments)
+				{
+					mailItem.Attachments.Add(a.TempFile, a.AttachmentType, 1, a.DisplayName);
 				}
 			}
-			else if (needToSign)
+			catch (Exception ex)
 			{
-				// Sign the plaintext mail if needed
-				mail = SignEmail(mail, mailItem.SendUsingAccount.CurrentUser.Address);
-			}
-			else if (needToEncrypt)
-			{
-				// Encrypt the plaintext mail if needed
-				mail = EncryptEmail(mail, null, recipients);
+				this.Passphrase = null;
 
-				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
-				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
-					mailAttachments.Add(attachment);
-
-				foreach (var attachment in mailAttachments)
+				if (ex.Message.ToLower().StartsWith("checksum"))
 				{
-					Attachment a = new Attachment();
-
-					a.TempFile = Path.GetTempPath();
-					a.FileName = attachment.FileName;
-					a.DisplayName = attachment.DisplayName;
-					a.AttachmentType = attachment.Type;
-
-					a.TempFile = Path.Combine(a.TempFile, a.FileName);
-					a.TempFile = a.TempFile + ".pgp";
-					attachment.SaveAsFile(a.TempFile);
-					attachment.Delete();
-
-					// Encrypt file
-					byte[] cleartext = File.ReadAllBytes(a.TempFile);
-					string cyphertext = EncryptEmail(cleartext, null, recipients);
-					File.WriteAllText(a.TempFile, cyphertext);
-
-					a.Encrypted = true;
-					attachments.Add(a);
+					MessageBox.Show(
+						"Incorrect passphrase possibly entered.",
+						"Outlook Privacy Error",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Error);
+					return;
 				}
+
+				MessageBox.Show(
+					ex.Message,
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+
+				// Cancel sending
+				return;
 			}
 
-			foreach (var a in attachments)
-			{
-				mailItem.Attachments.Add(a.TempFile, a.AttachmentType, 1, a.DisplayName);
-			}
+			if (mail == null)
+				return;
 
+			Cancel = false;
 			mailItem.Body = mail;
 		}
 
 		private string SignEmail(string data, string key)
 		{
-			return SignEmail(this.iso_8859_1.GetBytes(data), key);
-		}
-
-		private string SignEmail(byte[] data, string key)
-		{
-			Context ctx = new Context();
-			if (ctx.Protocol != Protocol.OpenPGP)
-				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
-
-			var keyring = ctx.KeyStore;
-			Key[] senderKeys = keyring.GetKeyList(key, false);
-			if (senderKeys == null || senderKeys.Length == 0)
+			try
 			{
-		        MessageBox.Show(
-		            "Error, Unable to locate sender key \""+key+"\".",
-		            "Outlook Privacy Error",
-		            MessageBoxButtons.OK,
-		            MessageBoxIcon.Error);
+				if (!PromptForPasswordAndKey())
+					return null;
 
-				return null;
+				var context = new CryptoContext(Passphrase);
+				var crypto = new PgpCrypto(context);
+				var headers = new Dictionary<string, string>();
+				headers["Version"] = "Outlook Privacy Plugin";
+				headers["Charset"] = _encoding.WebName;
+
+				return crypto.SignClear(data, key, this._encoding, headers);
 			}
-
-			PgpKey senderKey = (PgpKey)senderKeys[0];
-			if (senderKey.Uid == null || senderKey.Fingerprint == null)
+			catch (CryptoException ex)
 			{
+				this.Passphrase = null;
+
 				MessageBox.Show(
-					"Error, Sender key appears to be corrupt \"" + key + "\".",
+					ex.Message,
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
 				return null;
 			}
-
-			using(var sin = new MemoryStream(data))
-			using (var sout = new MemoryStream())
-			{
-				using (var origin = new GpgmeStreamData(sin))
-				using (var detachsig = new GpgmeStreamData(sout))
-				{
-
-					ctx.Signers.Clear();
-					ctx.Signers.Add(senderKey);
-					ctx.Armor = true;
-
-					try
-					{
-						var sigresult = ctx.Sign(origin, detachsig, SignatureMode.Detach);
-
-						if (sigresult.InvalidSigners != null)
-						{
-							MessageBox.Show(
-								"Error, invalid signers were found.",
-								"Outlook Privacy Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return null;
-						}
-
-						if (sigresult.Signatures == null)
-						{
-							MessageBox.Show(
-								"Error, no signatures were found.",
-								"Outlook Privacy Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return null;
-						}
-					}
-					catch (BadPassphraseException)
-					{
-						return null;
-					}
-					catch (Exception ex)
-					{
-						MessageBox.Show(
-							"Error signing message: " + ex.Message,
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
-
-						return null;
-					}
-				}
-
-				sout.Position = 0;
-				using (var reader = new StreamReader(sout))
-				{
-					return reader.ReadLine();
-				}
-			}
 		}
 
-		private string EncryptEmail(string mail, string passphrase, IList<string> recipients)
+		private string EncryptEmail(string mail, IList<string> recipients)
 		{
-			return EncryptEmail(this.iso_8859_1.GetBytes(mail), passphrase, recipients);
+			return EncryptEmail(this._encoding.GetBytes(mail), recipients);
 		}
 
-		private string EncryptEmail(byte[] data, string passphrase, IList<string> recipients)
+		private string EncryptEmail(byte[] data, IList<string> recipients)
 		{
-			List<Key> encryptKeys = new List<Key>();
-
-			Context ctx = new Context();
-			if (ctx.Protocol != Protocol.OpenPGP)
-				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
-
-			var keyring = ctx.KeyStore;
-
-			foreach (var recip in recipients)
+			try
 			{
-				Key[] keys = keyring.GetKeyList(recip, false);
-				if (keys == null || keys.Length == 0)
-				{
-					MessageBox.Show(
-						"Error, Unable to locate recipient key \"" + recip + "\".",
-						"Outlook Privacy Error",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Error);
+				var context = new CryptoContext();
+				var crypto = new PgpCrypto(context);
+				var headers = new Dictionary<string, string>();
+				headers["Version"] = "Outlook Privacy Plugin";
+				headers["Charset"] = _encoding.WebName;
 
-					return null;
-				}
-
-				PgpKey key = (PgpKey)keys[0];
-				if (key.Uid == null || key.Fingerprint == null)
-				{
-					MessageBox.Show(
-						"Error, Recipient key appears to be corrupt \"" + recip + "\".",
-						"Outlook Privacy Error",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Error);
-
-					return null;
-				}
-
-				encryptKeys.Add(key);
+				return crypto.Encrypt(data, recipients, headers);
 			}
-
-			using (var sin = new MemoryStream(data))
-			using (var sout = new MemoryStream())
+			catch (CryptoException ex)
 			{
-				using (var plain = new GpgmeStreamData(sin))
-				using (var cipher = new GpgmeStreamData(sout))
-				{
-					ctx.Armor = true;
+				this.Passphrase = null;
 
-					try
-					{
-						var result = ctx.Encrypt(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
-
-						if (result.InvalidRecipients != null)
-						{
-							MessageBox.Show(
-								"Error, encryption failed, invalid recipients found.",
-								"Outlook Privacy Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return null;
-						}
-					}
-					catch (BadPassphraseException)
-					{
-						return null;
-					}
-					catch (Exception ex)
-					{
-						MessageBox.Show(
-							"Error, encryption failed:" + ex.Message,
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
-
-						return null;
-					}
-				}
-
-				sout.Position = 0;
-				using (var reader = new StreamReader(sout))
-				{
-					return reader.ReadToEnd();
-				}
-			}
-		}
-
-		private string SignAndEncryptEmail(string data, string key, string passphrase, IList<string> recipients)
-		{
-			return SignAndEncryptEmail(this.iso_8859_1.GetBytes(data), key, passphrase, recipients);
-		}
-
-		private string SignAndEncryptEmail(byte[] data, string key, string passphrase, IList<string> recipients)
-		{
-			List<Key> encryptKeys = new List<Key>();
-
-			Context ctx = new Context();
-			if (ctx.Protocol != Protocol.OpenPGP)
-				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
-
-			var keyring = ctx.KeyStore;
-
-			foreach (var recip in recipients)
-			{
-				Key[] rkeys = keyring.GetKeyList(recip, false);
-				if (rkeys == null || rkeys.Length == 0)
-				{
-					MessageBox.Show(
-						"Error, Unable to locate recipient key \"" + recip + "\".",
-						"Outlook Privacy Error",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Error);
-
-					return null;
-				}
-
-				PgpKey rkey = (PgpKey)rkeys[0];
-				if (rkey.Uid == null || rkey.Fingerprint == null)
-				{
-					MessageBox.Show(
-						"Error, Recipient key appears to be corrupt \"" + recip + "\".",
-						"Outlook Privacy Error",
-						MessageBoxButtons.OK,
-						MessageBoxIcon.Error);
-
-					return null;
-				}
-
-				encryptKeys.Add(rkey);
-			}
-
-			Key[] senderKeys = keyring.GetKeyList(key, false);
-			if (senderKeys == null || senderKeys.Length == 0)
-			{
 				MessageBox.Show(
-					"Error, Unable to locate sender key \"" + key + "\".",
+					ex.Message,
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
 				return null;
 			}
-
-			PgpKey senderKey = (PgpKey)senderKeys[0];
-			if (senderKey.Uid == null || senderKey.Fingerprint == null)
+			catch (Exception e)
 			{
+				this.Passphrase = null;
+
 				MessageBox.Show(
-					"Error, Sender key appears to be corrupt \"" + key + "\".",
+					e.Message,
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
 				return null;
 			}
+		}
 
-			using (var sin = new MemoryStream(data))
-			using (var sout = new MemoryStream())
+		private string SignAndEncryptEmail(string data, string key, IList<string> recipients)
+		{
+			return SignAndEncryptEmail(this._encoding.GetBytes(data), key, recipients);
+		}
+
+		private string SignAndEncryptEmail(byte[] data, string key, IList<string> recipients)
+		{
+			try
 			{
-				using (var plain = new GpgmeStreamData(sin))
-				using (var cipher = new GpgmeStreamData(sout))
-				{
-					ctx.Signers.Clear();
-					ctx.Signers.Add(senderKey);
-					ctx.Armor = true;
+				if (!PromptForPasswordAndKey())
+					return null;
 
-					try
-					{
-						var result = ctx.EncryptAndSign(encryptKeys.ToArray(), EncryptFlags.None, plain, cipher);
+				var context = new CryptoContext(this.Passphrase);
+				var crypto = new PgpCrypto(context);
+				var headers = new Dictionary<string, string>();
+				headers["Version"] = "Outlook Privacy Plugin";
+				headers["Charset"] = _encoding.WebName;
 
-						if (result.InvalidRecipients != null)
-						{
-							MessageBox.Show(
-								"Error, encryption failed, invalid recipients found.",
-								"Outlook Privacy Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
+				return crypto.SignAndEncrypt(data, key, recipients, headers);
+			}
+			catch (Exception ex)
+			{
+				this.Passphrase = null;
 
-							return null;
-						}
-					}
-					catch (BadPassphraseException)
-					{
-						return null;
-					}
-					catch (Exception ex)
-					{
-						MessageBox.Show(
-							"Error, encryption failed: " + ex.Message,
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
+				MessageBox.Show(
+					ex.Message,
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
 
-						return null;
-					}
-				}
-
-				sout.Position = 0;
-				using (var reader = new StreamReader(sout))
-				{
-					return reader.ReadToEnd();
-				}
+				throw;
 			}
 		}
 		#endregion
@@ -1199,89 +1011,46 @@ namespace OutlookPrivacyPlugin
 
 				return;
 			}
-			
-			Context ctx = new Context();
-			if (ctx.Protocol != Protocol.OpenPGP)
-				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
 
-			var keyring = ctx.KeyStore;
-			Key[] senderKeys = null;
+			var Context = new CryptoContext(Passphrase);
+			var Crypto = new PgpCrypto(Context);
 
-			foreach(string toEmail in mailItem.To.Split(';'))
+			try
 			{
-				senderKeys = keyring.GetKeyList(toEmail, false);
-				if (senderKeys != null && senderKeys.Length > 0)
-					break;
-			}
-
-			if (senderKeys == null || senderKeys.Length == 0)
-			{
-				MessageBox.Show(
-					"Error, Unable to locate sender key in \"" + mailItem.To + "\".",
-					"Outlook Privacy Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
-				return;
-			}
-
-			PgpKey senderKey = (PgpKey)senderKeys[0];
-			if (senderKey.Uid == null || senderKey.Fingerprint == null)
-			{
-				MessageBox.Show(
-					"Error, Sender key appears to be corrupt \"" + mailItem.To + "\".",
-					"Outlook Privacy Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
-				return;
-			}
-
-			using (var sin = new MemoryStream(this.iso_8859_1.GetBytes(mail)))
-			{
-				using (var origin = new GpgmeStreamData(sin))
+				if (Crypto.Verify(_encoding.GetBytes(mail)))
 				{
+					Context = Crypto.Context;
 
-					ctx.Signers.Clear();
-					ctx.Signers.Add(senderKey);
-					ctx.Armor = true;
+					var message = "** Valid signature from \"" + Context.SignedByUserId +
+						"\" with KeyId " + Context.SignedByKeyId + ".\n\n";
 
-					try
+					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
 					{
-						var result = ctx.Verify(null, origin, null);
-
-						if (result.Signature == null || result.Signature.Validity != Validity.Full)
-						{
-							MessageBox.Show(
-								"Error, signature could not be validated.",
-								"Outlook Privacy Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return;
-						}
-					}
-					catch (BadPassphraseException)
-					{
-						MessageBox.Show(
-							"Error, signature could not be validated due to bad passphrase.",
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
-
-						return;
-					}
-					catch (Exception ex)
-					{
-						MessageBox.Show(
-							"Error, signature could not be validated: " + ex.Message,
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
-
-						return;
+						mailItem.Body = message + mailItem.Body;
 					}
 				}
+				else
+				{
+					Context = Crypto.Context;
+
+					var message = "** Invalid signature from \"" + Context.SignedByUserId +
+						"\" with KeyId " + Context.SignedByKeyId + ".\n\n";
+
+					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
+					{
+						mailItem.Body = message + mailItem.Body;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				this.Passphrase = null;
+
+				MessageBox.Show(
+					ex.Message,
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
 			}
 		}
 
@@ -1305,18 +1074,37 @@ namespace OutlookPrivacyPlugin
 			if(endMessagePosition != -1)
 				firstPgpBlock = firstPgpBlock.Substring(0, endMessagePosition);
 
+			string charset = null;
+			try
+			{
+				charset = Regex.Match(firstPgpBlock, @"Charset:\s+([^\s\r\n]+)").Groups[1].Value;
+			}
+			catch
+			{
+			}
+
+			// Set default encoding if charset was missing from 
+			// message.
+			if(string.IsNullOrWhiteSpace(charset))
+				charset = "ISO-8859-1";
+
+			var encoding = Encoding.GetEncoding(charset);
+
 			byte[] cleardata = DecryptAndVerify(mailItem.To, ASCIIEncoding.ASCII.GetBytes(firstPgpBlock));
 			if (cleardata != null)
 			{
-				mailItem.Body = this.iso_8859_1.GetString(cleardata);
+				mailItem.Body = DecryptAndVerifyHeaderMessage + encoding.GetString(cleardata);
 
-				// Don't HMTL encode or we will encode emails already in HTML format.
-				// Office has a safe html module they use to prevent security issues.
-				// Not encoding here should be no worse then reading a standard HTML
-				// email.
-				var html = this.iso_8859_1.GetString(cleardata);
-				html = html.Replace("\n", "<br/>");
-				mailItem.HTMLBody = "<html><body>" + html + "</body></html>";
+				if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatHTML)
+				{
+					// Don't HMTL encode or we will encode emails already in HTML format.
+					// Office has a safe html module they use to prevent security issues.
+					// Not encoding here should be no worse then reading a standard HTML
+					// email.
+					var html = DecryptAndVerifyHeaderMessage.Replace("<", "&lt;").Replace(">", "&gt;") + encoding.GetString(cleardata);
+					html = html.Replace("\n", "<br/>");
+					mailItem.HTMLBody = "<html><body>" + html + "</body></html>";
+				}
 
 				// Decrypt all attachments
 				List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
@@ -1327,12 +1115,6 @@ namespace OutlookPrivacyPlugin
 
 				foreach (var attachment in mailAttachments)
 				{
-					//Outlook.PropertyAccessor pa = attachment.PropertyAccessor;
-
-					//var v = pa.GetProperties(new string[] { "urn:schemas:mailheader" });
-					//var value = pa.GetProperty("content-id");
-					//var value2 = pa.GetProperty("urn:schemas:mailheader:content-id");
-
 					Attachment a = new Attachment();
 					
 					a.TempFile = Path.GetTempPath();
@@ -1361,40 +1143,13 @@ namespace OutlookPrivacyPlugin
 				//mailItem.Save();
 			}
 		}
+
 		#endregion
 
-		///// <summary>
-		///// Use File Magic to determine extention for file.
-		///// </summary>
-		///// <param name="filename"></param>
-		///// <returns></returns>
-		//string FileMagic(string filename)
-		//{
-		//    FileStream fin = File.OpenRead(filename);
-		//    byte[] buff = new byte[1024];
-		//    fin.Read(buff, 0, 1024);
-
-		//    if (buff[0] == 0x50 && buff[1] == 0x4b && buff[2] == 0x03 && buff[3] == 0x04 && buff[32] == 0x43 &&
-		//        buff[33] == 0x6f && buff[34] == 0x6e)
-		//        return "docx";
-
-		//    //Test for ZIP
-		//    if (buff[0] == 0x50 && buff[1] == 0x4b && buff[2] == 0x03 && buff[3] == 0x04)
-		//        return "zip";
-
-		//    if (buff[0] == 0x25 && buff[1] == 0x50 && buff[2] == 0x44 && buff[3] == 0x46)
-		//        return "pdf";
-
-		//    // TODO - This might match doc, xls, && ppt.  need to check on that :)
-		//    if (buff[0] == 0xd0 && buff[1] == 0xcf && buff[2] == 0x11 && buff[3] == 0xe0)
-		//        return "doc";
-
-		//    return null;
-		//}
-
-		string PromptForPasswordAndKey()
+		bool PromptForPasswordAndKey()
 		{
-			string privateKey = null;
+			if (this.Passphrase != null)
+				return true;
 
 			// Popup UI to select the passphrase and private key.
 			Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Key");
@@ -1403,147 +1158,88 @@ namespace OutlookPrivacyPlugin
 			if (passphraseResult != DialogResult.OK)
 			{
 				// The user closed the passphrase dialog, prevent sending the mail
-				return null;
+				return false;
 			}
 
-			//passphrase = passphraseDialog.EnteredPassphrase;
-			privateKey = passphraseDialog.SelectedKey;
+			this.Passphrase = passphraseDialog.EnteredPassphrase.ToCharArray();
 			passphraseDialog.Close();
 
-			if (string.IsNullOrEmpty(privateKey))
-			{
-				MessageBox.Show(
-					"Outlook Privacy Plugin needs a private key. No keys were detected.",
-					"Invalid Private Key",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
-				return null;
-			}
-
-			return privateKey;
+			return true;
 		}
 
-		byte[] DecryptAndVerify(string to, byte [] data)
+		string DecryptAndVerifyHeaderMessage = "";
+
+		byte[] DecryptAndVerify(string to, byte[] data)
 		{
-			Context ctx = new Context();
-			if (ctx.Protocol != Protocol.OpenPGP)
-				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
+			DecryptAndVerifyHeaderMessage = "";
 
-			var keyring = ctx.KeyStore;
-			Key[] senderKeys = null;
-			foreach (var toEmail in to.Split(';'))
-			{
-				senderKeys = keyring.GetKeyList(toEmail, false);
-				if (senderKeys != null && senderKeys.Length > 0)
-					break;
-			}
-
-			if (senderKeys == null || senderKeys.Length == 0)
-			{
-				MessageBox.Show(
-					"Error, Unable to locate sender key in \"" + to + "\".",
-					"Outlook Privacy Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
+			if (!PromptForPasswordAndKey())
 				return null;
-			}
 
-			PgpKey senderKey = (PgpKey)senderKeys[0];
-			if (senderKey.Uid == null || senderKey.Fingerprint == null)
+			var Context = new CryptoContext(Passphrase);
+			var Crypto = new PgpCrypto(Context);
+
+			try
 			{
-				MessageBox.Show(
-					"Error, Sender key appears to be corrupt \"" + to + "\".",
-					"Outlook Privacy Error",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
+				var cleartext = Crypto.DecryptAndVerify(data);
+				Context = Crypto.Context;
 
-				return null;
-			}
+				DecryptAndVerifyHeaderMessage = "** ";
 
-			using (var sin = new MemoryStream(data))
-			using (var sout = new MemoryStream())
-			{
-				using (var cipher = new GpgmeStreamData(sin))
-				using (var plain = new GpgmeStreamData(sout))
+				if (Context.IsEncrypted)
+					DecryptAndVerifyHeaderMessage += "Message decrypted. ";
+
+				if (Context.IsSigned && Context.SignatureValidated)
 				{
-					ctx.Signers.Clear();
-					ctx.Signers.Add(senderKey);
-					ctx.Armor = true;
-
-					try
-					{
-						var result = ctx.DecryptAndVerify(cipher, plain);
-
-						if (result.DecryptionResult.WrongKeyUsage)
-						{
-							MessageBox.Show(
-								"Error, decryption failed due to wrong key usage.",
-								"Outlook Privacy Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return null;
-						}
-
-						if (result.DecryptionResult.UnsupportedAlgorithm != null)
-						{
-							MessageBox.Show(
-								"Error, decryption failed due to unsupported algorithm.",
-								"Outlook Privacy Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							return null;
-						}
-
-						if (result.VerificationResult.Signature != null && result.VerificationResult.Signature.Validity != Validity.Full)
-						{
-							MessageBox.Show(
-								"Error, signature validation failed.",
-								"Outlook Privacy Error",
-								MessageBoxButtons.OK,
-								MessageBoxIcon.Error);
-
-							//return null;
-						}
-					}
-					catch (DecryptionFailedException ex)
-					{
-						MessageBox.Show(
-							"Error, decryption failed: " + ex.Message,
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
-
-						return null;
-					}
-					catch (BadPassphraseException)
-					{
-						MessageBox.Show(
-							"Error, decryption failed due to incorrect password.",
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
-
-						return null;
-					}
-					catch (GeneralErrorException ex)
-					{
-						MessageBox.Show(
-							"Error, decryption failed: " + ex.Message,
-							"Outlook Privacy Error",
-							MessageBoxButtons.OK,
-							MessageBoxIcon.Error);
-
-						return null;
-					}
+					DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId + 
+						"\" with KeyId " + Context.SignedByKeyId;
 				}
+				else if (Context.IsSigned)
+				{
+					DecryptAndVerifyHeaderMessage += "Invalid signature from \"" + Context.SignedByUserId +
+						"\" with KeyId " + Context.SignedByKeyId + ".";
+				}
+				else
+					DecryptAndVerifyHeaderMessage += "Message was unsigned.";
 
-				sout.Position = 0;
-				return sout.ToArray();
+				DecryptAndVerifyHeaderMessage += "\n\n";
+
+				return cleartext;
 			}
+			catch (CryptoException ex)
+			{
+				this.Passphrase = null;
+
+				MessageBox.Show(
+					ex.Message,
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+
+			}
+			catch (Exception e)
+			{
+				this.Passphrase = null;
+
+				if (e.Message.ToLower().StartsWith("checksum"))
+				{
+					MessageBox.Show(
+						"Incorrect passphrase possibly entered.",
+						"Outlook Privacy Error",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Error);
+				}
+				else
+				{
+					MessageBox.Show(
+						e.Message,
+						"Outlook Privacy Error",
+						MessageBoxButtons.OK,
+						MessageBoxIcon.Error);
+				}
+			}
+
+			return null;
 		}
 
 		#region General Logic
@@ -1571,61 +1267,27 @@ namespace OutlookPrivacyPlugin
 			_settings.DefaultKey = settingsBox.DefaultKey;
 			_settings.DefaultDomain = settingsBox.DefaultDomain;
 			_settings.Default2PlainFormat = settingsBox.Default2PlainFormat;
-			_settings.GnuPgTrustModel = settingsBox.GnuPgTrustModel;
 			_settings.Save();
-
-			//_gnuPg.BinaryPath = _settings.GnuPgPath;
 		}
 
 		#endregion
 
 		#region Key Management
-		internal IList<GnuKey> GetPrivateKeys()
-		{
-			Context ctx = new Context();
-			if (ctx.Protocol != Protocol.OpenPGP)
-				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
-
-			List<GnuKey> keys = new List<GnuKey>();
-			foreach (Key key in ctx.KeyStore.GetKeyList("", true))
-			{
-				GnuKey k = new GnuKey();
-				k.Key = key.Uid.Email;
-				k.KeyDisplay = string.Format("{0} <{1}>", key.Uid.Name, key.Uid.Email);
-
-				if (k.Key == null)
-					continue;
-
-				keys.Add(k);
-			}
-
-			return keys;
-		}
-
-		internal IList<GnuKey> GetPrivateKeys(string gnuPgPath)
-		{
-			//_gnuPg.BinaryPath = gnuPgPath;
-			//if (_gnuPg.BinaryExists())
-				return GetPrivateKeys();
-			//else
-			//    return new List<GnuKey>();
-		}
 
 		public IList<GnuKey> GetKeys()
 		{
-			Context ctx = new Context();
-			if (ctx.Protocol != Protocol.OpenPGP)
-				ctx.SetEngineInfo(Protocol.OpenPGP, null, null);
-
+			var crypto = new PgpCrypto(new CryptoContext());
 			List<GnuKey> keys = new List<GnuKey>();
-			foreach (Key key in ctx.KeyStore.GetKeyList("", false))
-			{
-				GnuKey k = new GnuKey();
-				k.Key = key.Uid.Email;
-				k.KeyDisplay = string.Format("{0} <{1}>", key.Uid.Name, key.Uid.Email);
 
-				if (k.Key == null)
+			foreach (string key in crypto.GetPublicKeyUserIds())
+			{
+				var match = Regex.Match(key, @".* <(.*)>");
+				if (!match.Success)
 					continue;
+
+				GnuKey k = new GnuKey();
+				k.Key = match.Groups[1].Value;
+				k.KeyDisplay = key;
 
 				keys.Add(k);
 			}
@@ -1671,16 +1333,6 @@ namespace OutlookPrivacyPlugin
 				result += s + Environment.NewLine;
 			}
 			return result;
-		}
-
-		public bool ValidateGnuPath(string gnuPath)
-		{
-			//if (_gnuPg != null)
-			//    return _gnuPg.BinaryExists(gnuPath);
-			//else
-			//    return false;
-
-			return true;
 		}
 
 		#endregion

@@ -31,16 +31,11 @@
 			this.components = new System.ComponentModel.Container();
 			this.MainContainer = new System.Windows.Forms.SplitContainer();
 			this.MainTabControl = new System.Windows.Forms.TabControl();
-			this.GeneralTab = new System.Windows.Forms.TabPage();
-			this.GeneralTableLayout = new System.Windows.Forms.TableLayoutPanel();
-			this.GnuPgTrustModelCheckBox = new System.Windows.Forms.CheckBox();
 			this.ComposeTab = new System.Windows.Forms.TabPage();
 			this.ComposeTableLayout = new System.Windows.Forms.TableLayoutPanel();
 			this.SignCheckBox = new System.Windows.Forms.CheckBox();
 			this.EncryptCheckBox = new System.Windows.Forms.CheckBox();
 			this.Encrypt2SelfCheckBox = new System.Windows.Forms.CheckBox();
-			this.DefaultKeyLabel = new System.Windows.Forms.Label();
-			this.KeyBox = new System.Windows.Forms.ComboBox();
 			this.Default2PlainTextCheckBox = new System.Windows.Forms.CheckBox();
 			this.ReadTab = new System.Windows.Forms.TabPage();
 			this.ReadTableLayout = new System.Windows.Forms.TableLayoutPanel();
@@ -59,8 +54,6 @@
 			this.MainContainer.Panel2.SuspendLayout();
 			this.MainContainer.SuspendLayout();
 			this.MainTabControl.SuspendLayout();
-			this.GeneralTab.SuspendLayout();
-			this.GeneralTableLayout.SuspendLayout();
 			this.ComposeTab.SuspendLayout();
 			this.ComposeTableLayout.SuspendLayout();
 			this.ReadTab.SuspendLayout();
@@ -93,7 +86,6 @@
 			// 
 			// MainTabControl
 			// 
-			this.MainTabControl.Controls.Add(this.GeneralTab);
 			this.MainTabControl.Controls.Add(this.ComposeTab);
 			this.MainTabControl.Controls.Add(this.ReadTab);
 			this.MainTabControl.Controls.Add(this.ExchangeServerTab);
@@ -104,45 +96,6 @@
 			this.MainTabControl.SelectedIndex = 0;
 			this.MainTabControl.Size = new System.Drawing.Size(307, 218);
 			this.MainTabControl.TabIndex = 0;
-			// 
-			// GeneralTab
-			// 
-			this.GeneralTab.Controls.Add(this.GeneralTableLayout);
-			this.GeneralTab.Location = new System.Drawing.Point(4, 22);
-			this.GeneralTab.Name = "GeneralTab";
-			this.GeneralTab.Padding = new System.Windows.Forms.Padding(3);
-			this.GeneralTab.Size = new System.Drawing.Size(299, 192);
-			this.GeneralTab.TabIndex = 2;
-			this.GeneralTab.Text = "General";
-			this.GeneralTab.UseVisualStyleBackColor = true;
-			// 
-			// GeneralTableLayout
-			// 
-			this.GeneralTableLayout.ColumnCount = 2;
-			this.GeneralTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 18F));
-			this.GeneralTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-			this.GeneralTableLayout.Controls.Add(this.GnuPgTrustModelCheckBox, 1, 4);
-			this.GeneralTableLayout.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.GeneralTableLayout.Location = new System.Drawing.Point(3, 3);
-			this.GeneralTableLayout.Name = "GeneralTableLayout";
-			this.GeneralTableLayout.RowCount = 5;
-			this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.GeneralTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.GeneralTableLayout.Size = new System.Drawing.Size(293, 186);
-			this.GeneralTableLayout.TabIndex = 1;
-			// 
-			// GnuPgTrustModelCheckBox
-			// 
-			this.GnuPgTrustModelCheckBox.AutoSize = true;
-			this.GnuPgTrustModelCheckBox.Location = new System.Drawing.Point(21, 3);
-			this.GnuPgTrustModelCheckBox.Name = "GnuPgTrustModelCheckBox";
-			this.GnuPgTrustModelCheckBox.Size = new System.Drawing.Size(177, 17);
-			this.GnuPgTrustModelCheckBox.TabIndex = 5;
-			this.GnuPgTrustModelCheckBox.Text = "Enable GnuPG Trust Model";
-			this.GnuPgTrustModelCheckBox.UseVisualStyleBackColor = true;
 			// 
 			// ComposeTab
 			// 
@@ -163,8 +116,6 @@
 			this.ComposeTableLayout.Controls.Add(this.SignCheckBox, 1, 0);
 			this.ComposeTableLayout.Controls.Add(this.EncryptCheckBox, 1, 1);
 			this.ComposeTableLayout.Controls.Add(this.Encrypt2SelfCheckBox, 1, 2);
-			this.ComposeTableLayout.Controls.Add(this.DefaultKeyLabel, 1, 4);
-			this.ComposeTableLayout.Controls.Add(this.KeyBox, 1, 6);
 			this.ComposeTableLayout.Controls.Add(this.Default2PlainTextCheckBox, 1, 3);
 			this.ComposeTableLayout.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.ComposeTableLayout.Location = new System.Drawing.Point(3, 3);
@@ -209,30 +160,6 @@
 			this.Encrypt2SelfCheckBox.TabIndex = 1;
 			this.Encrypt2SelfCheckBox.Text = "Encrypt Mail To Self";
 			this.Encrypt2SelfCheckBox.UseVisualStyleBackColor = true;
-			// 
-			// DefaultKeyLabel
-			// 
-			this.DefaultKeyLabel.AutoSize = true;
-			this.DefaultKeyLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.DefaultKeyLabel.Location = new System.Drawing.Point(21, 92);
-			this.DefaultKeyLabel.Name = "DefaultKeyLabel";
-			this.DefaultKeyLabel.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-			this.DefaultKeyLabel.Size = new System.Drawing.Size(269, 23);
-			this.DefaultKeyLabel.TabIndex = 2;
-			this.DefaultKeyLabel.Text = "Default Key";
-			// 
-			// KeyBox
-			// 
-			this.KeyBox.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.KeyBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.KeyBox.FormattingEnabled = true;
-			this.KeyBox.Items.AddRange(new object[] {
-            "Key1",
-            "Key2"});
-			this.KeyBox.Location = new System.Drawing.Point(21, 118);
-			this.KeyBox.Name = "KeyBox";
-			this.KeyBox.Size = new System.Drawing.Size(269, 21);
-			this.KeyBox.TabIndex = 3;
 			// 
 			// Default2PlainTextCheckBox
 			// 
@@ -395,9 +322,6 @@
 			((System.ComponentModel.ISupportInitialize)(this.MainContainer)).EndInit();
 			this.MainContainer.ResumeLayout(false);
 			this.MainTabControl.ResumeLayout(false);
-			this.GeneralTab.ResumeLayout(false);
-			this.GeneralTableLayout.ResumeLayout(false);
-			this.GeneralTableLayout.PerformLayout();
 			this.ComposeTab.ResumeLayout(false);
 			this.ComposeTableLayout.ResumeLayout(false);
 			this.ComposeTableLayout.PerformLayout();
@@ -426,21 +350,16 @@
     private System.Windows.Forms.TableLayoutPanel ComposeTableLayout;
     private System.Windows.Forms.CheckBox SignCheckBox;
     private System.Windows.Forms.CheckBox EncryptCheckBox;
-    private System.Windows.Forms.CheckBox Encrypt2SelfCheckBox;
-	private System.Windows.Forms.Label DefaultKeyLabel;
+	private System.Windows.Forms.CheckBox Encrypt2SelfCheckBox;
     private System.Windows.Forms.TableLayoutPanel ReadTableLayout;
     private System.Windows.Forms.CheckBox VerifyCheckBox;
-    private System.Windows.Forms.CheckBox DecryptCheckBox;
-    private System.Windows.Forms.TabPage GeneralTab;
-	private System.Windows.Forms.TableLayoutPanel GeneralTableLayout;
+	private System.Windows.Forms.CheckBox DecryptCheckBox;
     private System.Windows.Forms.ErrorProvider Errors;
     private System.Windows.Forms.FolderBrowserDialog GnuPgExeFolderDialog;
     private System.Windows.Forms.TabPage ExchangeServerTab;
     private System.Windows.Forms.TableLayoutPanel ExchangeServerTableLayout;
     private System.Windows.Forms.Label DefaultDomainLabel;
-    private System.Windows.Forms.TextBox DefaultDomainTextBox;
-	private System.Windows.Forms.ComboBox KeyBox;
+	private System.Windows.Forms.TextBox DefaultDomainTextBox;
 	private System.Windows.Forms.CheckBox Default2PlainTextCheckBox;
-	private System.Windows.Forms.CheckBox GnuPgTrustModelCheckBox;
   }
 }
