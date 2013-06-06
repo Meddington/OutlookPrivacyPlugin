@@ -213,7 +213,7 @@ namespace Deja.Crypto.BcPgp
 
 			// Setup signature stuff //
 			var tag = senderKey.PublicKey.Algorithm;
-			var signatureData = new PgpSignatureGenerator(tag, HashAlgorithmTag.Sha512);
+			var signatureData = new PgpSignatureGenerator(tag, HashAlgorithmTag.Sha256);
 			signatureData.InitSign(PgpSignature.BinaryDocument, senderKey.ExtractPrivateKey(Context.Password));
 
 			foreach (string userId in senderKey.PublicKey.GetUserIds())
@@ -240,7 +240,7 @@ namespace Deja.Crypto.BcPgp
 					{
 						signatureData.GenerateOnePassVersion(false).Encode(outputStream);
 
-						using (var literalOut = literalData.Open(outputStream, 'b', "email", data.Length, DateTime.Now))
+						using (var literalOut = literalData.Open(outputStream, 'b', "", data.Length, DateTime.Now))
 						{
 							literalOut.Write(data, 0, data.Length);
 							signatureData.Update(data);
