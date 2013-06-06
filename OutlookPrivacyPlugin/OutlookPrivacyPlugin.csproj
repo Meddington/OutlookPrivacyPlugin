@@ -168,6 +168,9 @@
     <Reference Include="Office, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="SharpMimeTools">
+      <HintPath>..\3rdParty\SharpMimeTools\bin\Release\SharpMimeTools.dll</HintPath>
+    </Reference>
     <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
@@ -304,10 +307,6 @@
     <ProjectReference Include="..\Deja.Crypto\Deja.Crypto.csproj">
       <Project>{228E6B06-76AC-42AE-8EE6-035DA96043EC}</Project>
       <Name>Deja.Crypto</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\References\SharpMimeTools\SharpMimeTools.csproj">
-      <Project>{D5CEEE86-95B6-4F17-B19A-BCF3CB2B1E0B}</Project>
-      <Name>SharpMimeTools</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

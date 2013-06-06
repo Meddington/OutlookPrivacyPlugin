@@ -383,6 +383,26 @@ namespace Deja.Crypto.BcPgp
             }
         }
 
+		public string SignAndEncryptText(byte[] data, string key, IList<string> recipients, Dictionary<string, string> headers)
+		{
+			return SignAndEncrypt(
+				data,
+				key,
+				recipients,
+				headers,
+				false);
+		}
+
+		public string SignAndEncryptBinary(byte[] data, string key, IList<string> recipients, Dictionary<string, string> headers)
+		{
+			return SignAndEncrypt(
+				data,
+				key,
+				recipients,
+				headers,
+				true);
+		}
+
 		/// <summary>
 		/// Signs then encrypts data using key and list of recipients.
 		/// </summary>
@@ -390,77 +410,86 @@ namespace Deja.Crypto.BcPgp
 		/// <param name="key">Signing key</param>
 		/// <param name="recipients">List of keys to encrypt to</param>
 		/// <returns>Returns ascii armored signed/encrypted data</returns>
-        public string SignAndEncrypt(byte[] data, string key, IList<string> recipients, Dictionary<string, string> headers)
-        {
+		protected string SignAndEncrypt(byte[] data, string key, IList<string> recipients, Dictionary<string, string> headers, bool isBinary)
+		{
 			Context = new CryptoContext(Context);
 
 			var senderKey = GetSecretKey(key);
-            if (senderKey == null)
+			if (senderKey == null)
 				throw new SecretKeyNotFoundException("Error, Unable to locate sender key \"" + key + "\".");
 
-            var compressedData = new PgpCompressedDataGenerator(CompressionAlgorithmTag.Zip);
-            var literalData = new PgpLiteralDataGenerator();
-            var cryptData = new PgpEncryptedDataGenerator(SymmetricKeyAlgorithmTag.Cast5, true, new SecureRandom());
+			var compressedData = new PgpCompressedDataGenerator(CompressionAlgorithmTag.ZLib);
+			var literalData = new PgpLiteralDataGenerator();
+			var cryptData = new PgpEncryptedDataGenerator(SymmetricKeyAlgorithmTag.Cast5, true, new SecureRandom());
 
-            foreach (var recipient in recipients)
-            {
-                var recipientKey = GetPublicKey(recipient);
-                if (recipientKey == null)
-					throw new PublicKeyNotFoundException("Error, Unable to locate recipient key \"" + recipient + "\".");
+			foreach (var recipient in recipients)
+			{
+				var recipientKey = GetPublicKey(recipient);
+				if (recipientKey == null)
+					throw new PublicKeyNotFoundException("Error, unable to find recipient key \"" + recipient + "\".");
 
-                cryptData.AddMethod(recipientKey);
-            }
+				cryptData.AddMethod(recipientKey);
+			}
 
-            // Setup signature stuff //
-			var signatureData = new PgpSignatureGenerator(senderKey.PublicKey.Algorithm, HashAlgorithmTag.Sha1);
-            signatureData.InitSign(PgpSignature.BinaryDocument, senderKey.ExtractPrivateKey(Context.Password));
+			// Setup signature stuff //
+			var signatureData = new PgpSignatureGenerator(
+				senderKey.PublicKey.Algorithm,
+				HashAlgorithmTag.Sha256);
+			signatureData.InitSign(
+				isBinary ? PgpSignature.BinaryDocument : PgpSignature.CanonicalTextDocument, 
+				senderKey.ExtractPrivateKey(Context.Password));
 
-            foreach (string userId in senderKey.PublicKey.GetUserIds())
-            {
-                var subPacketGenerator = new PgpSignatureSubpacketGenerator();
+			foreach (string userId in senderKey.PublicKey.GetUserIds())
+			{
+				var subPacketGenerator = new PgpSignatureSubpacketGenerator();
 
-                subPacketGenerator.SetSignerUserId(false, userId);
-                signatureData.SetHashedSubpackets(subPacketGenerator.Generate());
+				subPacketGenerator.SetSignerUserId(false, userId);
+				signatureData.SetHashedSubpackets(subPacketGenerator.Generate());
 
-                // Just the first one!
-                break;
-            }
-            // //
+				// Just the first one!
+				break;
+			}
+			// //
 
-            using (var sout = new MemoryStream())
-            {
+			using (var sout = new MemoryStream())
+			{
 				using (var armoredOut = new ArmoredOutputStream(sout))
 				{
 					foreach (var header in headers)
 						armoredOut.SetHeader(header.Key, header.Value);
 
-					using (var clearText = new MemoryStream())
+					using (var clearOut = new MemoryStream())
 					{
-						using (var compressedOut = compressedData.Open(clearText))
+						using (var compressedOut = compressedData.Open(clearOut))
 						{
 							signatureData.GenerateOnePassVersion(false).Encode(compressedOut);
 
 							using (var literalOut = literalData.Open(
-								compressedOut, 'b', "email", data.Length, DateTime.UtcNow))
+								compressedOut,
+								isBinary ? PgpLiteralData.Binary : PgpLiteralData.Text,
+								"",
+								data.Length,
+								DateTime.UtcNow))
 							{
 								literalOut.Write(data, 0, data.Length);
-								signatureData.Update(data);
+								signatureData.Update(data, 0, data.Length);
 							}
 
 							signatureData.Generate().Encode(compressedOut);
 						}
 
-						using (var encryptOut = cryptData.Open(armoredOut, clearText.Length))
+						var clearData = clearOut.ToArray();
+
+						using (var encryptOut = cryptData.Open(armoredOut, clearData.Length))
 						{
-							clearText.CopyTo(encryptOut);
+							encryptOut.Write(clearData, 0, clearData.Length);
 						}
 					}
 				}
 
-				sout.Position = 0;
 				return ASCIIEncoding.ASCII.GetString(sout.ToArray());
 			}
-        }
+		}
 
 		/// <summary>
 		/// Verify signature

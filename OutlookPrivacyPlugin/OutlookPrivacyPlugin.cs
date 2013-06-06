@@ -803,7 +803,7 @@ namespace OutlookPrivacyPlugin
 
 						// Encrypt file
 						byte[] cleartext = File.ReadAllBytes(a.TempFile);
-						string cyphertext = EncryptEmail(cleartext, recipients);
+						string cyphertext = SignAndEncryptAttachment(cleartext, GetSMTPAddress(mailItem), recipients);
 						File.WriteAllText(a.TempFile, cyphertext);
 
 						a.Encrypted = true;
@@ -960,6 +960,35 @@ namespace OutlookPrivacyPlugin
 			}
 		}
 
+		private string SignAndEncryptAttachment(byte[] data, string key, IList<string> recipients)
+		{
+			try
+			{
+				if (!PromptForPasswordAndKey())
+					return null;
+
+				var context = new CryptoContext(this.Passphrase);
+				var crypto = new PgpCrypto(context);
+				var headers = new Dictionary<string, string>();
+				headers["Version"] = "Outlook Privacy Plugin";
+				headers["Charset"] = _encoding.WebName;
+
+				return crypto.SignAndEncryptBinary(data, key, recipients, headers);
+			}
+			catch (Exception ex)
+			{
+				this.Passphrase = null;
+
+				MessageBox.Show(
+					ex.Message,
+					"Outlook Privacy Error",
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Error);
+
+				throw;
+			}
+		}
+
 		private string SignAndEncryptEmail(string data, string key, IList<string> recipients)
 		{
 			return SignAndEncryptEmail(this._encoding.GetBytes(data), key, recipients);
@@ -978,7 +1007,7 @@ namespace OutlookPrivacyPlugin
 				headers["Version"] = "Outlook Privacy Plugin";
 				headers["Charset"] = _encoding.WebName;
 
-				return crypto.SignAndEncrypt(data, key, recipients, headers);
+				return crypto.SignAndEncryptText(data, key, recipients, headers);
 			}
 			catch (Exception ex)
 			{
