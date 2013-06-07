@@ -1,4 +1,11 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Xml.Linq;
+using Outlook = Microsoft.Office.Interop.Outlook;
+using Office = Microsoft.Office.Core;
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,8 +15,6 @@ using System.Text;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Reflection;
-using Outlook = Microsoft.Office.Interop.Outlook;
-using Office = Microsoft.Office.Core;
 using OutlookPrivacyPlugin.Properties;
 using Exception = System.Exception;
 using anmar.SharpMimeTools;
@@ -17,10 +22,11 @@ using System.Timers;
 
 using Deja.Crypto.BcPgp;
 
+
 namespace OutlookPrivacyPlugin
 {
-	public partial class OutlookPrivacyPlugin
-	{
+    public partial class OutlookPrivacyPlugin
+    {
 		#region VSTO generated code
 
 		/// <summary>
@@ -312,7 +318,7 @@ namespace OutlookPrivacyPlugin
 
 				ribbon.InvalidateButtons();
 
-				if(ribbon.EncryptButton.Checked || ribbon.SignButton.Checked)
+				if (ribbon.EncryptButton.Checked || ribbon.SignButton.Checked)
 					mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
 			}
 			else
@@ -323,7 +329,7 @@ namespace OutlookPrivacyPlugin
 
 				// Look for PGP headers
 				Match match = null;
-				if(mailItem.Body != null)
+				if (mailItem.Body != null)
 					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
 
 				if (match != null && (_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
@@ -466,7 +472,7 @@ namespace OutlookPrivacyPlugin
 				var fileName = mimeAttachment.Name;
 				var tempFile = Path.Combine(Path.GetTempPath(), fileName);
 
-				using(FileStream fout = File.OpenWrite(tempFile))
+				using (FileStream fout = File.OpenWrite(tempFile))
 				{
 					mimeAttachment.Stream.CopyTo(fout);
 				}
@@ -560,7 +566,7 @@ namespace OutlookPrivacyPlugin
 		{
 			if (mailItem == null)
 				return;
-			
+
 			// New mail (Compose)
 			if (mailItem.Sent == false)
 			{
@@ -668,23 +674,27 @@ namespace OutlookPrivacyPlugin
 
 		private string GetSMTPAddress(Outlook.MailItem mailItem)
 		{
-			if (mailItem.SenderEmailAddress != null)
+			if (mailItem.SendUsingAccount != null &&
+				!string.IsNullOrWhiteSpace(mailItem.SendUsingAccount.SmtpAddress))
+				return mailItem.SendUsingAccount.SmtpAddress;
+
+			if (!string.IsNullOrWhiteSpace(mailItem.SenderEmailAddress) &&
+				!mailItem.SenderEmailType.ToUpper().Equals("EX"))
 				return mailItem.SenderEmailAddress;
 
-			if(mailItem.SendUsingAccount != null &&
+			// This can be x509 for exchange accounts
+			if (mailItem.SendUsingAccount != null &&
+				mailItem.SendUsingAccount.AccountType != 0 && /* Verify not exchange account */
 				mailItem.SendUsingAccount.CurrentUser != null &&
 				mailItem.SendUsingAccount.CurrentUser.Address != null)
 				return mailItem.SendUsingAccount.CurrentUser.Address;
-
-			if (mailItem.SenderEmailType == null)
-				throw new Exception("Error, unable to determin senders address.");
 
 			Microsoft.Office.Interop.Outlook.Recipient recip;
 			Outlook.ExchangeUser exUser;
 			Microsoft.Office.Interop.Outlook.Application oOutlook =
 				   new Microsoft.Office.Interop.Outlook.Application();
 			Outlook.NameSpace oNS = oOutlook.GetNamespace("MAPI");
-			
+
 			if (mailItem.SenderEmailType.ToUpper().Equals("EX"))
 			{
 				recip = oNS.CreateRecipient(mailItem.SenderName);
@@ -1100,7 +1110,7 @@ namespace OutlookPrivacyPlugin
 
 			string firstPgpBlock = mailItem.Body;
 			int endMessagePosition = firstPgpBlock.IndexOf("-----END PGP MESSAGE-----") + "-----END PGP MESSAGE-----".Length;
-			if(endMessagePosition != -1)
+			if (endMessagePosition != -1)
 				firstPgpBlock = firstPgpBlock.Substring(0, endMessagePosition);
 
 			string charset = null;
@@ -1114,7 +1124,7 @@ namespace OutlookPrivacyPlugin
 
 			// Set default encoding if charset was missing from 
 			// message.
-			if(string.IsNullOrWhiteSpace(charset))
+			if (string.IsNullOrWhiteSpace(charset))
 				charset = "ISO-8859-1";
 
 			var encoding = Encoding.GetEncoding(charset);
@@ -1145,7 +1155,7 @@ namespace OutlookPrivacyPlugin
 				foreach (var attachment in mailAttachments)
 				{
 					Attachment a = new Attachment();
-					
+
 					a.TempFile = Path.GetTempPath();
 					a.FileName = Regex.Replace(attachment.FileName, @"\.(pgp\.asc|gpg\.asc|pgp|gpg|asc)$", "");
 					a.DisplayName = attachment.DisplayName;
@@ -1220,7 +1230,7 @@ namespace OutlookPrivacyPlugin
 
 				if (Context.IsSigned && Context.SignatureValidated)
 				{
-					DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId + 
+					DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId +
 						"\" with KeyId " + Context.SignedByKeyId;
 				}
 				else if (Context.IsSigned)
@@ -1352,7 +1362,7 @@ namespace OutlookPrivacyPlugin
 		{
 			char[] delimiters = { '\r', '\n' };
 			string result = string.Empty;
-			
+
 			Regex r = new Regex("aka.*jpeg image of size");
 
 			foreach (string s in msg.Split(delimiters))

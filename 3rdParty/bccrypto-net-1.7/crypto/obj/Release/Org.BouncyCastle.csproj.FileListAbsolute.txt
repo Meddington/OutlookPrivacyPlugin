@@ -5,3 +5,7 @@ C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\bin\Release\
 C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\bin\Release\nunit.framework.dll
 C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\obj\Release\Org.BouncyCastle.csprojResolveAssemblyReference.cache
 C:\projects\outlook-privacy-plugin\3rdParty\bccrypto-net-1.7\crypto\obj\Release\Org.BouncyCastle.dll
+C:\projects\outlook-privacy-plugin\2013\OutlookPrivacyPlugin\3rdParty\bccrypto-net-1.7\crypto\bin\Release\Org.BouncyCastle.dll
+C:\projects\outlook-privacy-plugin\2013\OutlookPrivacyPlugin\3rdParty\bccrypto-net-1.7\crypto\bin\Release\crypto.xml
+C:\projects\outlook-privacy-plugin\2013\OutlookPrivacyPlugin\3rdParty\bccrypto-net-1.7\crypto\obj\Release\Org.BouncyCastle.csprojResolveAssemblyReference.cache
+C:\projects\outlook-privacy-plugin\2013\OutlookPrivacyPlugin\3rdParty\bccrypto-net-1.7\crypto\obj\Release\Org.BouncyCastle.dll
