@@ -1156,23 +1156,94 @@ namespace OutlookPrivacyPlugin
 				{
 					Attachment a = new Attachment();
 
-					a.TempFile = Path.GetTempPath();
-					a.FileName = Regex.Replace(attachment.FileName, @"\.(pgp\.asc|gpg\.asc|pgp|gpg|asc)$", "");
-					a.DisplayName = attachment.DisplayName;
-					a.AttachmentType = attachment.Type;
+					// content id
 
-					a.TempFile = Path.Combine(a.TempFile, a.FileName);
+					if (attachment.FileName.StartsWith("Attachment") && attachment.FileName.EndsWith(".pgp"))
+					{
+						var property = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001F");
+						a.FileName = property.ToString();
 
-					attachment.SaveAsFile(a.TempFile);
-					//attachment.Delete();
+						if (a.FileName.Contains('@'))
+						{
+							a.FileName = a.FileName.Substring(0, a.FileName.IndexOf('@'));
+						}
 
-					// Decrypt file
-					var cyphertext = File.ReadAllBytes(a.TempFile);
-					var plaintext = DecryptAndVerify(mailItem.To, cyphertext);
+						a.TempFile = Path.GetTempPath();
+						a.AttachmentType = attachment.Type;
 
-					File.WriteAllBytes(a.TempFile, plaintext);
+						a.TempFile = Path.Combine(a.TempFile, a.FileName);
 
-					attachments.Add(a);
+						attachment.SaveAsFile(a.TempFile);
+
+						// Decrypt file
+						var cyphertext = File.ReadAllBytes(a.TempFile);
+						File.Delete(a.TempFile);
+
+						try
+						{
+							var plaintext = DecryptAndVerify(mailItem.To, cyphertext);
+
+							File.WriteAllBytes(a.TempFile, plaintext);
+
+							attachments.Add(a);
+						}
+						catch
+						{
+							// Assume attachment wasn't encrypted
+						}
+					}
+					//else if (attachment.FileName == "PGPexch.htm.pgp")
+					//{
+					//	// This is the HTML email message.
+
+					//	var TempFile = Path.GetTempFileName();
+					//	attachment.SaveAsFile(TempFile);
+
+					//	// Decrypt file
+					//	var cyphertext = File.ReadAllBytes(TempFile);
+					//	File.Delete(TempFile);
+
+					//	try
+					//	{
+					//		var plaintext = DecryptAndVerify(mailItem.To, cyphertext);
+
+					//		mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatHTML;
+					//		mailItem.HTMLBody = _encoding.GetString(plaintext);
+					//	}
+					//	catch
+					//	{
+					//		// Odd!
+					//	}
+					//}
+					else
+					{
+						a.FileName = Regex.Replace(attachment.FileName, @"\.(pgp\.asc|gpg\.asc|pgp|gpg|asc)$", "");
+						a.DisplayName = Regex.Replace(attachment.DisplayName, @"\.(pgp\.asc|gpg\.asc|pgp|gpg|asc)$", ""); ;
+						a.TempFile = Path.GetTempPath();
+						a.AttachmentType = attachment.Type;
+
+						a.TempFile = Path.Combine(a.TempFile, a.FileName);
+
+						attachment.SaveAsFile(a.TempFile);
+
+						// Decrypt file
+						var cyphertext = File.ReadAllBytes(a.TempFile);
+						File.Delete(a.TempFile);
+
+						try
+						{
+							var plaintext = DecryptAndVerify(mailItem.To, cyphertext);
+
+							File.WriteAllBytes(a.TempFile, plaintext);
+
+							attachments.Add(a);
+						}
+						catch
+						{
+							// Assume attachment wasn't encrypted
+						}
+					}
+
 				}
 
 				foreach (var attachment in attachments)
