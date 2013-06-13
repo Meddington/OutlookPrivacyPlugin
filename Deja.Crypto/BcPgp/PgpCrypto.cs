@@ -322,7 +322,7 @@ namespace Deja.Crypto.BcPgp
 					}
 				}
 
-				return ASCIIEncoding.ASCII.GetString(sout.ToArray());
+				return encoding.GetString(sout.ToArray());
 			}
 		}
 

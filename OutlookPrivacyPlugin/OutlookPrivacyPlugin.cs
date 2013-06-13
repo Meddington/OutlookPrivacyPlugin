@@ -909,7 +909,6 @@ namespace OutlookPrivacyPlugin
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
-				headers["Charset"] = _encoding.WebName;
 
 				return crypto.SignClear(data, key, this._encoding, headers);
 			}
