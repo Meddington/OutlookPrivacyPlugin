@@ -7,6 +7,11 @@ namespace OutlookPrivacyPlugin
 {
 	internal partial class Recipient : Form
 	{
+		/// <summary>
+		/// Use Encryption or SIgning key?
+		/// </summary>
+		public bool Encryption = true;
+
 		private readonly List<string> _defaultKeys;
 
 		internal IList<string> SelectedKeys
@@ -37,7 +42,7 @@ namespace OutlookPrivacyPlugin
 			// Did we locate all recipients keys?
 			bool unfoundKeys = true;
 
-			IList<GnuKey> keys = Globals.OutlookPrivacyPlugin.GetKeys();
+			IList<GnuKey> keys = Encryption ? Globals.OutlookPrivacyPlugin.GetKeysForEncryption() : Globals.OutlookPrivacyPlugin.GetKeysForSigning();
 			if (keys.Count <= 0)
 			{
 				// No keys available, no use in showing this dialog at all
@@ -118,7 +123,7 @@ namespace OutlookPrivacyPlugin
 
 		private void OldPassphrase_Load(object sender, EventArgs e)
 		{
-			IList<GnuKey> keys = Globals.OutlookPrivacyPlugin.GetKeys();
+			IList<GnuKey> keys = Globals.OutlookPrivacyPlugin.GetKeysForEncryption();
 			KeyBox.DataSource = keys;
 			KeyBox.DisplayMember = "KeyDisplay";
 			KeyBox.ValueMember = "Key";

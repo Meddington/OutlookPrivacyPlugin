@@ -439,32 +439,65 @@ namespace OutlookPrivacyPlugin
 		{
 			// 1. Decrypt attachement
 
+			CryptoContext Context;
 			var tempfile = Path.GetTempFileName();
 			encryptedMime.SaveAsFile(tempfile);
 			var encrypteddata = File.ReadAllBytes(tempfile);
-			var cleardata = DecryptAndVerify(mailItem.To, encrypteddata);
+			var cleardata = DecryptAndVerify(mailItem.To, encrypteddata, out Context);
 			if (cleardata == null)
 				return;
-
-			// Remove existing attachments.
-			List<Microsoft.Office.Interop.Outlook.Attachment> attachments = new List<Outlook.Attachment>();
-			foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
-				attachments.Add(attachment);
-
-			//foreach(var attachment in attachments)
-			//    attachment.Delete();
 
 			// Extract files from MIME data
 
 			SharpMessage msg = new SharpMessage(this._encoding.GetString(cleardata));
 			string body = mailItem.Body;
-			mailItem.Body = msg.Body;
-			var html = System.Security.SecurityElement.Escape(msg.Body);
-			html = html.Replace("\n", "<br/>");
-			mailItem.HTMLBody = "<html><body>" + html + "</body></html>";
 
-			// Note: Don't update BodyFormat or message will not display correctly the first
-			// time it's opened.
+			var DecryptAndVerifyHeaderMessage = "** ";
+
+			if (Context.IsEncrypted)
+				DecryptAndVerifyHeaderMessage += "Message decrypted. ";
+
+			if (Context.IsSigned && Context.SignatureValidated)
+			{
+				DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId +
+					"\" with KeyId " + Context.SignedByKeyId;
+			}
+			else if (Context.IsSigned)
+			{
+				DecryptAndVerifyHeaderMessage += "Invalid signature from \"" + Context.SignedByUserId +
+					"\" with KeyId " + Context.SignedByKeyId + ".";
+			}
+			else
+				DecryptAndVerifyHeaderMessage += "Message was unsigned.";
+
+			DecryptAndVerifyHeaderMessage += "\n\n";
+
+			if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
+			{
+				mailItem.Body = DecryptAndVerifyHeaderMessage + msg.Body;
+			}
+			else if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatHTML)
+			{
+				// TODO -- Include header messages
+
+				if (!msg.Body.TrimStart().ToLower().StartsWith("<html"))
+				{
+					body = DecryptAndVerifyHeaderMessage + msg.Body;
+					body = System.Net.WebUtility.HtmlEncode(body);
+					body = body.Replace("\n", "<br />");
+
+					mailItem.HTMLBody = "<html><head></head><body>" + body + "</body></html>";
+				}
+				else
+					mailItem.HTMLBody = msg.Body;
+			}
+			else
+			{
+				// May cause mail item not to open correctly
+
+				mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
+				mailItem.Body = msg.Body;
+			}
 
 			foreach (SharpAttachment mimeAttachment in msg.Attachments)
 			{
@@ -1128,7 +1161,8 @@ namespace OutlookPrivacyPlugin
 
 			var encoding = Encoding.GetEncoding(charset);
 
-			byte[] cleardata = DecryptAndVerify(mailItem.To, ASCIIEncoding.ASCII.GetBytes(firstPgpBlock));
+			CryptoContext Context;
+			byte[] cleardata = DecryptAndVerify(mailItem.To, ASCIIEncoding.ASCII.GetBytes(firstPgpBlock), out Context);
 			if (cleardata != null)
 			{
 				mailItem.Body = DecryptAndVerifyHeaderMessage + encoding.GetString(cleardata);
@@ -1180,7 +1214,7 @@ namespace OutlookPrivacyPlugin
 
 						try
 						{
-							var plaintext = DecryptAndVerify(mailItem.To, cyphertext);
+							var plaintext = DecryptAndVerify(mailItem.To, cyphertext, out Context);
 
 							File.WriteAllBytes(a.TempFile, plaintext);
 
@@ -1231,7 +1265,7 @@ namespace OutlookPrivacyPlugin
 
 						try
 						{
-							var plaintext = DecryptAndVerify(mailItem.To, cyphertext);
+							var plaintext = DecryptAndVerify(mailItem.To, cyphertext, out Context);
 
 							File.WriteAllBytes(a.TempFile, plaintext);
 
@@ -1278,9 +1312,10 @@ namespace OutlookPrivacyPlugin
 
 		string DecryptAndVerifyHeaderMessage = "";
 
-		byte[] DecryptAndVerify(string to, byte[] data)
+		byte[] DecryptAndVerify(string to, byte[] data, out CryptoContext outContext)
 		{
 			DecryptAndVerifyHeaderMessage = "";
+			outContext = null;
 
 			if (!PromptForPasswordAndKey())
 				return null;
@@ -1293,26 +1328,29 @@ namespace OutlookPrivacyPlugin
 				var cleartext = Crypto.DecryptAndVerify(data);
 				Context = Crypto.Context;
 
-				DecryptAndVerifyHeaderMessage = "** ";
+				// NOT USED YET.
+				
+				//DecryptAndVerifyHeaderMessage = "** ";
 
-				if (Context.IsEncrypted)
-					DecryptAndVerifyHeaderMessage += "Message decrypted. ";
+				//if (Context.IsEncrypted)
+				//	DecryptAndVerifyHeaderMessage += "Message decrypted. ";
 
-				if (Context.IsSigned && Context.SignatureValidated)
-				{
-					DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId +
-						"\" with KeyId " + Context.SignedByKeyId;
-				}
-				else if (Context.IsSigned)
-				{
-					DecryptAndVerifyHeaderMessage += "Invalid signature from \"" + Context.SignedByUserId +
-						"\" with KeyId " + Context.SignedByKeyId + ".";
-				}
-				else
-					DecryptAndVerifyHeaderMessage += "Message was unsigned.";
+				//if (Context.IsSigned && Context.SignatureValidated)
+				//{
+				//	DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId +
+				//		"\" with KeyId " + Context.SignedByKeyId;
+				//}
+				//else if (Context.IsSigned)
+				//{
+				//	DecryptAndVerifyHeaderMessage += "Invalid signature from \"" + Context.SignedByUserId +
+				//		"\" with KeyId " + Context.SignedByKeyId + ".";
+				//}
+				//else
+				//	DecryptAndVerifyHeaderMessage += "Message was unsigned.";
 
-				DecryptAndVerifyHeaderMessage += "\n\n";
+				//DecryptAndVerifyHeaderMessage += "\n\n";
 
+				outContext = Context;
 				return cleartext;
 			}
 			catch (CryptoException ex)
@@ -1383,12 +1421,33 @@ namespace OutlookPrivacyPlugin
 
 		#region Key Management
 
-		public IList<GnuKey> GetKeys()
+		public IList<GnuKey> GetKeysForEncryption()
 		{
 			var crypto = new PgpCrypto(new CryptoContext());
 			List<GnuKey> keys = new List<GnuKey>();
 
-			foreach (string key in crypto.GetPublicKeyUserIds())
+			foreach (string key in crypto.GetPublicKeyUserIdsForEncryption())
+			{
+				var match = Regex.Match(key, @".* <(.*)>");
+				if (!match.Success)
+					continue;
+
+				GnuKey k = new GnuKey();
+				k.Key = match.Groups[1].Value;
+				k.KeyDisplay = key;
+
+				keys.Add(k);
+			}
+
+			return keys;
+		}
+
+		public IList<GnuKey> GetKeysForSigning()
+		{
+			var crypto = new PgpCrypto(new CryptoContext());
+			List<GnuKey> keys = new List<GnuKey>();
+
+			foreach (string key in crypto.GetPublicKeyUserIdsForSign())
 			{
 				var match = Regex.Match(key, @".* <(.*)>");
 				if (!match.Success)

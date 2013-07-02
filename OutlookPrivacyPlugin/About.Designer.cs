@@ -119,9 +119,9 @@
 			this.BuildLabel.BackColor = System.Drawing.Color.White;
 			this.BuildLabel.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.BuildLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.BuildLabel.Location = new System.Drawing.Point(91, 52);
+			this.BuildLabel.Location = new System.Drawing.Point(15, 52);
 			this.BuildLabel.Name = "BuildLabel";
-			this.BuildLabel.Size = new System.Drawing.Size(202, 13);
+			this.BuildLabel.Size = new System.Drawing.Size(278, 18);
 			this.BuildLabel.TabIndex = 9;
 			this.BuildLabel.Text = "-29-Sept-2010-";
 			this.BuildLabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
