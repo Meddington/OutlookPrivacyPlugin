@@ -767,6 +767,9 @@ namespace Deja.Crypto.BcPgp
 					Context.IsSigned = true;
 					Context.SignedBy = GetPublicKey(signature.KeyId);
 
+					if (Context.SignedBy == null)
+						throw new PublicKeyNotFoundException("Public key not found for key id \""+signature.KeyId+"\".");
+
 					signature.InitVerify(GetPublicKey(signature.KeyId));
 					signature.Update(clearOut.ToArray());
 					Context.SignatureValidated = signature.Verify();

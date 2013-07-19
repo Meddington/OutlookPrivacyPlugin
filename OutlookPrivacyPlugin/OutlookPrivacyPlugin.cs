@@ -407,10 +407,13 @@ namespace OutlookPrivacyPlugin
 					// Look for PGP MIME
 					foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
 					{
-						if (attachment.FileName == "PGP_MIME version identification.dat")
+						var mimeEncoding = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001F");
+
+						if (mimeEncoding == "application/pgp-encrypted")
 							foundPgpMime = true;
 
-						if (attachment.FileName == "encrypted.asc")
+						// Should be first attachment *after* PGP_MIME version identification
+						else if (foundPgpMime && encryptedMime == null && mimeEncoding == "application/octet-stream")
 							encryptedMime = attachment;
 					}
 
@@ -478,8 +481,6 @@ namespace OutlookPrivacyPlugin
 			}
 			else if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatHTML)
 			{
-				// TODO -- Include header messages
-
 				if (!msg.Body.TrimStart().ToLower().StartsWith("<html"))
 				{
 					body = DecryptAndVerifyHeaderMessage + msg.Body;
@@ -489,7 +490,22 @@ namespace OutlookPrivacyPlugin
 					mailItem.HTMLBody = "<html><head></head><body>" + body + "</body></html>";
 				}
 				else
-					mailItem.HTMLBody = msg.Body;
+				{
+					// Find <body> tag and insert our message.
+
+					var matches = Regex.Match(msg.Body, @"(<body[^<]*>)", RegexOptions.IgnoreCase);
+					if (matches.Success)
+					{
+						var bodyTag = matches.Groups[1].Value;
+
+						// Insert decryption message.
+						mailItem.HTMLBody = msg.Body.Replace(
+							bodyTag,
+							bodyTag + DecryptAndVerifyHeaderMessage.Replace("\n", "<br />"));
+					}
+					else
+						mailItem.HTMLBody = msg.Body;
+				}
 			}
 			else
 			{
@@ -1111,6 +1127,17 @@ namespace OutlookPrivacyPlugin
 					{
 						mailItem.Body = message + mailItem.Body;
 					}
+				}
+			}
+			catch (PublicKeyNotFoundException ex)
+			{
+				Context = Crypto.Context;
+
+				var message = "** Unable to verify signature, missing public key.\n\n";
+
+				if (mailType == Outlook.OlBodyFormat.olFormatPlain)
+				{
+					mailItem.Body = message + mailItem.Body;
 				}
 			}
 			catch (Exception ex)
