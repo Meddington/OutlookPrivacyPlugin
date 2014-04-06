@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Deja.Crypto")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Deja vu Security")]
 [assembly: AssemblyProduct("Deja.Crypto")]
-[assembly: AssemblyCopyright("Copyright ©  2013")]
+[assembly: AssemblyCopyright("Copyright © 2013 Deja vu Security")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

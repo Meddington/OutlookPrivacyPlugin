@@ -21,6 +21,7 @@ using anmar.SharpMimeTools;
 using System.Timers;
 
 using Deja.Crypto.BcPgp;
+using NLog;
 
 
 namespace OutlookPrivacyPlugin
@@ -40,6 +41,9 @@ namespace OutlookPrivacyPlugin
 		}
 
 		#endregion
+
+		static NLog.Logger logger = LogManager.GetCurrentClassLogger();
+
 
 		private Properties.Settings _settings;
 		private GnuPGCommandBar _gpgCommandBar = null;
@@ -364,11 +368,7 @@ namespace OutlookPrivacyPlugin
 					// Update match again, in case decryption failed/cancelled.
 					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
 
-					Outlook.UserProperty DecryptedProperpty = mailItem.UserProperties["GnuPGSetting.Decrypted"];
-					if (DecryptedProperpty == null)
-						DecryptedProperpty = mailItem.UserProperties.Add("GnuPGSetting.Decrypted", Outlook.OlUserPropertyType.olYesNo, false, null);
-					DecryptedProperpty.Value = true;
-
+					SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
 				}
 				else if (match != null && _settings.AutoVerify && match.Value == _pgpSignedHeader)
 				{
@@ -420,11 +420,7 @@ namespace OutlookPrivacyPlugin
 					if (foundPgpMime && encryptedMime != null)
 					{
 						HandlePgpMime(mailItem, encryptedMime);
-
-						Outlook.UserProperty DecryptedProperpty = mailItem.UserProperties["GnuPGSetting.Decrypted"];
-						if (DecryptedProperpty == null)
-							DecryptedProperpty = mailItem.UserProperties.Add("GnuPGSetting.Decrypted", Outlook.OlUserPropertyType.olYesNo, false, null);
-						DecryptedProperpty.Value = true;
+						SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
 					}
 				}
 
@@ -436,6 +432,23 @@ namespace OutlookPrivacyPlugin
 			}
 
 			ribbon.InvalidateButtons();
+		}
+
+		void SetProperty(Outlook.MailItem mailItem, string name, object value)
+		{
+//			var schema = "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/" + name;
+			var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
+			
+			mailItem.PropertyAccessor.SetProperty(schema, value);
+		}
+
+		object GetProperty(Outlook.MailItem mailItem, string name)
+		{
+			//var schema = "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/" + name;
+			var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
+
+			return mailItem.PropertyAccessor.GetProperty(schema);
+			//return null;
 		}
 
 		void HandlePgpMime(Outlook.MailItem mailItem, Microsoft.Office.Interop.Outlook.Attachment encryptedMime)
@@ -549,13 +562,14 @@ namespace OutlookPrivacyPlugin
 				if (mailItem.Sent == false)
 				{
 					bool toSave = false;
-					Outlook.UserProperty SignProperpty = mailItem.UserProperties["GnuPGSetting.Sign"];
-					if (SignProperpty == null || (bool)SignProperpty.Value != ribbon.SignButton.Checked)
+					var SignProperpty = GetProperty(mailItem, "GnuPGSetting.Sign");
+					if (SignProperpty == null || (bool)SignProperpty != ribbon.SignButton.Checked)
 					{
 						toSave = true;
 					}
-					Outlook.UserProperty EncryptProperpty = mailItem.UserProperties["GnuPGSetting.Encrypt"];
-					if (EncryptProperpty == null || (bool)EncryptProperpty.Value != ribbon.EncryptButton.Checked)
+
+					var EncryptProperpty = GetProperty(mailItem, "GnuPGSetting.Decrypted");
+					if (EncryptProperpty == null || (bool)EncryptProperpty != ribbon.EncryptButton.Checked)
 					{
 						toSave = true;
 					}
@@ -590,8 +604,8 @@ namespace OutlookPrivacyPlugin
 				}
 				else
 				{
-					Outlook.UserProperty SignProperpty = mailItem.UserProperties["GnuPGSetting.Decrypted"];
-					if (SignProperpty != null && (bool)SignProperpty.Value)
+					var SignProperty = GetProperty(mailItem, "GnuPGSetting.Decrypted");
+					if (SignProperty != null && (bool)SignProperty)
 					{
 						mailItem.Close(Microsoft.Office.Interop.Outlook.OlInspectorClose.olDiscard);
 					}
@@ -620,19 +634,8 @@ namespace OutlookPrivacyPlugin
 			if (mailItem.Sent == false)
 			{
 				// Record compose button states.
-				Outlook.UserProperty SignProperpty = mailItem.UserProperties["GnuPGSetting.Sign"];
-				if (SignProperpty == null)
-				{
-					SignProperpty = mailItem.UserProperties.Add("GnuPGSetting.Sign", Outlook.OlUserPropertyType.olYesNo, false, null);
-				}
-				SignProperpty.Value = ribbon.SignButton.Checked;
-
-				Outlook.UserProperty EncryptProperpty = mailItem.UserProperties["GnuPGSetting.Encrypt"];
-				if (EncryptProperpty == null)
-				{
-					EncryptProperpty = mailItem.UserProperties.Add("GnuPGSetting.Encrypt", Outlook.OlUserPropertyType.olYesNo, false, null);
-				}
-				EncryptProperpty.Value = ribbon.EncryptButton.Checked;
+				SetProperty(mailItem, "GnuPGSetting.Sign", ribbon.SignButton.Checked);
+				SetProperty(mailItem, "GnuPGSetting.Encrypt", ribbon.EncryptButton.Checked);
 			}
 		}
 		#endregion
@@ -655,6 +658,7 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (Exception ex)
 			{
+				WriteErrorData("AddGnuPGCommandBar", ex);
 				MessageBox.Show(ex.Message);
 			}
 		}
@@ -930,6 +934,7 @@ namespace OutlookPrivacyPlugin
 					return;
 				}
 
+				WriteErrorData("Application_ItemSend", ex);
 				MessageBox.Show(
 					ex.Message,
 					"Outlook Privacy Error",
@@ -965,6 +970,7 @@ namespace OutlookPrivacyPlugin
 			{
 				this.Passphrase = null;
 
+				WriteErrorData("SignEmail", ex);
 				MessageBox.Show(
 					ex.Message,
 					"Outlook Privacy Error",
@@ -996,6 +1002,7 @@ namespace OutlookPrivacyPlugin
 			{
 				this.Passphrase = null;
 
+				WriteErrorData("EncryptEmail", ex);
 				MessageBox.Show(
 					ex.Message,
 					"Outlook Privacy Error",
@@ -1008,6 +1015,7 @@ namespace OutlookPrivacyPlugin
 			{
 				this.Passphrase = null;
 
+				WriteErrorData("EncryptEmail", e);
 				MessageBox.Show(
 					e.Message,
 					"Outlook Privacy Error",
@@ -1071,6 +1079,7 @@ namespace OutlookPrivacyPlugin
 			{
 				this.Passphrase = null;
 
+				WriteErrorData("SignAndEncryptEmail", ex);
 				MessageBox.Show(
 					ex.Message,
 					"Outlook Privacy Error",
@@ -1144,11 +1153,36 @@ namespace OutlookPrivacyPlugin
 			{
 				this.Passphrase = null;
 
+				WriteErrorData("VerifyEmail", ex);
 				MessageBox.Show(
 					ex.Message,
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
+			}
+		}
+
+		void WriteErrorData(string msg, Exception ex)
+		{
+			try
+			{
+				var logFile = System.Environment.GetEnvironmentVariable("APPDATA");
+				logFile = Path.Combine(logFile, "OutlookPrivacyPlugin");
+
+				if (!Directory.Exists(logFile))
+					Directory.CreateDirectory(logFile);
+
+				logFile = Path.Combine(logFile, "log.txt");
+
+				File.AppendAllText(logFile, "\n-------- " +
+					DateTime.Now.ToString() +
+					" --------\n" +
+					msg +
+					"\n\n" +
+					ex.ToString());
+			}
+			catch
+			{
 			}
 		}
 
@@ -1384,6 +1418,7 @@ namespace OutlookPrivacyPlugin
 			{
 				this.Passphrase = null;
 
+				WriteErrorData("DecryptAndVerify", ex);
 				MessageBox.Show(
 					ex.Message,
 					"Outlook Privacy Error",
@@ -1394,6 +1429,7 @@ namespace OutlookPrivacyPlugin
 			catch (Exception e)
 			{
 				this.Passphrase = null;
+				WriteErrorData("DecryptAndVerify", e);
 
 				if (e.Message.ToLower().StartsWith("checksum"))
 				{
@@ -1455,7 +1491,7 @@ namespace OutlookPrivacyPlugin
 
 			foreach (string key in crypto.GetPublicKeyUserIdsForEncryption())
 			{
-				var match = Regex.Match(key, @".* <(.*)>");
+				var match = Regex.Match(key, @"<(.*)>");
 				if (!match.Success)
 					continue;
 
@@ -1476,7 +1512,7 @@ namespace OutlookPrivacyPlugin
 
 			foreach (string key in crypto.GetPublicKeyUserIdsForSign())
 			{
-				var match = Regex.Match(key, @".* <(.*)>");
+				var match = Regex.Match(key, @"<(.*)>");
 				if (!match.Success)
 					continue;
 

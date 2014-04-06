@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 
 [assembly: AssemblyTitle("OutlookPrivacyPlugin")]
-[assembly: AssemblyDescription("Outlook 2010 Email Encryption Plugin")]
+[assembly: AssemblyDescription("Outlook Email Encryption Plugin")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Deja vu Security")]
 [assembly: AssemblyProduct("Outlook Privacy Plugin")]

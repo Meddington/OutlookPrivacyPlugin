@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deja.Crypto", "Deja.Crypto\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutlookPrivacyPlugin.Security", "OutlookPrivacyPlugin.Security\OutlookPrivacyPlugin.Security.csproj", "{56E8E807-0807-45E0-B19A-98912AE47630}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{6972D1B3-F675-48C1-AF05-BD7A2F95C614}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{56E8E807-0807-45E0-B19A-98912AE47630}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56E8E807-0807-45E0-B19A-98912AE47630}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56E8E807-0807-45E0-B19A-98912AE47630}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6972D1B3-F675-48C1-AF05-BD7A2F95C614}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6972D1B3-F675-48C1-AF05-BD7A2F95C614}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6972D1B3-F675-48C1-AF05-BD7A2F95C614}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6972D1B3-F675-48C1-AF05-BD7A2F95C614}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

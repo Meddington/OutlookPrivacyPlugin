@@ -26,11 +26,26 @@ namespace Deja.Crypto.BcPgp
 			OnePassSignature = null;
 			Signature = null;
 
-			var path = System.Environment.GetEnvironmentVariable("APPDATA");
-			path = Path.Combine(path, "gnupg");
+			var gpgHome = System.Environment.GetEnvironmentVariable("GNUPGHOME");
+			if (gpgHome == null)
+			{
+				// Now try via registry
+				var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\GNU\GnuPG");
+				if (key != null)
+				{
+					gpgHome = key.GetValue("HomeDir", null) as string;
+				}
 
-			PublicKeyRingFile = Path.Combine(path, "pubring.gpg");
-			PrivateKeyRingFile = Path.Combine(path, "secring.gpg");
+				if (gpgHome == null)
+				{
+					// Now try default location
+					gpgHome = System.Environment.GetEnvironmentVariable("APPDATA");
+					gpgHome = Path.Combine(gpgHome, "gnupg");
+				}
+			}
+
+			PublicKeyRingFile = Path.Combine(gpgHome, "pubring.gpg");
+			PrivateKeyRingFile = Path.Combine(gpgHome, "secring.gpg");
 		}
 
 		public CryptoContext(char[] password) : this()

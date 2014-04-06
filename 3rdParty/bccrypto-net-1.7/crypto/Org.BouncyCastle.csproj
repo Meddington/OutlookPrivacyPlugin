@@ -10,7 +10,7 @@
     <ApplicationIcon />
     <AssemblyKeyContainerName />
     <AssemblyName>Org.BouncyCastle</AssemblyName>
-    <AssemblyOriginatorKeyFile>OutlookPrivacyPlugin_TemporaryKey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>OutlookPrivacyPlugin_TemporaryKey.snk</AssemblyOriginatorKeyFile>
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
@@ -3444,8 +3444,7 @@
     <Content Include="License.html" />
     <Content Include="Readme.html" />
     <None Include="NBuild.build" />
-    <None Include="OutlookGnuPG.snk" />
-    <None Include="OutlookPrivacyPlugin_TemporaryKey.pfx" />
+    <None Include="OutlookPrivacyPlugin_TemporaryKey.snk" />
     <None Include="testcfg.nunit" />
   </ItemGroup>
   <ItemGroup>

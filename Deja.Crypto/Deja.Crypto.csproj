@@ -37,9 +37,12 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>OutlookPrivacyPlugin_TemporaryKey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>OutlookPrivacyPlugin_TemporaryKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NLog">
+      <HintPath>..\packages\NLog.2.1.0\lib\net45\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -64,8 +67,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="OutlookGnuPG.snk" />
-    <None Include="OutlookPrivacyPlugin_TemporaryKey.pfx" />
+    <None Include="OutlookPrivacyPlugin_TemporaryKey.snk" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

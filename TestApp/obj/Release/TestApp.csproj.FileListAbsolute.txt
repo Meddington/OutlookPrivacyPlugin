@@ -1,0 +1,11 @@
+E:\projects\outlook-privacy-plugin\TestApp\bin\Release\TestApp.exe.config
+E:\projects\outlook-privacy-plugin\TestApp\bin\Release\TestApp.exe
+E:\projects\outlook-privacy-plugin\TestApp\bin\Release\TestApp.pdb
+E:\projects\outlook-privacy-plugin\TestApp\bin\Release\Deja.Crypto.dll
+E:\projects\outlook-privacy-plugin\TestApp\bin\Release\NLog.dll
+E:\projects\outlook-privacy-plugin\TestApp\bin\Release\Org.BouncyCastle.dll
+E:\projects\outlook-privacy-plugin\TestApp\bin\Release\Deja.Crypto.pdb
+E:\projects\outlook-privacy-plugin\TestApp\bin\Release\NLog.xml
+E:\projects\outlook-privacy-plugin\TestApp\obj\Release\TestApp.csprojResolveAssemblyReference.cache
+E:\projects\outlook-privacy-plugin\TestApp\obj\Release\TestApp.exe
+E:\projects\outlook-privacy-plugin\TestApp\obj\Release\TestApp.pdb

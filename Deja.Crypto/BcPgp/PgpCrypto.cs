@@ -12,6 +12,8 @@ using Org.BouncyCastle.Utilities.IO;
 using Org.BouncyCastle.Utilities.Encoders;
 using Org.BouncyCastle.Bcpg;
 
+using NLog;
+
 namespace Deja.Crypto.BcPgp
 {
 	/// <summary>
@@ -19,6 +21,8 @@ namespace Deja.Crypto.BcPgp
 	/// </summary>
     public class PgpCrypto
     {
+		static NLog.Logger logger = LogManager.GetCurrentClassLogger();
+
 		public PgpCrypto(CryptoContext context)
 		{
 			Context = context;
@@ -48,6 +52,7 @@ namespace Deja.Crypto.BcPgp
 
 				default:
 					// Lol, how did we get here?
+					logger.Debug("IsSigningKey: Unsupported key algorithm: "+alg.ToString());
 					throw new ApplicationException("Unsupported key algorithm.");
 			}
 		}
@@ -446,7 +451,7 @@ namespace Deja.Crypto.BcPgp
 				throw new SecretKeyNotFoundException("Error, unable to locate signing key \"" + key + "\".");
 
 			// Setup signature stuff //
-			var signatureData = new PgpSignatureGenerator(senderKey.PublicKey.Algorithm, HashAlgorithmTag.Sha256);
+			var signatureData = new PgpSignatureGenerator(senderKey.PublicKey.Algorithm, HashAlgorithmTag.Sha1);
 			signatureData.InitSign(PgpSignature.CanonicalTextDocument, senderKey.ExtractPrivateKey(Context.Password));
 
 			foreach (string userId in senderKey.PublicKey.GetUserIds())
@@ -459,9 +464,8 @@ namespace Deja.Crypto.BcPgp
 				// Just the first one!
 				break;
 			}
-			// //
 
-			byte[] crlf = new byte[] { (byte) '\r', (byte) '\n' };
+			// //
 
 			using (var sout = new MemoryStream())
 			{
@@ -472,6 +476,10 @@ namespace Deja.Crypto.BcPgp
 
 					armoredOut.BeginClearText(HashAlgorithmTag.Sha1);
 
+					// Remove any extra trailing whitespace.
+					// this should not include \r or \n.
+					data = data.TrimEnd(null);
+
 					using (var stringReader = new StringReader(data))
 					{
 						do
@@ -480,16 +488,20 @@ namespace Deja.Crypto.BcPgp
 							if (line == null)
 								break;
 
-							var lineBytes = encoding.GetBytes(line.TrimEnd(null));
+							// Lines must have all white space removed
+							line = line.TrimEnd(null);
+							line = line.TrimEnd(new char[] {' ', '\t', '\r', '\n'});
 
-							armoredOut.Write(lineBytes);
-							armoredOut.Write(crlf);
-							signatureData.Update(lineBytes);
-							signatureData.Update(crlf);
+							line += "\r\n";
+
+							signatureData.Update(encoding.GetBytes(line));
+							armoredOut.Write(encoding.GetBytes(line));
 						}
 						while (true);
 					}
 
+					// Write extra line before signature block.
+					armoredOut.Write(encoding.GetBytes("\r\n"));
 					armoredOut.EndClearText();
 
 					using (var outputStream = new BcpgOutputStream(armoredOut))
@@ -749,9 +761,14 @@ namespace Deja.Crypto.BcPgp
 								if (line == null)
 									break;
 
-								var buff = encoding.GetBytes(line.TrimEnd(null));
+								line = line
+									.TrimEnd(null)
+									.TrimEnd(new char[] { ' ', '\t', '\n', '\r' })
+									.TrimEnd(null)
+									+"\r\n";
+
+								var buff = encoding.GetBytes(line);
 								clearOut.Write(buff, 0, buff.Length);
-								clearOut.Write(crlf, 0, crlf.Length);
 							}
 							while (true);
 						}
@@ -768,10 +785,10 @@ namespace Deja.Crypto.BcPgp
 					Context.SignedBy = GetPublicKey(signature.KeyId);
 
 					if (Context.SignedBy == null)
-						throw new PublicKeyNotFoundException("Public key not found for key id \""+signature.KeyId+"\".");
+						throw new PublicKeyNotFoundException("Public key not found for key id \"" + signature.KeyId + "\".");
 
 					signature.InitVerify(GetPublicKey(signature.KeyId));
-					signature.Update(clearOut.ToArray());
+					signature.Update(clearOut.ToArray(), 0, (int)(clearOut.Length - 2));
 					Context.SignatureValidated = signature.Verify();
 
 					return Context.SignatureValidated;
