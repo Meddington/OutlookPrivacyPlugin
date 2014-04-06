@@ -2,34 +2,13 @@
 
 A simple OpenPGP encryption plugin for Outlook 2010 and 2013.
 
-== Installer
-
-See the https://github.com/dejavusecurity/OutlookPrivacyPlugin/releases[releases] page for downloads and release notes.
-
 == About
 
 Outlook Privacy Plugin is a security extension for Outlook. It enables Outlook to send and receive email messages that are encrypted and/or signed with the OpenPGP standard.
 
-This plugin requires Microsoft .NET v4.5 and http://www.gpg4win.org/[gpg4win.]
-
-== Features
-
- * Microsoft Outlook 2010 and 2013
- * Support for both 32bit & 64bit versions of Office
- * Encrypt and decrypt email using OpenPGP standard
- * Supports encrypted attachments
- * Supports multiple recipients
- * Decrypts PGP-MIME
- * Decrypts OpenPGP blocks in HTML email
- * Multiple email accounts (based on sender/receiver email)
- 
-== Not Supported:
-
-Encrypting with PGP-MIME (planned)
-No support for HTML email (planned)
-This plugin is in BETA status and is based on an earlier plugin for Office 2007.
-
 == Installation
+
+See the https://github.com/dejavusecurity/OutlookPrivacyPlugin/releases[releases] page for downloads and release notes.
 
 === 1. Install Gpg4win
 
@@ -48,3 +27,21 @@ After downloading the zip file, right-click -> Properties, at the bottom click t
 === 3. Install 
 
 Close outlook and run the Outlook Privacy Plugin installer.
+
+== Features
+
+ * Microsoft Outlook 2010 and 2013
+ * Support for both 32bit & 64bit versions of Office
+ * Encrypt and decrypt email using OpenPGP standard
+ * Supports encrypted attachments
+ * Supports multiple recipients
+ * Decrypts PGP-MIME
+ * Decrypts OpenPGP blocks in HTML email
+ * Multiple email accounts (based on sender/receiver email)
+ 
+== Not Supported:
+
+Encrypting with PGP-MIME (planned)
+No support for HTML email (planned)
+This plugin is in BETA status and is based on an earlier plugin for Office 2007.
+
