@@ -184,7 +184,7 @@ namespace Org.BouncyCastle.Bcpg.OpenPgp
             char[]						passPhrase)
         {
 			int keySize = GetKeySize(algorithm);
-			byte[] pBytes = Strings.ToByteArray(new string(passPhrase));
+			byte[] pBytes = Strings.ToUtf8ByteArray(new string(passPhrase));
 			byte[] keyBytes = new byte[(keySize + 7) / 8];
 
 			int generatedBytes = 0;

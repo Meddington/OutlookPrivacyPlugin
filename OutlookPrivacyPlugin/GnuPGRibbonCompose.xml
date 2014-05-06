@@ -20,7 +20,14 @@
                         onAction="OnEncryptButton" 
                         getPressed="GetPressed" 
                         getImage="GetCustomImage" />
-          <button id="settingsButtonNew" 
+          <button id="attachPublicKeyButton"
+						  size="normal"
+						  label="Attach Key"
+						  screentip="Attach Public Key"
+						  supertip="Attach public key associated with this account to email."
+						  onAction="OnAttachPublicKeyButton"
+						  getImage="GetCustomImage" />
+			<button id="settingsButtonNew" 
                   size="normal"
                   label="Settings"
                   screentip="OpenPGP Settings"

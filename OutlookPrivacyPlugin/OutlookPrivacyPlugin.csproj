@@ -32,10 +32,10 @@
     <IsWebBootstrapper>False</IsWebBootstrapper>
     <TargetFrameworkProfile />
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <PublishUrl>OutlookPrivacyPlugin-BETA-35\</PublishUrl>
+    <PublishUrl>OutlookPrivacyPlugin-BETA-36\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.26</ApplicationVersion>
+    <ApplicationVersion>1.0.0.30</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>false</UpdateEnabled>
     <UpdateInterval>0</UpdateInterval>
@@ -277,6 +277,8 @@
   <ItemGroup>
     <EmbeddedResource Include="GnuPGRibbonCompose.xml" />
     <EmbeddedResource Include="GnuPGRibbonRead.xml" />
+    <None Include="Resources\attach.bmp" />
+    <None Include="Resources\attach.gif" />
     <Content Include="Resources\database_gear.png" />
     <Content Include="Resources\DejaVu_Logo_Final.png" />
     <Content Include="Resources\GpgLogo.png" />

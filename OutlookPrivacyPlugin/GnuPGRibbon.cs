@@ -22,6 +22,9 @@ using System.Windows.Forms;
 using Office = Microsoft.Office.Core;
 using Outlook = Microsoft.Office.Interop.Outlook;
 
+using Deja.Crypto.BcPgp;
+using System.Text.RegularExpressions;
+
 namespace OutlookPrivacyPlugin
 {
 	[ComVisible(true)]
@@ -33,6 +36,7 @@ namespace OutlookPrivacyPlugin
 		public GnuPGToggleButton EncryptButton;
 		public GnuPGToggleButton VerifyButton;
 		public GnuPGToggleButton DecryptButton;
+		public GnuPGToggleButton AttachPublicKeyButton;
 
 		private Dictionary<string, GnuPGToggleButton> Buttons = new Dictionary<string, GnuPGToggleButton>();
 
@@ -42,11 +46,13 @@ namespace OutlookPrivacyPlugin
 			EncryptButton = new GnuPGToggleButton("encryptButton");
 			VerifyButton = new GnuPGToggleButton("verifyButton");
 			DecryptButton = new GnuPGToggleButton("decryptButton");
+			AttachPublicKeyButton = new GnuPGToggleButton("attachPublicKeyButton");
 
 			Buttons.Add(SignButton.Id, SignButton);
 			Buttons.Add(EncryptButton.Id, EncryptButton);
 			Buttons.Add(VerifyButton.Id, VerifyButton);
 			Buttons.Add(DecryptButton.Id, DecryptButton);
+			Buttons.Add(AttachPublicKeyButton.Id, AttachPublicKeyButton);
 		}
 
 		#region IRibbonExtensibility Members
@@ -76,6 +82,7 @@ namespace OutlookPrivacyPlugin
 			// Compose Mail
 			EncryptButton.Checked = settings.AutoEncrypt;
 			SignButton.Checked = settings.AutoSign;
+			AttachPublicKeyButton.Checked = false;
 
 			// Read Mail
 			DecryptButton.Checked = settings.AutoDecrypt;
@@ -91,6 +98,7 @@ namespace OutlookPrivacyPlugin
 			ribbon.InvalidateControl(EncryptButton.Id);
 			ribbon.InvalidateControl(VerifyButton.Id);
 			ribbon.InvalidateControl(DecryptButton.Id);
+			ribbon.InvalidateControl(AttachPublicKeyButton.Id);
 		}
 
 		#region Ribbon Callbacks
@@ -156,6 +164,47 @@ namespace OutlookPrivacyPlugin
 				Globals.OutlookPrivacyPlugin.VerifyEmail(mailItem);
 		}
 
+		public void OnAttachPublicKeyButton(Office.IRibbonControl control)
+		{
+			Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+			if (mailItem == null)
+			{
+				// TODO - Generate a log message
+				MessageBox.Show("Error, mailItem was null.");
+				return;
+			}
+			
+			var smtp = Globals.OutlookPrivacyPlugin.GetSMTPAddress(mailItem);
+			
+			var crypto = new Deja.Crypto.BcPgp.PgpCrypto(new Deja.Crypto.BcPgp.CryptoContext());
+			var publicKey = crypto.PublicKey(smtp, new Dictionary<string, string>());
+
+			if(publicKey == null)
+			{
+				// TODO - Generate log message
+				MessageBox.Show("Error, unable to find public key to attach.");
+				return;
+			}
+
+			var tempFile = Path.Combine(Path.GetTempPath(), "public_key.gpg");
+			File.WriteAllText(tempFile, publicKey);
+
+			try
+			{
+				mailItem.Attachments.Add(
+					tempFile, 
+					Outlook.OlAttachmentType.olByValue, 
+					1, 
+					"public_key.gpg");
+				
+				mailItem.Save();
+			}
+			finally
+			{
+				File.Delete(tempFile);
+			}
+		}
+
 		public void OnSettingsButtonRead(Office.IRibbonControl control)
 		{
 			Globals.OutlookPrivacyPlugin.Settings();
@@ -188,6 +237,9 @@ namespace OutlookPrivacyPlugin
 				case "aboutButtonNew":
 				case "aboutButtonRead":
 					pictureDisp = ImageConverter.Convert(global::OutlookPrivacyPlugin.Properties.Resources.Logo);
+					break;
+				case "attachPublicKeyButton":
+					pictureDisp = ImageConverter.Convert(global::OutlookPrivacyPlugin.Properties.Resources.attach);
 					break;
 				default:
 					if ((control.Id == EncryptButton.Id) || (control.Id == DecryptButton.Id))

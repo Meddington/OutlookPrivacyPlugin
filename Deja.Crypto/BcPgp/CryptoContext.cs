@@ -15,37 +15,66 @@ namespace Deja.Crypto.BcPgp
 {
     public class CryptoContext
     {
+		readonly string _publicFilename = "pubring.gpg";
+		readonly string _privateFilename = "secring.gpg";
+
 		public CryptoContext()
 		{
 			IsEncrypted = false;
 			IsSigned = false;
 			SignatureValidated = false;
 			IsCompressed = false;
+			FailedIntegrityCheck = true;
 
 			Password = null;
 			OnePassSignature = null;
 			Signature = null;
 
+			List<string> gpgLocations = new List<string>();
+
+			// If GNUPGHOME is set, add to list
 			var gpgHome = System.Environment.GetEnvironmentVariable("GNUPGHOME");
-			if (gpgHome == null)
+			if (gpgHome != null)
+				gpgLocations.Add(gpgHome);
+
+			// If registry key is set, add to list
+			using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\GNU\GnuPG"))
 			{
-				// Now try via registry
-				var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\GNU\GnuPG");
 				if (key != null)
 				{
 					gpgHome = key.GetValue("HomeDir", null) as string;
-				}
 
-				if (gpgHome == null)
-				{
-					// Now try default location
-					gpgHome = System.Environment.GetEnvironmentVariable("APPDATA");
-					gpgHome = Path.Combine(gpgHome, "gnupg");
+					if (gpgHome != null)
+						gpgLocations.Add(gpgHome);
 				}
 			}
 
-			PublicKeyRingFile = Path.Combine(gpgHome, "pubring.gpg");
-			PrivateKeyRingFile = Path.Combine(gpgHome, "secring.gpg");
+			// Add default location to list
+			gpgHome = System.Environment.GetEnvironmentVariable("APPDATA");
+			gpgHome = Path.Combine(gpgHome, "gnupg");
+			gpgLocations.Add(gpgHome);
+
+			// Try all possible locations
+			foreach(var home in gpgLocations)
+			{
+				if (File.Exists(Path.Combine(home, _privateFilename)))
+				{
+					PublicKeyRingFile = Path.Combine(gpgHome, _publicFilename);
+					PrivateKeyRingFile = Path.Combine(gpgHome, _privateFilename);
+					return;
+				}
+
+				// Portable gnupg will use a subfolder named 'home'
+				if (File.Exists(Path.Combine(home, "home", _privateFilename)))
+				{
+					PublicKeyRingFile = Path.Combine(gpgHome, "home", _publicFilename);
+					PrivateKeyRingFile = Path.Combine(gpgHome, "home", _privateFilename);
+					return;
+				}
+			}
+
+			// failed to find keyrings!
+			throw new ApplicationException("Error, failed to locate keyrings! Please specify location using GNUPGHOME environmental variable.");
 		}
 
 		public CryptoContext(char[] password) : this()
@@ -81,6 +110,7 @@ namespace Deja.Crypto.BcPgp
         public string PublicKeyRingFile { get; set; }
         public string PrivateKeyRingFile { get; set; }
 
+		public bool FailedIntegrityCheck { get; set; }
         public bool IsCompressed { get; set; }
         public bool IsEncrypted { get; set; }
         public bool IsSigned { get; set; }

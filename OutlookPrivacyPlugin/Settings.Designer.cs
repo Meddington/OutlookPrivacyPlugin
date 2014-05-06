@@ -41,6 +41,7 @@
 			this.ReadTableLayout = new System.Windows.Forms.TableLayoutPanel();
 			this.VerifyCheckBox = new System.Windows.Forms.CheckBox();
 			this.DecryptCheckBox = new System.Windows.Forms.CheckBox();
+			this.IgnoreIntegrityCheckBox = new System.Windows.Forms.CheckBox();
 			this.ExchangeServerTab = new System.Windows.Forms.TabPage();
 			this.ExchangeServerTableLayout = new System.Windows.Forms.TableLayoutPanel();
 			this.DefaultDomainLabel = new System.Windows.Forms.Label();
@@ -80,8 +81,8 @@
 			// MainContainer.Panel2
 			// 
 			this.MainContainer.Panel2.Controls.Add(this.ButtonsContainer);
-			this.MainContainer.Size = new System.Drawing.Size(307, 252);
-			this.MainContainer.SplitterDistance = 218;
+			this.MainContainer.Size = new System.Drawing.Size(303, 166);
+			this.MainContainer.SplitterDistance = 137;
 			this.MainContainer.TabIndex = 0;
 			// 
 			// MainTabControl
@@ -94,7 +95,7 @@
 			this.MainTabControl.Location = new System.Drawing.Point(0, 0);
 			this.MainTabControl.Name = "MainTabControl";
 			this.MainTabControl.SelectedIndex = 0;
-			this.MainTabControl.Size = new System.Drawing.Size(307, 218);
+			this.MainTabControl.Size = new System.Drawing.Size(303, 137);
 			this.MainTabControl.TabIndex = 0;
 			// 
 			// ComposeTab
@@ -103,7 +104,7 @@
 			this.ComposeTab.Location = new System.Drawing.Point(4, 22);
 			this.ComposeTab.Name = "ComposeTab";
 			this.ComposeTab.Padding = new System.Windows.Forms.Padding(3);
-			this.ComposeTab.Size = new System.Drawing.Size(299, 192);
+			this.ComposeTab.Size = new System.Drawing.Size(295, 111);
 			this.ComposeTab.TabIndex = 0;
 			this.ComposeTab.Text = "Compose";
 			this.ComposeTab.UseVisualStyleBackColor = true;
@@ -128,7 +129,7 @@
 			this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-			this.ComposeTableLayout.Size = new System.Drawing.Size(293, 186);
+			this.ComposeTableLayout.Size = new System.Drawing.Size(289, 105);
 			this.ComposeTableLayout.TabIndex = 0;
 			// 
 			// SignCheckBox
@@ -156,7 +157,7 @@
 			this.Encrypt2SelfCheckBox.AutoSize = true;
 			this.Encrypt2SelfCheckBox.Location = new System.Drawing.Point(21, 49);
 			this.Encrypt2SelfCheckBox.Name = "Encrypt2SelfCheckBox";
-			this.Encrypt2SelfCheckBox.Size = new System.Drawing.Size(139, 17);
+			this.Encrypt2SelfCheckBox.Size = new System.Drawing.Size(138, 17);
 			this.Encrypt2SelfCheckBox.TabIndex = 1;
 			this.Encrypt2SelfCheckBox.Text = "Encrypt Mail To Self";
 			this.Encrypt2SelfCheckBox.UseVisualStyleBackColor = true;
@@ -177,7 +178,7 @@
 			this.ReadTab.Location = new System.Drawing.Point(4, 22);
 			this.ReadTab.Name = "ReadTab";
 			this.ReadTab.Padding = new System.Windows.Forms.Padding(3);
-			this.ReadTab.Size = new System.Drawing.Size(299, 192);
+			this.ReadTab.Size = new System.Drawing.Size(295, 111);
 			this.ReadTab.TabIndex = 1;
 			this.ReadTab.Text = "Read";
 			this.ReadTab.UseVisualStyleBackColor = true;
@@ -189,6 +190,7 @@
 			this.ReadTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
 			this.ReadTableLayout.Controls.Add(this.VerifyCheckBox, 1, 0);
 			this.ReadTableLayout.Controls.Add(this.DecryptCheckBox, 1, 1);
+			this.ReadTableLayout.Controls.Add(this.IgnoreIntegrityCheckBox, 1, 3);
 			this.ReadTableLayout.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.ReadTableLayout.Location = new System.Drawing.Point(3, 3);
 			this.ReadTableLayout.Name = "ReadTableLayout";
@@ -197,7 +199,7 @@
 			this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.ReadTableLayout.Size = new System.Drawing.Size(293, 186);
+			this.ReadTableLayout.Size = new System.Drawing.Size(289, 105);
 			this.ReadTableLayout.TabIndex = 1;
 			// 
 			// VerifyCheckBox
@@ -205,7 +207,7 @@
 			this.VerifyCheckBox.AutoSize = true;
 			this.VerifyCheckBox.Location = new System.Drawing.Point(21, 3);
 			this.VerifyCheckBox.Name = "VerifyCheckBox";
-			this.VerifyCheckBox.Size = new System.Drawing.Size(215, 17);
+			this.VerifyCheckBox.Size = new System.Drawing.Size(214, 17);
 			this.VerifyCheckBox.TabIndex = 0;
 			this.VerifyCheckBox.Text = "Automatically Verify Opened Mail";
 			this.VerifyCheckBox.UseVisualStyleBackColor = true;
@@ -220,13 +222,23 @@
 			this.DecryptCheckBox.Text = "Automatically Decrypt Opened Mail";
 			this.DecryptCheckBox.UseVisualStyleBackColor = true;
 			// 
+			// IgnoreIntegrityCheckBox
+			// 
+			this.IgnoreIntegrityCheckBox.AutoSize = true;
+			this.IgnoreIntegrityCheckBox.Location = new System.Drawing.Point(21, 49);
+			this.IgnoreIntegrityCheckBox.Name = "IgnoreIntegrityCheckBox";
+			this.IgnoreIntegrityCheckBox.Size = new System.Drawing.Size(204, 17);
+			this.IgnoreIntegrityCheckBox.TabIndex = 2;
+			this.IgnoreIntegrityCheckBox.Text = "Ignore Integrity Check Failures";
+			this.IgnoreIntegrityCheckBox.UseVisualStyleBackColor = true;
+			// 
 			// ExchangeServerTab
 			// 
 			this.ExchangeServerTab.Controls.Add(this.ExchangeServerTableLayout);
 			this.ExchangeServerTab.Location = new System.Drawing.Point(4, 22);
 			this.ExchangeServerTab.Name = "ExchangeServerTab";
 			this.ExchangeServerTab.Padding = new System.Windows.Forms.Padding(3);
-			this.ExchangeServerTab.Size = new System.Drawing.Size(299, 192);
+			this.ExchangeServerTab.Size = new System.Drawing.Size(295, 111);
 			this.ExchangeServerTab.TabIndex = 3;
 			this.ExchangeServerTab.Text = "Exchange Server";
 			this.ExchangeServerTab.UseVisualStyleBackColor = true;
@@ -244,7 +256,7 @@
 			this.ExchangeServerTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ExchangeServerTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ExchangeServerTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-			this.ExchangeServerTableLayout.Size = new System.Drawing.Size(255, 163);
+			this.ExchangeServerTableLayout.Size = new System.Drawing.Size(287, 163);
 			this.ExchangeServerTableLayout.TabIndex = 0;
 			// 
 			// DefaultDomainLabel
@@ -254,7 +266,7 @@
 			this.DefaultDomainLabel.Location = new System.Drawing.Point(21, 0);
 			this.DefaultDomainLabel.Name = "DefaultDomainLabel";
 			this.DefaultDomainLabel.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-			this.DefaultDomainLabel.Size = new System.Drawing.Size(231, 23);
+			this.DefaultDomainLabel.Size = new System.Drawing.Size(263, 23);
 			this.DefaultDomainLabel.TabIndex = 0;
 			this.DefaultDomainLabel.Text = "Default Domain Name";
 			// 
@@ -266,7 +278,7 @@
 			this.DefaultDomainTextBox.Location = new System.Drawing.Point(21, 26);
 			this.DefaultDomainTextBox.MaxLength = 64;
 			this.DefaultDomainTextBox.Name = "DefaultDomainTextBox";
-			this.DefaultDomainTextBox.Size = new System.Drawing.Size(231, 20);
+			this.DefaultDomainTextBox.Size = new System.Drawing.Size(263, 20);
 			this.DefaultDomainTextBox.TabIndex = 1;
 			this.DefaultDomainTextBox.TextChanged += new System.EventHandler(this.DefaultDomainTextBox_TextChanged);
 			// 
@@ -279,8 +291,8 @@
 			// ButtonsContainer.Panel2
 			// 
 			this.ButtonsContainer.Panel2.Controls.Add(this.OkButton);
-			this.ButtonsContainer.Size = new System.Drawing.Size(307, 30);
-			this.ButtonsContainer.SplitterDistance = 146;
+			this.ButtonsContainer.Size = new System.Drawing.Size(303, 25);
+			this.ButtonsContainer.SplitterDistance = 143;
 			this.ButtonsContainer.SplitterWidth = 5;
 			this.ButtonsContainer.TabIndex = 0;
 			// 
@@ -290,7 +302,7 @@
 			this.OkButton.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.OkButton.Location = new System.Drawing.Point(0, 0);
 			this.OkButton.Name = "OkButton";
-			this.OkButton.Size = new System.Drawing.Size(156, 30);
+			this.OkButton.Size = new System.Drawing.Size(155, 25);
 			this.OkButton.TabIndex = 0;
 			this.OkButton.Text = "Ok";
 			this.OkButton.UseVisualStyleBackColor = true;
@@ -310,7 +322,7 @@
 			this.AcceptButton = this.OkButton;
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(307, 252);
+			this.ClientSize = new System.Drawing.Size(303, 166);
 			this.Controls.Add(this.MainContainer);
 			this.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -361,5 +373,6 @@
     private System.Windows.Forms.Label DefaultDomainLabel;
 	private System.Windows.Forms.TextBox DefaultDomainTextBox;
 	private System.Windows.Forms.CheckBox Default2PlainTextCheckBox;
+	private System.Windows.Forms.CheckBox IgnoreIntegrityCheckBox;
   }
 }

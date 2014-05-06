@@ -22,12 +22,20 @@ namespace OutlookPrivacyPlugin
 
 			Default2PlainFormat = settings.Default2PlainFormat;
 
+			IgnoreIntegrityCheck = settings.IgnoreIntegrityCheck;
+
 			// Temporary disable all settings regarding auto-verify/decrypt
 			// MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
 		}
 
 		private string m_DefaultKey;
 		internal string DefaultKey { get { return m_DefaultKey; } set { m_DefaultKey = value; } }
+
+		internal bool IgnoreIntegrityCheck
+		{
+			get { return IgnoreIntegrityCheckBox.Checked; }
+			set { IgnoreIntegrityCheckBox.Checked = value; }
+		}
 
 		internal bool Default2PlainFormat
 		{

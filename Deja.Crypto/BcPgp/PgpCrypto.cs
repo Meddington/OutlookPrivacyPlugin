@@ -515,6 +515,39 @@ namespace Deja.Crypto.BcPgp
 			}
 		}
 
+		public string PublicKey(string email, Dictionary<string, string> headers)
+		{
+			Context = new CryptoContext(Context);
+
+			var publicKey = GetPublicKeyForEncryption(email);
+			var sigKey = GetSecretKeyForSigning(email);
+			var literalData = new PgpLiteralDataGenerator();
+			var data = publicKey.GetEncoded();
+
+			using (var sout = new MemoryStream())
+			{
+				using (var armoredOut = new ArmoredOutputStream(sout))
+				{
+					foreach (var header in headers)
+						armoredOut.SetHeader(header.Key, header.Value);
+
+					//using (var literalOut = literalData.Open(
+					//	armoredOut,
+					//	PgpLiteralData.Binary,
+					//	"email",
+					//	data.Length,
+					//	DateTime.UtcNow))
+					//{
+					//	literalOut.Write(data, 0, data.Length);
+					//}
+
+					armoredOut.Write(data);
+				}
+
+				return ASCIIEncoding.ASCII.GetString(sout.ToArray());
+			}
+		}
+
 		/// <summary>
 		/// Encrypt data to a set of recipients
 		/// </summary>
@@ -701,6 +734,8 @@ namespace Deja.Crypto.BcPgp
 					var factory = new PgpObjectFactory(armoredIn);
 
 					DecryptHandlePgpObject(factory.NextPgpObject());
+					if (Context.FailedIntegrityCheck)
+						throw new VerifyException("Error, failed validation check.");
 
 					if (!Context.IsSigned)
 						throw new CryptoException("Error, message is not signed.");
@@ -801,7 +836,7 @@ namespace Deja.Crypto.BcPgp
 		/// </summary>
 		/// <param name="data">Data to decrypt and verify</param>
 		/// <returns>Returns decrypted data if signature verifies.</returns>
-        public byte[] DecryptAndVerify(byte[] data)
+        public byte[] DecryptAndVerify(byte[] data, bool ignoreIntegrityCheck = false)
         {
 			Context = new CryptoContext(Context);
 
@@ -822,6 +857,9 @@ namespace Deja.Crypto.BcPgp
 								continue;
 
 							var ret = DecryptHandlePgpObject(obj);
+							if (Context.FailedIntegrityCheck && !ignoreIntegrityCheck)
+								throw new VerifyException("Data not integrity protected.");
+
 							return ret;
 						}
 					}
@@ -837,6 +875,9 @@ namespace Deja.Crypto.BcPgp
 							continue;
 
 						var ret = DecryptHandlePgpObject(obj);
+						if (Context.FailedIntegrityCheck && !ignoreIntegrityCheck)
+							throw new VerifyException("Data not integrity protected.");
+
 						return ret;
 					}
 				}
@@ -882,8 +923,21 @@ namespace Deja.Crypto.BcPgp
 								ret = r;
 						}
 
+						// This can fail due to integrity protection missing.
+						// Legacy systems to not have this protection
+						// Should make an option to ignore.
+						try
+						{
 						if (!encryptedData.Verify())
 							throw new VerifyException("Verify of encrypted data failed!");
+					}
+						catch (PgpException exx)
+						{
+							if (exx.Message == "data not integrity protected.")
+								Context.FailedIntegrityCheck = true;
+							else
+								throw;
+						}
 					}
 					catch (PgpException ex)
 					{

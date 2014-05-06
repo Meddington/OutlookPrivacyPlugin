@@ -9,10 +9,10 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="AutoVerify" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="AutoDecrypt" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="DefaultKey" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
@@ -45,6 +45,9 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="GnuPgTrustModel" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="IgnoreIntegrityCheck" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
