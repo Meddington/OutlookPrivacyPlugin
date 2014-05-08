@@ -419,12 +419,13 @@ namespace OutlookPrivacyPlugin
 				else
 				{
 					bool foundPgpMime = false;
-					bool foundPgpSigMime = false;
 					string sigHash = "sha1";
 					Microsoft.Office.Interop.Outlook.Attachment encryptedMime = null;
 					Microsoft.Office.Interop.Outlook.Attachment sigMime = null;
 
 					var contentType = mailItem.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/content-type/0x0000001F");
+
+					logger.Trace("MIME: Message content-type: " + (string)contentType);
 
 					if (((string)contentType).Contains("application/pgp-signature"))
 					{
@@ -444,6 +445,8 @@ namespace OutlookPrivacyPlugin
 					{
 						var mimeEncoding = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001F");
 
+						logger.Trace("MIME: Attachment type: " + mimeEncoding);
+
 						if (mimeEncoding == "application/pgp-encrypted")
 						{
 							logger.Trace("MIME: Found application/pgp-encrypted.");
@@ -454,21 +457,22 @@ namespace OutlookPrivacyPlugin
 							logger.Trace("MIME: Found application/pgp-signature");
 							sigMime = attachment;
 						}
-
-						// Should be first attachment *after* PGP_MIME version identification
 						else if (foundPgpMime && encryptedMime == null && mimeEncoding == "application/octet-stream")
 						{
+							// Should be first attachment *after* PGP_MIME version identification
+
 							logger.Trace("MIME: Found octet-stream following pgp-encrypted.");
 							encryptedMime = attachment;
-					}
+						}
 					}
 
 					if (encryptedMime != null || sigMime != null)
 					{
+						logger.Trace("MIME: Calling HandlePgpMime");
 						HandlePgpMime(mailItem, encryptedMime, sigMime, sigHash);
 
 						if(encryptedMime != null)
-						SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
+							SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
 					}
 				}
 
@@ -497,6 +501,82 @@ namespace OutlookPrivacyPlugin
 
 			return mailItem.PropertyAccessor.GetProperty(schema);
 			//return null;
+		}
+
+		/// <summary>
+		/// Add "- " prefix as needed
+		/// </summary>
+		/// <param name="msg"></param>
+		/// <returns></returns>
+		string PgpClearDashEscapeAndQuoteEncode(string msg)
+		{
+			var writer = new StringWriter();
+			using (var reader = new StringReader(msg))
+			{
+				while(true)
+				{
+					var line = EncodeQuotedPrintable(reader.ReadLine());
+					if(line == null)
+						break;
+
+					if (line.Length > 0 && line[0] == '-')
+						writer.Write("- ");
+
+					writer.WriteLine(line);
+				}
+			}
+
+			return writer.ToString();
+		}
+
+		Encoding GetEncodingFromMail(Outlook.MailItem mailItem)
+		{
+			var contentType = mailItem.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/content-type/0x0000001F");
+
+			var match = Regex.Match(contentType, "charset=\"([^\"]+)\"");
+			if (!match.Success)
+				return Encoding.UTF8;
+
+			return Encoding.GetEncoding(match.Groups[1].Value);
+		}
+
+		public static string EncodeQuotedPrintable(string value)
+		{
+			if (string.IsNullOrEmpty(value))
+				return value;
+
+			StringBuilder builder = new StringBuilder();
+
+			char[] bytes = value.ToCharArray();
+			foreach (char v in bytes)
+			{
+				// The following are not required to be encoded:
+				// - Tab (ASCII 9)
+				// - Space (ASCII 32)
+				// - Characters 33 to 126, except for the equal sign (61).
+
+				if (v == '\n' || v == '\r')
+					builder.Append(v);
+
+				else if ((v == 9) || ((v >= 32) && (v <= 60)) || ((v >= 62) && (v <= 126)))
+					builder.Append(v);
+
+				else
+				{
+					builder.Append('=');
+					builder.Append(((int)v).ToString("X2"));
+				}
+			}
+
+			char lastChar = builder[builder.Length - 1];
+			if (char.IsWhiteSpace(lastChar))
+			{
+				builder.Remove(builder.Length - 1, 1);
+				builder.Append('=');
+				builder.Append(((int)lastChar).ToString("X2"));
+			}
+
+			return builder.ToString();
 		}
 
 		void HandlePgpMime(Outlook.MailItem mailItem, Microsoft.Office.Interop.Outlook.Attachment encryptedMime,
@@ -548,11 +628,19 @@ namespace OutlookPrivacyPlugin
 					// the rules for are the same with the addition of two heaer fields.
 					// Ultimately we need to get these fields out of email itself.
 
+					var encoding = GetEncodingFromMail(mailItem);
+
 					var clearsig = string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\n\r\n", sigHash);
-					clearsig += "Content-Type: text/plain; charset=ISO-8859-1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n";
-					clearsig += ASCIIEncoding.ASCII.GetString(
+					//clearsig += "Content-Type: text/plain; charset=ISO-8859-1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n";
+					clearsig += "Content-Type: text/plain; charset=" + 
+						encoding.BodyName.ToUpper()+
+						"\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n";
+
+					clearsig += PgpClearDashEscapeAndQuoteEncode(
+						encoding.GetString(
 						(byte[])mailItem.PropertyAccessor.GetProperty(
-						"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102"));
+							"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102")));
+
 					clearsig += "\r\n"+detachedsig;
 
 					logger.Trace(clearsig);
@@ -1635,6 +1723,7 @@ namespace OutlookPrivacyPlugin
 			_settings.DefaultKey = settingsBox.DefaultKey;
 			_settings.DefaultDomain = settingsBox.DefaultDomain;
 			_settings.Default2PlainFormat = settingsBox.Default2PlainFormat;
+			_settings.IgnoreIntegrityCheck = settingsBox.IgnoreIntegrityCheck;
 			_settings.Save();
 		}
 
