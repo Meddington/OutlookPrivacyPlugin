@@ -121,5 +121,10 @@ namespace OutlookPrivacyPlugin
 		{
 			DefaultDomain = DefaultDomainTextBox.Text;
 		}
+
+		private void Settings_Load(object sender, System.EventArgs e)
+		{
+
+		}
 	}
 }

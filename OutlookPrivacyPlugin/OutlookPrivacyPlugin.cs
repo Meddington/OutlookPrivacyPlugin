@@ -321,6 +321,9 @@ namespace OutlookPrivacyPlugin
 			if (mailItem == null)
 				return;
 
+			OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Sign", false);
+			OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
+
 			// New mail (Compose)
 			if (mailItem.Sent == false)
 			{
@@ -336,6 +339,9 @@ namespace OutlookPrivacyPlugin
 				{
 					ribbon.EncryptButton.Checked = true;
 				}
+
+				OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Sign", ribbon.SignButton.Checked);
+				OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Encrypt", ribbon.EncryptButton.Checked);
 
 				ribbon.InvalidateButtons();
 
@@ -486,7 +492,7 @@ namespace OutlookPrivacyPlugin
 			ribbon.InvalidateButtons();
 		}
 
-		void SetProperty(Outlook.MailItem mailItem, string name, object value)
+		public static void SetProperty(Outlook.MailItem mailItem, string name, object value)
 		{
 //			var schema = "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/" + name;
 			var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
@@ -494,7 +500,7 @@ namespace OutlookPrivacyPlugin
 			mailItem.PropertyAccessor.SetProperty(schema, value);
 		}
 
-		object GetProperty(Outlook.MailItem mailItem, string name)
+		public static object GetProperty(Outlook.MailItem mailItem, string name)
 		{
 			//var schema = "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/" + name;
 			var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
@@ -1001,7 +1007,7 @@ namespace OutlookPrivacyPlugin
 				return exUser.PrimarySmtpAddress;
 			}
 
-			throw new Exception("Error, unable to determin senders address.");
+			throw new Exception("Error, unable to determine senders address.");
 		}
 
 		#region Send Logic

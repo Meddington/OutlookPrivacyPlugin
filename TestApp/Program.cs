@@ -15,10 +15,14 @@ namespace TestApp
 			var context = new CryptoContext(args[0].ToCharArray());
 			var crypto = new PgpCrypto(context);
 
-			if (crypto.VerifyClear(File.ReadAllBytes(args[1])))
-				Console.WriteLine("Valid");
-			else
-				Console.WriteLine("Invalid");
+			Console.WriteLine(ASCIIEncoding.ASCII.GetString(crypto.DecryptAndVerify(File.ReadAllBytes(args[1]), true)));
+
+			if (context.FailedIntegrityCheck)
+				Console.WriteLine("Failed integrity check");
+
+			Console.WriteLine("Done");
+
+
 		}
 	}
 }

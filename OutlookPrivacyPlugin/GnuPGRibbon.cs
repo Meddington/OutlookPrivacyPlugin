@@ -25,11 +25,27 @@ using Outlook = Microsoft.Office.Interop.Outlook;
 using Deja.Crypto.BcPgp;
 using System.Text.RegularExpressions;
 
+using NLog;
+
 namespace OutlookPrivacyPlugin
 {
+	public class ButtonStateData
+	{
+		public bool SignButton = false;
+		public bool EncryptButton = false;
+
+		public ButtonStateData(bool sign, bool encrypt)
+		{
+			SignButton = sign;
+			EncryptButton = encrypt;
+		}
+	}
+
 	[ComVisible(true)]
 	public class GnuPGRibbon : Office.IRibbonExtensibility
 	{
+		static NLog.Logger logger = LogManager.GetCurrentClassLogger();
+
 		private Office.IRibbonUI ribbon;
 
 		public GnuPGToggleButton SignButton;
@@ -37,6 +53,8 @@ namespace OutlookPrivacyPlugin
 		public GnuPGToggleButton VerifyButton;
 		public GnuPGToggleButton DecryptButton;
 		public GnuPGToggleButton AttachPublicKeyButton;
+
+		public Dictionary<string, ButtonStateData> ButtonState = new Dictionary<string, ButtonStateData>();
 
 		private Dictionary<string, GnuPGToggleButton> Buttons = new Dictionary<string, GnuPGToggleButton>();
 
@@ -110,9 +128,14 @@ namespace OutlookPrivacyPlugin
 
 		public void OnEncryptButton(Office.IRibbonControl control, bool isPressed)
 		{
+			logger.Trace("OnEncryptButton("+control.Id+", "+isPressed+")");
+
+			Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+			if (mailItem == null)
+				logger.Trace("OnEncryptButton: mailItem == null");
+
 			if (isPressed == true)
 			{
-				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 				if (mailItem != null)
 				{
 					var settings = new Properties.Settings();
@@ -125,6 +148,7 @@ namespace OutlookPrivacyPlugin
 				}
 			}
 
+			OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Encrypt", isPressed);
 			EncryptButton.Checked = isPressed;
 			ribbon.InvalidateControl(EncryptButton.Id);
 		}
@@ -138,9 +162,10 @@ namespace OutlookPrivacyPlugin
 
 		public void OnSignButton(Office.IRibbonControl control, bool isPressed)
 		{
+			Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+
 			if (isPressed == true)
 			{
-				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 				if (mailItem != null)
 				{
 					var settings = new Properties.Settings();
@@ -153,6 +178,7 @@ namespace OutlookPrivacyPlugin
 				}
 			}
 
+			OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Sign", isPressed);
 			SignButton.Checked = isPressed;
 			ribbon.InvalidateControl(SignButton.Id);
 		}
@@ -253,8 +279,24 @@ namespace OutlookPrivacyPlugin
 
 		public bool GetPressed(Office.IRibbonControl control)
 		{
+			logger.Trace("GetPressed("+control.Id+")");
+
+			if (control.Id == SignButton.Id)
+			{
+				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Sign");
+			}
+			else if (control.Id == EncryptButton.Id)
+			{
+				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Encrypt");
+			}
+			else
+				logger.Trace("GetPressed: Button did not match encrypt or sign!");
+
 			if (Buttons.ContainsKey(control.Id))
 				return Buttons[control.Id].Checked;
+
 			return false;
 		}
 

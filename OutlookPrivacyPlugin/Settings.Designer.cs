@@ -81,7 +81,7 @@
 			// MainContainer.Panel2
 			// 
 			this.MainContainer.Panel2.Controls.Add(this.ButtonsContainer);
-			this.MainContainer.Size = new System.Drawing.Size(303, 166);
+			this.MainContainer.Size = new System.Drawing.Size(353, 166);
 			this.MainContainer.SplitterDistance = 137;
 			this.MainContainer.TabIndex = 0;
 			// 
@@ -95,7 +95,7 @@
 			this.MainTabControl.Location = new System.Drawing.Point(0, 0);
 			this.MainTabControl.Name = "MainTabControl";
 			this.MainTabControl.SelectedIndex = 0;
-			this.MainTabControl.Size = new System.Drawing.Size(303, 137);
+			this.MainTabControl.Size = new System.Drawing.Size(353, 137);
 			this.MainTabControl.TabIndex = 0;
 			// 
 			// ComposeTab
@@ -104,13 +104,15 @@
 			this.ComposeTab.Location = new System.Drawing.Point(4, 22);
 			this.ComposeTab.Name = "ComposeTab";
 			this.ComposeTab.Padding = new System.Windows.Forms.Padding(3);
-			this.ComposeTab.Size = new System.Drawing.Size(295, 111);
+			this.ComposeTab.Size = new System.Drawing.Size(345, 111);
 			this.ComposeTab.TabIndex = 0;
 			this.ComposeTab.Text = "Compose";
 			this.ComposeTab.UseVisualStyleBackColor = true;
 			// 
 			// ComposeTableLayout
 			// 
+			this.ComposeTableLayout.AutoSize = true;
+			this.ComposeTableLayout.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
 			this.ComposeTableLayout.ColumnCount = 2;
 			this.ComposeTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 18F));
 			this.ComposeTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
@@ -129,7 +131,7 @@
 			this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ComposeTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-			this.ComposeTableLayout.Size = new System.Drawing.Size(289, 105);
+			this.ComposeTableLayout.Size = new System.Drawing.Size(339, 105);
 			this.ComposeTableLayout.TabIndex = 0;
 			// 
 			// SignCheckBox
@@ -178,13 +180,15 @@
 			this.ReadTab.Location = new System.Drawing.Point(4, 22);
 			this.ReadTab.Name = "ReadTab";
 			this.ReadTab.Padding = new System.Windows.Forms.Padding(3);
-			this.ReadTab.Size = new System.Drawing.Size(295, 111);
+			this.ReadTab.Size = new System.Drawing.Size(345, 111);
 			this.ReadTab.TabIndex = 1;
 			this.ReadTab.Text = "Read";
 			this.ReadTab.UseVisualStyleBackColor = true;
 			// 
 			// ReadTableLayout
 			// 
+			this.ReadTableLayout.AutoSize = true;
+			this.ReadTableLayout.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
 			this.ReadTableLayout.ColumnCount = 2;
 			this.ReadTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 18F));
 			this.ReadTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
@@ -199,7 +203,7 @@
 			this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ReadTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.ReadTableLayout.Size = new System.Drawing.Size(289, 105);
+			this.ReadTableLayout.Size = new System.Drawing.Size(339, 105);
 			this.ReadTableLayout.TabIndex = 1;
 			// 
 			// VerifyCheckBox
@@ -238,25 +242,28 @@
 			this.ExchangeServerTab.Location = new System.Drawing.Point(4, 22);
 			this.ExchangeServerTab.Name = "ExchangeServerTab";
 			this.ExchangeServerTab.Padding = new System.Windows.Forms.Padding(3);
-			this.ExchangeServerTab.Size = new System.Drawing.Size(295, 111);
+			this.ExchangeServerTab.Size = new System.Drawing.Size(345, 111);
 			this.ExchangeServerTab.TabIndex = 3;
 			this.ExchangeServerTab.Text = "Exchange Server";
 			this.ExchangeServerTab.UseVisualStyleBackColor = true;
 			// 
 			// ExchangeServerTableLayout
 			// 
+			this.ExchangeServerTableLayout.AutoSize = true;
+			this.ExchangeServerTableLayout.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
 			this.ExchangeServerTableLayout.ColumnCount = 2;
 			this.ExchangeServerTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 18F));
 			this.ExchangeServerTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
 			this.ExchangeServerTableLayout.Controls.Add(this.DefaultDomainLabel, 1, 0);
 			this.ExchangeServerTableLayout.Controls.Add(this.DefaultDomainTextBox, 1, 1);
+			this.ExchangeServerTableLayout.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.ExchangeServerTableLayout.Location = new System.Drawing.Point(3, 3);
 			this.ExchangeServerTableLayout.Name = "ExchangeServerTableLayout";
 			this.ExchangeServerTableLayout.RowCount = 3;
 			this.ExchangeServerTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ExchangeServerTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.ExchangeServerTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-			this.ExchangeServerTableLayout.Size = new System.Drawing.Size(287, 163);
+			this.ExchangeServerTableLayout.Size = new System.Drawing.Size(339, 105);
 			this.ExchangeServerTableLayout.TabIndex = 0;
 			// 
 			// DefaultDomainLabel
@@ -266,7 +273,7 @@
 			this.DefaultDomainLabel.Location = new System.Drawing.Point(21, 0);
 			this.DefaultDomainLabel.Name = "DefaultDomainLabel";
 			this.DefaultDomainLabel.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
-			this.DefaultDomainLabel.Size = new System.Drawing.Size(263, 23);
+			this.DefaultDomainLabel.Size = new System.Drawing.Size(315, 23);
 			this.DefaultDomainLabel.TabIndex = 0;
 			this.DefaultDomainLabel.Text = "Default Domain Name";
 			// 
@@ -278,7 +285,7 @@
 			this.DefaultDomainTextBox.Location = new System.Drawing.Point(21, 26);
 			this.DefaultDomainTextBox.MaxLength = 64;
 			this.DefaultDomainTextBox.Name = "DefaultDomainTextBox";
-			this.DefaultDomainTextBox.Size = new System.Drawing.Size(263, 20);
+			this.DefaultDomainTextBox.Size = new System.Drawing.Size(315, 20);
 			this.DefaultDomainTextBox.TabIndex = 1;
 			this.DefaultDomainTextBox.TextChanged += new System.EventHandler(this.DefaultDomainTextBox_TextChanged);
 			// 
@@ -291,8 +298,8 @@
 			// ButtonsContainer.Panel2
 			// 
 			this.ButtonsContainer.Panel2.Controls.Add(this.OkButton);
-			this.ButtonsContainer.Size = new System.Drawing.Size(303, 25);
-			this.ButtonsContainer.SplitterDistance = 143;
+			this.ButtonsContainer.Size = new System.Drawing.Size(353, 25);
+			this.ButtonsContainer.SplitterDistance = 166;
 			this.ButtonsContainer.SplitterWidth = 5;
 			this.ButtonsContainer.TabIndex = 0;
 			// 
@@ -302,7 +309,7 @@
 			this.OkButton.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.OkButton.Location = new System.Drawing.Point(0, 0);
 			this.OkButton.Name = "OkButton";
-			this.OkButton.Size = new System.Drawing.Size(155, 25);
+			this.OkButton.Size = new System.Drawing.Size(182, 25);
 			this.OkButton.TabIndex = 0;
 			this.OkButton.Text = "Ok";
 			this.OkButton.UseVisualStyleBackColor = true;
@@ -320,27 +327,32 @@
 			// Settings
 			// 
 			this.AcceptButton = this.OkButton;
-			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 13F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(303, 166);
+			this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+			this.AutoSize = true;
+			this.ClientSize = new System.Drawing.Size(353, 166);
 			this.Controls.Add(this.MainContainer);
 			this.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
 			this.Name = "Settings";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Settings";
+			this.Load += new System.EventHandler(this.Settings_Load);
 			this.MainContainer.Panel1.ResumeLayout(false);
 			this.MainContainer.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.MainContainer)).EndInit();
 			this.MainContainer.ResumeLayout(false);
 			this.MainTabControl.ResumeLayout(false);
 			this.ComposeTab.ResumeLayout(false);
+			this.ComposeTab.PerformLayout();
 			this.ComposeTableLayout.ResumeLayout(false);
 			this.ComposeTableLayout.PerformLayout();
 			this.ReadTab.ResumeLayout(false);
+			this.ReadTab.PerformLayout();
 			this.ReadTableLayout.ResumeLayout(false);
 			this.ReadTableLayout.PerformLayout();
 			this.ExchangeServerTab.ResumeLayout(false);
+			this.ExchangeServerTab.PerformLayout();
 			this.ExchangeServerTableLayout.ResumeLayout(false);
 			this.ExchangeServerTableLayout.PerformLayout();
 			this.ButtonsContainer.Panel2.ResumeLayout(false);

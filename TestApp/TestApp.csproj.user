@@ -4,4 +4,7 @@
     <StartArguments>
     </StartArguments>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <StartArguments>c:\temp\out.txt</StartArguments>
+  </PropertyGroup>
 </Project>

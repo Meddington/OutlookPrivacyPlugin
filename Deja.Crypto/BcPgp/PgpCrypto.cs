@@ -905,7 +905,7 @@ namespace Deja.Crypto.BcPgp
 				{
 					try
 					{
-						// NOTE: When content is encrypted to multiple reciepents, only one of these blocks
+						// NOTE: When content is encrypted to multiple recipients, only one of these blocks
 						//       will match a known KeyId.  If a match is never made, then there is a problem :)
 						Context.SecretKey = GetSecretKey(encryptedData.KeyId);
 						if (Context.SecretKey == null)
@@ -928,9 +928,9 @@ namespace Deja.Crypto.BcPgp
 						// Should make an option to ignore.
 						try
 						{
-						if (!encryptedData.Verify())
-							throw new VerifyException("Verify of encrypted data failed!");
-					}
+							if (!encryptedData.Verify())
+								throw new VerifyException("Verify of encrypted data failed!");
+						}
 						catch (PgpException exx)
 						{
 							if (exx.Message == "data not integrity protected.")
@@ -1039,7 +1039,7 @@ namespace Deja.Crypto.BcPgp
 			}
 			else
 			{
-				throw new CryptoException("Unknown Pgp Object: " + obj.ToString());
+				throw new CryptoException("Unknown Pgp Object: " + obj.GetType().ToString());
 			}
 
 			return ret;
