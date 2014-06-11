@@ -10,6 +10,10 @@ Outlook Privacy Plugin is a security extension for Outlook. It enables Outlook t
 
 See the https://github.com/dejavusecurity/OutlookPrivacyPlugin/releases[releases] page for downloads and release notes.
 
+=== 0. Download
+
+Download the latest release from the the https://github.com/dejavusecurity/OutlookPrivacyPlugin/releases[releases] page.
+
 === 1. Install Gpg4win
 
 Install http://www.gpg4win.org/[gpg4win] and import or create keys as needed. Verify you can see all expected keys from the gpg4win key manager software.
