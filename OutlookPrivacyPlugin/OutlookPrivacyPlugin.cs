@@ -299,6 +299,33 @@ namespace OutlookPrivacyPlugin
 			_WrappedObjects.Remove(id);
 		}
 
+        /// <summary>
+        /// Helper function to read the content type from the email.
+        /// </summary>
+        /// <param name="mailItem"></param>
+        /// <returns></returns>
+        private string ReadContentType(Outlook.MailItem mailItem)
+        {
+            object contentType = null;
+            try
+            {
+                contentType = mailItem.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/content-type/0x0000001F");
+            }
+            catch (Exception)
+            {
+                object[] schemanames = { "http://schemas.microsoft.com/mapi/proptag/0x007D001F" };
+                object[] allProperties = mailItem.PropertyAccessor.GetProperties(schemanames);
+                string allHeaders = (string)allProperties[0];
+                foreach (var str in allHeaders.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
+                {
+                    const string strContentType = "Content-Type: ";
+                    if (str.StartsWith(strContentType))
+                        contentType = str.Substring(strContentType.Length);
+                }
+            }
+            return (string)contentType;
+        }
+
 		/// <summary>
 		/// WrapperEvent fired when a mailItem is opened.
 		/// This handler is designed to initialize the state of the compose button
@@ -421,7 +448,7 @@ namespace OutlookPrivacyPlugin
 					Microsoft.Office.Interop.Outlook.Attachment encryptedMime = null;
 					Microsoft.Office.Interop.Outlook.Attachment sigMime = null;
 
-					var contentType = mailItem.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/content-type/0x0000001F");
+					var contentType = ReadContentType(mailItem);
 
 					logger.Trace("MIME: Message content-type: " + (string)contentType);
 
@@ -529,7 +556,7 @@ namespace OutlookPrivacyPlugin
 
 		Encoding GetEncodingFromMail(Outlook.MailItem mailItem)
 		{
-			var contentType = mailItem.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/content-type/0x0000001F");
+		    var contentType = ReadContentType(mailItem);
 
 			var match = Regex.Match(contentType, "charset=\"([^\"]+)\"");
 			if (!match.Success)
