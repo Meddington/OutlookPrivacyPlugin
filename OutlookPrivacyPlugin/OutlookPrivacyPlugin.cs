@@ -2,23 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Office = Microsoft.Office.Core;
 
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Drawing;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Reflection;
-using OutlookPrivacyPlugin.Properties;
 using Exception = System.Exception;
 using anmar.SharpMimeTools;
-using System.Timers;
 
 using Deja.Crypto.BcPgp;
 using NLog;
@@ -591,7 +583,6 @@ namespace OutlookPrivacyPlugin
 			logger.Trace("> HandlePgpMime");
 			CryptoContext Context = null;
 
-			string sig = null;
 			byte[] cyphertext = null;
 			string cleartext = mailItem.Body;
 
@@ -814,17 +805,21 @@ namespace OutlookPrivacyPlugin
 				if (mailItem.Sent == false)
 				{
 					bool toSave = false;
-					var SignProperpty = GetProperty(mailItem, "GnuPGSetting.Sign");
-					if (SignProperpty == null || (bool)SignProperpty != ribbon.SignButton.Checked)
+					var signProperpty = GetProperty(mailItem, "GnuPGSetting.Sign");
+					if (signProperpty == null || (bool)signProperpty != ribbon.SignButton.Checked)
 					{
 						toSave = true;
 					}
 
-					var EncryptProperpty = GetProperty(mailItem, "GnuPGSetting.Decrypted");
-					if (EncryptProperpty == null || (bool)EncryptProperpty != ribbon.EncryptButton.Checked)
+					var encryptProperpty = GetProperty(mailItem, "GnuPGSetting.Decrypted");
+					if (encryptProperpty == null || (bool)encryptProperpty != ribbon.EncryptButton.Checked)
 					{
 						toSave = true;
 					}
+
+                    SetProperty(mailItem, "GnuPGSetting.Sign", false);
+                    SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
+
 					if (toSave == true)
 					{
 #if DISABLED
@@ -856,10 +851,30 @@ namespace OutlookPrivacyPlugin
 				}
 				else
 				{
-					var SignProperty = GetProperty(mailItem, "GnuPGSetting.Decrypted");
-					if (SignProperty != null && (bool)SignProperty)
+                    SetProperty(mailItem, "GnuPGSetting.Sign", false);
+                    SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
+
+                    var signProperty = GetProperty(mailItem, "GnuPGSetting.Decrypted");
+                    SetProperty(mailItem, "GnuPGSetting.Decrypted", false);
+
+                    if (signProperty != null && (bool)signProperty)
 					{
-						mailItem.Close(Microsoft.Office.Interop.Outlook.OlInspectorClose.olDiscard);
+                        // NOTE: Cannot call mailItem.Close from Close event handler
+                        //       instead we will start a timer and call it after we
+                        //       return. There is a small race condition, but 250
+                        //       milliseconds should be enough even on slow machines.
+
+                        var timer = new System.Windows.Forms.Timer { Interval = 250 };
+                        timer.Tick += new EventHandler((o, e) =>
+					{
+                            timer.Stop();
+                            ((Outlook._MailItem)mailItem).Close(
+                                Microsoft.Office.Interop.Outlook.OlInspectorClose.olDiscard);
+                        });
+
+					    timer.Start();
+
+					    Cancel = true;
 					}
 				}
 			}
@@ -1013,8 +1028,7 @@ namespace OutlookPrivacyPlugin
 		#region Send Logic
 		private void Application_ItemSend(object Item, ref bool Cancel)
 		{
-			Outlook.MailItem mailItem = Item as Outlook.MailItem;
-
+			var mailItem = Item as Outlook.MailItem;
 			if (mailItem == null)
 				return;
 
@@ -1026,6 +1040,9 @@ namespace OutlookPrivacyPlugin
 			Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
 			bool needToEncrypt = currentRibbon.EncryptButton.Checked;
 			bool needToSign = currentRibbon.SignButton.Checked;
+
+            currentRibbon.EncryptButton.Checked = false;
+            currentRibbon.SignButton.Checked = false;
 
 			// Early out when we don't need to sign/encrypt
 			if (!needToEncrypt && !needToSign)
@@ -1058,9 +1075,9 @@ namespace OutlookPrivacyPlugin
 					foreach (Outlook.Recipient mailRecipient in mailItem.Recipients)
 						mailRecipients.Add(GetAddressCN(((Outlook.Recipient)mailRecipient).Address));
 
-					Recipient recipientDialog = new Recipient(mailRecipients); // Passing in the first addres, maybe it matches
+					var recipientDialog = new Recipient(mailRecipients); // Passing in the first addres, maybe it matches
 					recipientDialog.TopMost = true;
-					DialogResult recipientResult = recipientDialog.ShowDialog();
+					var recipientResult = recipientDialog.ShowDialog();
 
 					if (recipientResult != DialogResult.OK)
 					{
@@ -1089,7 +1106,7 @@ namespace OutlookPrivacyPlugin
 					recipients.Add(GetSMTPAddress(mailItem));
 				}
 
-				List<Attachment> attachments = new List<Attachment>();
+				var attachments = new List<Attachment>();
 
 				// Sign and encrypt the plaintext mail
 				if ((needToSign) && (needToEncrypt))
@@ -1098,13 +1115,13 @@ namespace OutlookPrivacyPlugin
 					if (mail == null)
 						return;
 
-					List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
-					foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+					var mailAttachments = new List<Outlook.Attachment>();
+					foreach (Outlook.Attachment attachment in mailItem.Attachments)
 						mailAttachments.Add(attachment);
 
 					foreach (var attachment in mailAttachments)
 					{
-						Attachment a = new Attachment();
+						var a = new Attachment();
 
 						a.TempFile = Path.GetTempPath();
 						a.FileName = attachment.FileName;
@@ -1139,13 +1156,13 @@ namespace OutlookPrivacyPlugin
 					if (mail == null)
 						return;
 
-					List<Microsoft.Office.Interop.Outlook.Attachment> mailAttachments = new List<Outlook.Attachment>();
-					foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+					var mailAttachments = new List<Outlook.Attachment>();
+					foreach (Outlook.Attachment attachment in mailItem.Attachments)
 						mailAttachments.Add(attachment);
 
 					foreach (var attachment in mailAttachments)
 					{
-						Attachment a = new Attachment();
+						var a = new Attachment();
 
 						a.TempFile = Path.GetTempPath();
 						a.FileName = attachment.FileName;
@@ -1390,11 +1407,11 @@ namespace OutlookPrivacyPlugin
 					}
 				}
 			}
-			catch (PublicKeyNotFoundException ex)
+			catch (PublicKeyNotFoundException)
 			{
 				Context = Crypto.Context;
 
-				var message = "** Unable to verify signature, missing public key.\n\n";
+				const string message = "** Unable to verify signature, missing public key.\n\n";
 
 				if (mailType == Outlook.OlBodyFormat.olFormatPlain)
 				{
@@ -1740,15 +1757,15 @@ namespace OutlookPrivacyPlugin
 		public IList<GnuKey> GetKeysForEncryption()
 		{
 			var crypto = new PgpCrypto(new CryptoContext());
-			List<GnuKey> keys = new List<GnuKey>();
+			var keys = new List<GnuKey>();
 
-			foreach (string key in crypto.GetPublicKeyUserIdsForEncryption())
+			foreach (var key in crypto.GetPublicKeyUserIdsForEncryption())
 			{
 				var match = Regex.Match(key, @"<(.*)>");
 				if (!match.Success)
 					continue;
 
-				GnuKey k = new GnuKey();
+				var k = new GnuKey();
 				k.Key = match.Groups[1].Value;
 				k.KeyDisplay = key;
 
@@ -1761,15 +1778,15 @@ namespace OutlookPrivacyPlugin
 		public IList<GnuKey> GetKeysForSigning()
 		{
 			var crypto = new PgpCrypto(new CryptoContext());
-			List<GnuKey> keys = new List<GnuKey>();
+			var keys = new List<GnuKey>();
 
-			foreach (string key in crypto.GetPublicKeyUserIdsForSign())
+			foreach (var key in crypto.GetPublicKeyUserIdsForSign())
 			{
 				var match = Regex.Match(key, @"<(.*)>");
 				if (!match.Success)
 					continue;
 
-				GnuKey k = new GnuKey();
+				var k = new GnuKey();
 				k.Key = match.Groups[1].Value;
 				k.KeyDisplay = key;
 

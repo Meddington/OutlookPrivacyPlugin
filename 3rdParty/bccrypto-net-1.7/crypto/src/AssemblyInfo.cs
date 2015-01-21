@@ -62,11 +62,6 @@ using System.Runtime.InteropServices;
 //       documentation for more information on this.
 //
 [assembly: AssemblyDelaySign(false)]
-#if STRONG_NAME
-[assembly: AssemblyKeyFile(@"../BouncyCastle.snk")]
-#else
-[assembly: AssemblyKeyFile("")]
-#endif
 [assembly: AssemblyKeyName("")]
 
 [assembly: CLSCompliant(true)]
