@@ -49,3 +49,29 @@ Encrypting with PGP-MIME (planned)
 No support for HTML email (planned)
 This plugin is in BETA status and is based on an earlier plugin for Office 2007.
 
+== Known Issues
+
+=== Install: The value of the property 'type' cannot be parsed.
+
+This error can occur on installation on computers running the Office "ProPlus" SKU. The full message
+is included below. This is not an issue in Outlook Privacy Plugin, but an issue on Microsofts side. If
+you have administrative rights to the computer there is a work arround that can be done.
+
+----
+The value of the property 'type' cannot be parsed. The error is: Could not load file or assembly 
+'Microsoft.Office.BusinessApplications.Fba, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c' 
+or one of its dependencies. The system cannot find the file specified. 
+(c:\Program Files\Common Files\Microsoft Shared\VSTO\10.0\VSTOInstaller.exe.Config line 10)
+----
+
+==== Workarround
+
+The full support thread on this issue is available link:https://social.msdn.microsoft.com/Forums/vstudio/en-US/c26d3f76-be37-4e1b-9d9a-84edae351e18/problem-with-vstoinstallerconfig[here].
+
+. Find +VSTOInstaller.exe.config+ and +VSTOInstaller.config+. They should be located in your Office installation folder.
+. Create a backup of each file
+. Open Notepad by right-clicking and saying "Run as administrator". Then open each file, one at a time.
+. Find +type="Microsoft.Office.BusinessApplications.Fba.HttpFbaRequestCreator,Microsoft.Office.BusinessApplications.Fba,Version=14.0.0.0,Culture=neutral,PublicKeyToken=71e9bce111e9429c"+
+. Replace with +type="Microsoft.Office.BusinessApplications.Runtime.DeploymentAction.HttpFbaRequestCreator,Microsoft.Office.BusinessApplications.Runtime,Version=14.0.0.0,Culture=neutral,PublicKeyToken=71e9bce111e9429c"+
+
+Re-run the installer.
