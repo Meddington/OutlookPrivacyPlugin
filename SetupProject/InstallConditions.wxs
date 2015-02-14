@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Fragment>
+		<Property Id="VSTORUNTIMEREDIST">
+			<RegistrySearch
+				Id="VSTORuntimeRedist"
+				Root="HKLM"
+				Key="SOFTWARE\Microsoft\VSTO Runtime Setup\v4R"
+				Name="Version"
+				Type="raw" />
+		</Property>
+		<Condition Message="!(loc.VSTO_Missing)">
+			<![CDATA[Installed OR VSTORUNTIMEREDIST"]]>
+		</Condition>
+
+		<PropertyRef Id="NETFRAMEWORK45"/>
+		<Condition Message="!(loc.NET45_Missing)">
+			<![CDATA[Installed OR NETFRAMEWORK45]]>
+		</Condition>
+	</Fragment>
+</Wix>

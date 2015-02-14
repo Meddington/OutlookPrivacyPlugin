@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="en-us" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+	<String Id="ProductName">Outlook Privacy Plugin</String>
+	<String Id="Manufacturer">https://github.com/dejavusecurity/OutlookPrivacyPlugin</String>
+	<String Id="AboutUrl">https://github.com/dejavusecurity/OutlookPrivacyPlugin</String>
+	<String Id="Language">1033</String>
+	<String Id="DowngradeErrorMessage">A newer version is already installed.</String>
+	<String Id="VSTO_Missing">The Visual Studio 2010 Tools for Office Runtime is not installed. Please download and install from http://go.microsoft.com/fwlink/?LinkId=140384</String>
+	<String Id="NET45_Missing">This application requires .NET Framework 4.5.</String>
+	<String Id="AddIn_FriendlyName">Outlook Privacy Plugin</String>
+	<String Id="AddIn_Description">Outlook Email Encryption Plugin</String>
+</WixLocalization>
