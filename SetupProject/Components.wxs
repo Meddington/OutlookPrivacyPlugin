@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension" >
+		<Fragment>
+
+			<?include $(sys.CURRENTDIR)\Common.wxi?>
+
+			<DirectoryRef Id="INSTALLFOLDER">
+
+				<Component Id="Deja.Crypto.dll" Guid="{7F2B22CD-4767-44A4-AB5C-D8D2D5226F52}" Shared="yes">
+					<File Id="Deja.Crypto.dll" Name="Deja.Crypto.dll" KeyPath="yes" Source="$(var.SourceDir)" />
+				</Component>
+
+				<Component Id="Org.BouncyCastle.dll" Guid="{08EF9E03-A39A-461D-A594-A520A91FB0EB}" Shared="yes">
+					<File Id="Org.BouncyCastle.dll" Name="Org.BouncyCastle.dll" KeyPath="yes" Source="$(var.SourceDir)" />
+				</Component>
+
+				<Component Id="Microsoft.Office.Tools.Common.v4.0.Utilities.dll" Guid="{57443BE3-562F-48C4-820B-F51B33604BAC}" Shared="yes">
+					<File Id="Microsoft.Office.Tools.Common.v4.0.Utilities.dll" Name="Microsoft.Office.Tools.Common.v4.0.Utilities.dll" KeyPath="yes" Source="$(var.SourceDir)" />
+				</Component>
+
+				<Component Id="Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll" Guid="{C4D035CE-0FA5-4305-83B1-A69A3F604887}" Shared="yes">
+					<File Id="Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll" Name="Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll" KeyPath="yes" Source="$(var.SourceDir)" />
+				</Component>
+
+				<Component Id="NLog.dll" Guid="{9841617B-6D65-42F3-8548-CFCFFB97DAC1}" Shared="yes">
+					<File Id="NLog.dll" Name="NLog.dll" KeyPath="yes" Source="$(var.SourceDir)" />
+				</Component>
+
+				<Component Id="SharpMimeTools.dll" Guid="{297ED3A5-431F-42CE-B9A3-764EC2285B7D}" Shared="yes">
+					<File Id="SharpMimeTools.dll" Name="SharpMimeTools.dll" KeyPath="yes" Source="$(var.SourceDir)" />
+				</Component>
+
+				<Component Id="OutlookPrivacyPlugin.dll" Guid="{E7D4F439-1C01-4886-B4CF-8E53EC5F62B7}" Shared="yes">
+					<File Id="OutlookPrivacyPlugin.dll" Name="OutlookPrivacyPlugin.dll" KeyPath="yes" Source="$(var.SourceDir)" >
+						<netfx:NativeImage Id="NGen_OutlookPrivacyPlugin" AppBaseDirectory="INSTALLFOLDER" Platform="all" Priority="0" />
+					</File>
+					<File Id="OutlookPrivacyPlugin.dll.config" Name="OutlookPrivacyPlugin.dll.config" KeyPath="no" Source="$(var.SourceDir)" />
+					<File Id="OutlookPrivacyPlugin.dll.manifest" Name="OutlookPrivacyPlugin.dll.manifest" KeyPath="no" Source="$(var.SourceDir)" />
+					<File Id="OutlookPrivacyPlugin.vsto" Name="OutlookPrivacyPlugin.vsto" KeyPath="no" Source="$(var.SourceDir)" />
+				</Component>
+
+				</DirectoryRef>
+		</Fragment>
+		<Fragment>
+				<ComponentGroup Id="ProductComponents">
+						<ComponentRef Id="Deja.Crypto.dll" />
+						<ComponentRef Id="Org.BouncyCastle.dll" />
+						<ComponentRef Id="Microsoft.Office.Tools.Common.v4.0.Utilities.dll" />
+						<ComponentRef Id="Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll" />
+						<ComponentRef Id="NLog.dll" />
+						<ComponentRef Id="SharpMimeTools.dll" />
+						<ComponentRef Id="OutlookPrivacyPlugin.dll" />
+				</ComponentGroup>
+		</Fragment>
+</Wix>

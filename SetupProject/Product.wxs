@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*"
+	         Name="!(loc.ProductName)"
+	         Language="!(loc.Language)"
+	         Version="1.1.0.0"
+	         Manufacturer="!(loc.Manufacturer)"
+	         Codepage="1252"
+	         UpgradeCode="{AAF9E87D-44F1-4C3B-A899-1467153FE705}">
+
+		<Package InstallerVersion="405"
+		         Compressed="yes"
+		         Platform="x86"
+		         Languages="!(loc.Language)"
+		         Manufacturer="!(loc.Manufacturer)"
+		         InstallPrivileges="elevated"
+		         AdminImage="yes"
+		         InstallScope="perMachine" />
+
+		<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeErrorMessage)"
+		              AllowSameVersionUpgrades="yes" />
+		<MediaTemplate EmbedCab="yes"
+		               CompressionLevel="high" />
+
+		<Feature Id="OutlookAddIn"
+		         Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+			<ComponentGroupRef Id="AddInRegistration" />
+		</Feature>
+
+		<Property Id="ARPNOMODIFY"
+		          Value="1" />
+		<Property Id="ARPNOREPAIR"
+		          Value="1" />
+		<Property Id="ARPURLINFOABOUT"
+		          Value="!(loc.AboutUrl)" />
+		<Property Id="MSIUSEREALADMINDETECTION"
+		          Value="1" />
+		<Property Id="MsiLogging"
+		          Value="VOICEWARMUP" />
+
+		<!--reference to install conditions-->
+		<PropertyRef Id="NETFRAMEWORK45" />
+		<PropertyRef Id="VSTORUNTIMEREDIST" />
+
+
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR"
+		           Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="INSTALLFOLDER"
+				           Name="Outlook Privacy Plugin" />
+			</Directory>
+		</Directory>
+	</Fragment>
+</Wix>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" >
+	<Fragment>
+		
+		<DirectoryRef Id="INSTALLFOLDER">
+			<Component Id="Registry_FriendlyName">
+				<RegistryValue Id="RegKey_FriendlyName" Root="HKLM"
+											 Key="Software\Microsoft\Office\Excel\AddIns\OutlookPrivacyPlugin"
+											 Name="FriendlyName"
+											 Value="!(loc.AddIn_FriendlyName)"
+											 Type="string" KeyPath="yes" />
+			</Component>
+			<Component Id="Registry_Description">
+				<RegistryValue Id="RegKey_Description" Root="HKLM"
+											 Key="Software\Microsoft\Office\Excel\AddIns\OutlookPrivacyPlugin"
+											 Name="Description"
+											 Value="!(loc.AddIn_Description)"
+											 Type="string" KeyPath="yes" />
+			</Component>
+			<Component Id="Registry_Manifest">
+				<RegistryValue Id="RegKey_Manifest" Root="HKLM"
+											 Key="Software\Microsoft\Office\Excel\AddIns\OutlookPrivacyPlugin"
+											 Name="Manifest" Value="[#OutlookPrivacyPlugin.vsto]|vstolocal"
+											 Type="string" KeyPath="yes" />
+			</Component>
+			<Component Id="Registry_LoadBehavior">
+				<RegistryValue Id="RegKey_LoadBehavior" Root="HKLM"
+											 Key="Software\Microsoft\Office\Excel\AddIns\OutlookPrivacyPlugin"
+											 Name="LoadBehavior" Value="3"
+											 Type="integer" KeyPath="yes" />
+			</Component>
+
+			<Component Id="Registry_FriendlyName_x64" Win64="yes">
+				<RegistryValue Id="RegKey_FriendlyName_x64" Root="HKLM"
+											 Key="Software\Microsoft\Office\Excel\AddIns\OutlookPrivacyPlugin"
+											 Name="FriendlyName"
+											 Value="!(loc.AddIn_FriendlyName)"
+											 Type="string" KeyPath="yes" />
+			</Component>
+			<Component Id="Registry_Description_x64" Win64="yes">
+				<RegistryValue Id="RegKey_Description_x64" Root="HKLM"
+											 Key="Software\Microsoft\Office\Excel\AddIns\OutlookPrivacyPlugin"
+											 Name="Description"
+											 Value="!(loc.AddIn_Description)"
+											 Type="string" KeyPath="yes" />
+			</Component>
+			<Component Id="Registry_Manifest_x64" Win64="yes">
+				<RegistryValue Id="RegKey_Manifest_x64" Root="HKLM"
+											 Key="Software\Microsoft\Office\Excel\AddIns\OutlookPrivacyPlugin"
+											 Name="Manifest" Value="[#OutlookPrivacyPlugin.vsto]|vstolocal"
+											 Type="string" KeyPath="yes" />
+			</Component>
+			<Component Id="Registry_LoadBehavior_x64" Win64="yes">
+				<RegistryValue Id="RegKey_LoadBehavior_x64" Root="HKLM"
+											 Key="Software\Microsoft\Office\Excel\AddIns\OutlookPrivacyPlugin"
+											 Name="LoadBehavior" Value="3"
+											 Type="integer" KeyPath="yes" />
+			</Component>
+		</DirectoryRef>
+	</Fragment>
+	
+	<Fragment>
+		<ComponentGroup Id="AddInRegistration">
+			<ComponentRef Id="Registry_FriendlyName" />
+			<ComponentRef Id="Registry_Description" />
+			<ComponentRef Id="Registry_Manifest" />
+			<ComponentRef Id="Registry_LoadBehavior" />
+
+			<ComponentRef Id="Registry_FriendlyName_x64" />
+			<ComponentRef Id="Registry_Description_x64" />
+			<ComponentRef Id="Registry_Manifest_x64" />
+			<ComponentRef Id="Registry_LoadBehavior_x64" />
+		</ComponentGroup>
+	</Fragment>
+	
+</Wix>

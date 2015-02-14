@@ -243,7 +243,6 @@
     <None Include="App.config" />
     <None Include="oop.snk" />
     <None Include="OutlookPrivacyPlugin_TemporaryKey.pfx" />
-    <None Include="OutlookPrivacyPlugin_TemporaryKey.snk" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -295,7 +294,7 @@
     <ManifestKeyFile>OutlookPrivacyPlugin_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>C59300CE714F8A15418DA6E37CECE19CB5A50786</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>34EFACE46763A615187D2363318A06D780F9ADC5</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
