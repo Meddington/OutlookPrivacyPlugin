@@ -45,9 +45,9 @@ Close outlook and run the Outlook Privacy Plugin installer.
  
 == Not Supported:
 
-Encrypting with PGP-MIME (planned)
-No support for HTML email (planned)
-This plugin is in BETA status and is based on an earlier plugin for Office 2007.
+ * Encrypting with PGP-MIME (planned)
+ * No support for HTML email (planned)
+ * This plugin is in BETA status and is based on an earlier plugin for Office 2007.
 
 == Known Issues
 
