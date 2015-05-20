@@ -203,7 +203,11 @@ namespace OutlookPrivacyPlugin
 			var smtp = Globals.OutlookPrivacyPlugin.GetSMTPAddress(mailItem);
 			
 			var crypto = new Deja.Crypto.BcPgp.PgpCrypto(new Deja.Crypto.BcPgp.CryptoContext());
-			var publicKey = crypto.PublicKey(smtp, new Dictionary<string, string>());
+			
+			var headers = new Dictionary<string, string>();
+			headers["Version"] = "Outlook Privacy Plugin";
+
+			var publicKey = crypto.PublicKey(smtp, headers);
 
 			if(publicKey == null)
 			{
@@ -212,7 +216,7 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			var tempFile = Path.Combine(Path.GetTempPath(), "public_key.gpg");
+			var tempFile = Path.Combine(Path.GetTempPath(), "public_key.asc");
 			File.WriteAllText(tempFile, publicKey);
 
 			try
@@ -221,7 +225,7 @@ namespace OutlookPrivacyPlugin
 					tempFile, 
 					Outlook.OlAttachmentType.olByValue, 
 					1, 
-					"public_key.gpg");
+					"public_key.asc");
 				
 				mailItem.Save();
 			}
@@ -284,12 +288,12 @@ namespace OutlookPrivacyPlugin
 			if (control.Id == SignButton.Id)
 			{
 				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
-				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Sign");
+				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Sign", false);
 			}
 			else if (control.Id == EncryptButton.Id)
 			{
 				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
-				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Encrypt");
+				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 			}
 			else
 				logger.Trace("GetPressed: Button did not match encrypt or sign!");

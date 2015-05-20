@@ -548,7 +548,7 @@ namespace Deja.Crypto.BcPgp
 		/// <returns>Returns ascii armored signature</returns>
 		public string Sign(byte[] data, string key, Dictionary<string, string> headers)
 		{
-			logger.Trace(string.Format("Sign({0}, {1})", data.Length, key));
+			logger.Trace("Sign({0}, {1})", data.Length, key);
 
 			Context = new CryptoContext(Context);
 
@@ -686,28 +686,12 @@ namespace Deja.Crypto.BcPgp
 			Context = new CryptoContext(Context);
 
 			var publicKey = GetPublicKeyForEncryption(email);
-			var sigKey = GetSecretKeyForSigning(email);
-			var literalData = new PgpLiteralDataGenerator();
-			var data = publicKey.GetEncoded();
 
 			using (var sout = new MemoryStream())
 			{
 				using (var armoredOut = new ArmoredOutputStream(sout))
 				{
-					foreach (var header in headers)
-						armoredOut.SetHeader(header.Key, header.Value);
-
-					//using (var literalOut = literalData.Open(
-					//	armoredOut,
-					//	PgpLiteralData.Binary,
-					//	"email",
-					//	data.Length,
-					//	DateTime.UtcNow))
-					//{
-					//	literalOut.Write(data, 0, data.Length);
-					//}
-
-					armoredOut.Write(data);
+					publicKey.Encode(armoredOut);
 				}
 
 				return ASCIIEncoding.ASCII.GetString(sout.ToArray());

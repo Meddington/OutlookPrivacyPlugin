@@ -47,6 +47,9 @@ namespace OutlookPrivacyPlugin
 		// This dictionary holds our Wrapped Inspectors, Explorers, MailItems
 		private Dictionary<Guid, object> _WrappedObjects;
 
+        private static Dictionary<string, Dictionary<string, object>> _conversationState =
+            new Dictionary<string, Dictionary<string, object>>(); 
+
 		char[] Passphrase { get; set; }
 
 		// PGP Headers
@@ -118,13 +121,21 @@ namespace OutlookPrivacyPlugin
 
 		string GetResourceText(string key)
 		{
-			var a = Assembly.GetExecutingAssembly();
-			var s = a.GetManifestResourceStream(key);
+			try
+			{
+				var a = Assembly.GetExecutingAssembly();
+				var s = a.GetManifestResourceStream(key);
 
-			byte[] buff = new byte[s.Length];
-			var cnt = s.Read(buff, 0, buff.Length);
+				byte[] buff = new byte[s.Length];
+				var cnt = s.Read(buff, 0, buff.Length);
 
-			return UTF8Encoding.UTF8.GetString(buff, 0, cnt);
+				return UTF8Encoding.UTF8.GetString(buff, 0, cnt);
+			}
+			catch
+			{
+				MessageBox.Show("Error, unable to get resource text for key '{0}'.", key);
+				return string.Format("Error, unable to get resource text for key '{0}'.", key);
+			}
 		}
 
 		private GnuPGRibbon ribbon;
@@ -254,7 +265,7 @@ namespace OutlookPrivacyPlugin
 		/// <param name="Inspector">the new created Inspector</param>
 		private void OutlookGnuPG_NewInspector(Outlook.Inspector inspector)
 		{
-			Outlook.MailItem mailItem = inspector.CurrentItem as Outlook.MailItem;
+			var mailItem = inspector.CurrentItem as Outlook.MailItem;
 			if (mailItem != null)
 			{
 				WrapMailItem(inspector);
@@ -270,7 +281,7 @@ namespace OutlookPrivacyPlugin
 			if (_WrappedObjects.ContainsValue(inspector) == true)
 				return;
 
-			MailItemInspector wrappedMailItem = new MailItemInspector(inspector);
+			var wrappedMailItem = new MailItemInspector(inspector);
 			wrappedMailItem.Dispose += new OutlookWrapperDisposeDelegate(MailItemInspector_Dispose);
 			wrappedMailItem.MyClose += new MailItemInspectorCloseDelegate(mailItem_Close);
 			wrappedMailItem.Open += new MailItemInspectorOpenDelegate(mailItem_Open);
@@ -291,7 +302,7 @@ namespace OutlookPrivacyPlugin
 		/// <param name="o">the wrapped mailItem object</param>
 		private void MailItemInspector_Dispose(Guid id, object o)
 		{
-			MailItemInspector wrappedMailItem = o as MailItemInspector;
+			var wrappedMailItem = o as MailItemInspector;
 			wrappedMailItem.Dispose -= new OutlookWrapperDisposeDelegate(MailItemInspector_Dispose);
 			wrappedMailItem.MyClose -= new MailItemInspectorCloseDelegate(mailItem_Close);
 			wrappedMailItem.Open -= new MailItemInspectorOpenDelegate(mailItem_Open);
@@ -340,14 +351,14 @@ namespace OutlookPrivacyPlugin
 			if (mailItem == null)
 				return;
 
-			OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Sign", false);
-			OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
+            // TODO - use dictionary of conversation id to mapp these properties!
+            //mailItem.ConversationID
 
 			// New mail (Compose)
 			if (mailItem.Sent == false)
 			{
-				ribbon.SignButton.Checked = _settings.AutoSign;
-				ribbon.EncryptButton.Checked = _settings.AutoEncrypt;
+				ribbon.SignButton.Checked = _settings.AutoSign || (bool) GetProperty(mailItem, "GnuPGSetting.Sign", false);
+                ribbon.EncryptButton.Checked = _settings.AutoEncrypt || (bool)GetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 
 				if (mailItem.Body.IndexOf("\n** Message decrypted. Valid signature") > -1)
 				{
@@ -359,8 +370,8 @@ namespace OutlookPrivacyPlugin
 					ribbon.EncryptButton.Checked = true;
 				}
 
-				OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Sign", ribbon.SignButton.Checked);
-				OutlookPrivacyPlugin.SetProperty(mailItem, "GnuPGSetting.Encrypt", ribbon.EncryptButton.Checked);
+				SetProperty(mailItem, "GnuPGSetting.Sign", ribbon.SignButton.Checked);
+				SetProperty(mailItem, "GnuPGSetting.Encrypt", ribbon.EncryptButton.Checked);
 
 				ribbon.InvalidateButtons();
 
@@ -370,7 +381,10 @@ namespace OutlookPrivacyPlugin
 			else
 			// Read mail
 			{
-				// Default: disable read-buttons
+                SetProperty(mailItem, "GnuPGSetting.Sign", false);
+                SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
+
+                // Default: disable read-buttons
 				ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
 
 				// Look for PGP headers
@@ -513,19 +527,33 @@ namespace OutlookPrivacyPlugin
 
 		public static void SetProperty(Outlook.MailItem mailItem, string name, object value)
 		{
-//			var schema = "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/" + name;
-			var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
+			//var schema = "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/" + name;
+            var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
 			
-			mailItem.PropertyAccessor.SetProperty(schema, value);
+            mailItem.PropertyAccessor.SetProperty(schema, value);
+
+            //if(!_conversationState.ContainsKey(mailItem.ConversationID))
+            //    _conversationState[mailItem.ConversationIndex] = new Dictionary<string, object>();
+
+            //_conversationState[mailItem.ConversationIndex][name] = value;
 		}
 
-		public static object GetProperty(Outlook.MailItem mailItem, string name)
+		public static object GetProperty(Outlook.MailItem mailItem, string name, object defaultReturn = null)
 		{
-			//var schema = "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/" + name;
-			var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
+			try
+			{
+				//var schema = "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/" + name;
+				var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
 
-			return mailItem.PropertyAccessor.GetProperty(schema);
-			//return null;
+				return mailItem.PropertyAccessor.GetProperty(schema);
+				//return null;
+
+				//return _conversationState[mailItem.ConversationIndex][name];
+			}
+			catch(Exception ex)
+			{
+				return defaultReturn;
+			}
 		}
 
 		/// <summary>
@@ -832,13 +860,13 @@ namespace OutlookPrivacyPlugin
 				if (mailItem.Sent == false)
 				{
 					bool toSave = false;
-					var signProperpty = GetProperty(mailItem, "GnuPGSetting.Sign");
+					var signProperpty = GetProperty(mailItem, "GnuPGSetting.Sign", false);
 					if (signProperpty == null || (bool)signProperpty != ribbon.SignButton.Checked)
 					{
 						toSave = true;
 					}
 
-					var encryptProperpty = GetProperty(mailItem, "GnuPGSetting.Decrypted");
+					var encryptProperpty = GetProperty(mailItem, "GnuPGSetting.Decrypted", false);
 					if (encryptProperpty == null || (bool)encryptProperpty != ribbon.EncryptButton.Checked)
 					{
 						toSave = true;
@@ -930,6 +958,11 @@ namespace OutlookPrivacyPlugin
 				// Record compose button states.
 				SetProperty(mailItem, "GnuPGSetting.Sign", ribbon.SignButton.Checked);
 				SetProperty(mailItem, "GnuPGSetting.Encrypt", ribbon.EncryptButton.Checked);
+			}
+			else
+			{
+                SetProperty(mailItem, "GnuPGSetting.Sign", false);
+                SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 			}
 		}
 		#endregion
@@ -1068,9 +1101,6 @@ namespace OutlookPrivacyPlugin
 			bool needToEncrypt = currentRibbon.EncryptButton.Checked;
 			bool needToSign = currentRibbon.SignButton.Checked;
 
-            currentRibbon.EncryptButton.Checked = false;
-            currentRibbon.SignButton.Checked = false;
-
 			// Early out when we don't need to sign/encrypt
 			if (!needToEncrypt && !needToSign)
 				return;
@@ -1080,7 +1110,6 @@ namespace OutlookPrivacyPlugin
 
 			try
 			{
-
 				if (mailType != Outlook.OlBodyFormat.olFormatPlain)
 				{
 					MessageBox.Show(
@@ -1172,6 +1201,56 @@ namespace OutlookPrivacyPlugin
 				else if (needToSign)
 				{
 					// Sign the plaintext mail if needed
+
+					// 1. Verify text lines are not too long
+					bool longLines = false;
+					var mailLines = mail.Split('\n');
+					foreach (var line in mailLines)
+					{
+						if (line.Length > 70)
+						{
+							longLines = true;
+							break;
+						}
+					}
+
+					if(longLines)
+					{
+						var dialog = new SelectLineWrap();
+						var result = dialog.ShowDialog();
+						if (result == DialogResult.Cancel)
+							return;
+
+						if (dialog.radioButtonWrap.Checked)
+						{
+							var lines = new List<string>(mailLines);
+							for(int i = 0; i<lines.Count; i++)
+							{
+								var line = lines[i];
+								if(line.Length>70)
+								{
+									var newLine = line.Substring(70);
+									line = line.Substring(0, 70);
+
+									lines[i] = line;
+									lines.Insert(i + 1, newLine);
+								}
+							}
+
+							var sb = new StringBuilder(mail.Length+20);
+							foreach (var line in lines)
+								sb.AppendLine(line);
+
+							mail = sb.ToString();
+						}
+						if (dialog.radioButtonMime.Checked)
+						{
+							// todo
+						}
+						if (dialog.radioButtonEdit.Checked)
+							return;
+					}
+
 					mail = SignEmail(mail, GetSMTPAddress(mailItem));
 					if (mail == null)
 						return;
@@ -1246,6 +1325,12 @@ namespace OutlookPrivacyPlugin
 
 			Cancel = false;
 			mailItem.Body = mail;
+
+			currentRibbon.EncryptButton.Checked = false;
+			currentRibbon.SignButton.Checked = false;
+
+			SetProperty(mailItem, "GnuPGSetting.Sign", false);
+			SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 		}
 
 		private string SignEmail(string data, string key)
@@ -1685,27 +1770,25 @@ namespace OutlookPrivacyPlugin
 				var cleartext = Crypto.DecryptAndVerify(data, _settings.IgnoreIntegrityCheck);
 				Context = Crypto.Context;
 
-				// NOT USED YET.
-				
-				//DecryptAndVerifyHeaderMessage = "** ";
+				DecryptAndVerifyHeaderMessage = "** ";
 
-				//if (Context.IsEncrypted)
-				//	DecryptAndVerifyHeaderMessage += "Message decrypted. ";
+				if (Context.IsEncrypted)
+					DecryptAndVerifyHeaderMessage += "Message decrypted. ";
 
-				//if (Context.IsSigned && Context.SignatureValidated)
-				//{
-				//	DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId +
-				//		"\" with KeyId " + Context.SignedByKeyId;
-				//}
-				//else if (Context.IsSigned)
-				//{
-				//	DecryptAndVerifyHeaderMessage += "Invalid signature from \"" + Context.SignedByUserId +
-				//		"\" with KeyId " + Context.SignedByKeyId + ".";
-				//}
-				//else
-				//	DecryptAndVerifyHeaderMessage += "Message was unsigned.";
+				if (Context.IsSigned && Context.SignatureValidated)
+				{
+					DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId +
+						"\" with KeyId " + Context.SignedByKeyId;
+				}
+				else if (Context.IsSigned)
+				{
+					DecryptAndVerifyHeaderMessage += "Invalid signature from \"" + Context.SignedByUserId +
+						"\" with KeyId " + Context.SignedByKeyId + ".";
+				}
+				else
+					DecryptAndVerifyHeaderMessage += "Message was unsigned.";
 
-				//DecryptAndVerifyHeaderMessage += "\n\n";
+				DecryptAndVerifyHeaderMessage += "\n\n";
 
 				outContext = Context;
 				return cleartext;
