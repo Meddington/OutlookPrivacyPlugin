@@ -29,4 +29,26 @@
 	</ItemGroup>
 	<Import Project="$(MSBuildExtensionsPath32)\InstallShield\2013Limited\InstallShield.targets"/>
 	<ItemGroup/>
+	<ItemGroup>
+		<ProjectReference Include="..\Deja.Crypto\Deja.Crypto.csproj">
+			<Name>Deja.Crypto</Name>
+			<Project>{228E6B06-76AC-42AE-8EE6-035DA96043EC}</Project>
+		</ProjectReference>
+		<ProjectReference Include="..\MimeKit\MimeKitLite.Net40.csproj">
+			<Name>MimeKitLite.Net40</Name>
+			<Project>{87B25B2B-10E4-4A09-B682-7267CD3123BA}</Project>
+		</ProjectReference>
+		<ProjectReference Include="..\3rdParty\bccrypto-net-1.7\crypto\Org.BouncyCastle.csproj">
+			<Name>Org.BouncyCastle</Name>
+			<Project>{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}</Project>
+		</ProjectReference>
+		<ProjectReference Include="..\OutlookPrivacyPlugin\OutlookPrivacyPlugin.csproj">
+			<Name>OutlookPrivacyPlugin</Name>
+			<Project>{1BF6A6EE-74FC-40DD-ABC2-6F8D12A76610}</Project>
+		</ProjectReference>
+		<ProjectReference Include="..\OutlookPrivacyPlugin.Security\OutlookPrivacyPlugin.Security.csproj">
+			<Name>OutlookPrivacyPlugin.Security</Name>
+			<Project>{56E8E807-0807-45E0-B19A-98912AE47630}</Project>
+		</ProjectReference>
+	</ItemGroup>
 </Project>

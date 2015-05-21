@@ -339,8 +339,13 @@
 		<col def="S0">ISDotNetInstallerArgsCommit</col>
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
+		<row><td>Deja.Crypto.Primary_output</td><td>{3C560D00-26A9-485E-AEBE-58FAE014CD5F}</td><td>INSTALLDIR</td><td>2</td><td/><td>deja.crypto.primary_output</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISX_DEFAULTCOMPONENT</td><td>{4D024094-ED7C-4E6B-9352-939628581190}</td><td>INSTALLDIR</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>TestApp.Primary_output</td><td>{547B689A-9B0D-49D2-807F-8C2DB42E51B7}</td><td>INSTALLDIR</td><td>2</td><td/><td>testapp.primary_output</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>MimeKitLite.Net40.Primary_output</td><td>{369E8431-88C3-40EA-AD4B-D3465AC6BF39}</td><td>INSTALLDIR</td><td>2</td><td/><td>mimekitlite.net40.primary_ou</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Org.BouncyCastle.Primary_output</td><td>{68FB6256-8773-4EB0-A7D1-92A1E20FF780}</td><td>INSTALLDIR</td><td>2</td><td/><td>org.bouncycastle.primary_out</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>OutlookPrivacyPlugin.Primary_output</td><td>{BA78DFF6-3375-4A15-9311-A0AF3E43D950}</td><td>INSTALLDIR</td><td>2</td><td/><td>outlookprivacyplugin.primary</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>OutlookPrivacyPlugin.Security.Primary_output</td><td>{F301CBB6-3FCA-4182-866F-145F8DBE6D77}</td><td>INSTALLDIR</td><td>2</td><td/><td>outlookprivacyplugin.securit</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+
 	</table>
 
 	<table name="Condition">
@@ -909,7 +914,7 @@
 		<row><td>CustomSetup</td><td>Next</td><td>NewDialog</td><td>ReadyToInstall</td><td>OutOfNoRbDiskSpace &lt;&gt; 1</td><td>0</td></row>
 		<row><td>CustomSetup</td><td>Next</td><td>[_IsSetupTypeMin]</td><td>Custom</td><td>1</td><td>0</td></row>
 		<row><td>CustomSetupTips</td><td>OK</td><td>EndDialog</td><td>Return</td><td>1</td><td>1</td></row>
-		<row><td>CustomerInformation</td><td>Back</td><td>NewDialog</td><td>LicenseAgreement</td><td>1</td><td>1</td></row>
+		<row><td>CustomerInformation</td><td>Back</td><td>NewDialog</td><td>InstallWelcome</td><td>NOT Installed</td><td>1</td></row>
 		<row><td>CustomerInformation</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
 		<row><td>CustomerInformation</td><td>Next</td><td>EndDialog</td><td>Exit</td><td>(SERIALNUMVALRETRYLIMIT) And (SERIALNUMVALRETRYLIMIT&lt;0) And (SERIALNUMVALRETURN&lt;&gt;SERIALNUMVALSUCCESSRETVAL)</td><td>2</td></row>
 		<row><td>CustomerInformation</td><td>Next</td><td>NewDialog</td><td>ReadyToInstall</td><td>(Not SERIALNUMVALRETURN) OR (SERIALNUMVALRETURN=SERIALNUMVALSUCCESSRETVAL)</td><td>3</td></row>
@@ -937,7 +942,7 @@
 		<row><td>InstallChangeFolder</td><td>Up</td><td>DirectoryListUp</td><td>0</td><td>1</td><td>0</td></row>
 		<row><td>InstallWelcome</td><td>Back</td><td>NewDialog</td><td>SplashBitmap</td><td>Display_IsBitmapDlg</td><td>0</td></row>
 		<row><td>InstallWelcome</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
-		<row><td>InstallWelcome</td><td>Next</td><td>NewDialog</td><td>LicenseAgreement</td><td>1</td><td>0</td></row>
+		<row><td>InstallWelcome</td><td>Next</td><td>NewDialog</td><td>ReadyToInstall</td><td>1</td><td>0</td></row>
 		<row><td>LicenseAgreement</td><td>Back</td><td>NewDialog</td><td>InstallWelcome</td><td>1</td><td>0</td></row>
 		<row><td>LicenseAgreement</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
 		<row><td>LicenseAgreement</td><td>ISPrintButton</td><td>DoAction</td><td>ISPrint</td><td>1</td><td>0</td></row>
@@ -972,7 +977,7 @@
 		<row><td>ReadmeInformation</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>1</td></row>
 		<row><td>ReadmeInformation</td><td>Next</td><td>NewDialog</td><td>CustomerInformation</td><td>1</td><td>1</td></row>
 		<row><td>ReadyToInstall</td><td>Back</td><td>NewDialog</td><td>CustomSetup</td><td>Installed OR _IsSetupTypeMin = "Custom"</td><td>2</td></row>
-		<row><td>ReadyToInstall</td><td>Back</td><td>NewDialog</td><td>CustomerInformation</td><td>NOT Installed</td><td>1</td></row>
+		<row><td>ReadyToInstall</td><td>Back</td><td>NewDialog</td><td>InstallWelcome</td><td>NOT Installed</td><td>1</td></row>
 		<row><td>ReadyToInstall</td><td>Back</td><td>NewDialog</td><td>MaintenanceType</td><td>Installed AND _IsMaintenance = "Reinstall"</td><td>3</td></row>
 		<row><td>ReadyToInstall</td><td>Cancel</td><td>SpawnDialog</td><td>CancelSetup</td><td>1</td><td>0</td></row>
 		<row><td>ReadyToInstall</td><td>InstallNow</td><td>EndDialog</td><td>Return</td><td>OutOfNoRbDiskSpace &lt;&gt; 1</td><td>0</td></row>
@@ -1860,8 +1865,12 @@
 	<table name="FeatureComponents">
 		<col key="yes" def="s38">Feature_</col>
 		<col key="yes" def="s72">Component_</col>
+		<row><td>AlwaysInstall</td><td>Deja.Crypto.Primary_output</td></row>
 		<row><td>AlwaysInstall</td><td>ISX_DEFAULTCOMPONENT</td></row>
-		<row><td>AlwaysInstall</td><td>TestApp.Primary_output</td></row>
+		<row><td>AlwaysInstall</td><td>MimeKitLite.Net40.Primary_output</td></row>
+		<row><td>AlwaysInstall</td><td>Org.BouncyCastle.Primary_output</td></row>
+		<row><td>AlwaysInstall</td><td>OutlookPrivacyPlugin.Primary_output</td></row>
+		<row><td>AlwaysInstall</td><td>OutlookPrivacyPlugin.Security.Primary_output</td></row>
 	</table>
 
 	<table name="File">
@@ -1876,7 +1885,12 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
+		<row><td>deja.crypto.primary_output</td><td>Deja.Crypto.Primary_output</td><td>Deja.Crypto.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;Deja.Crypto&gt;|Built</td><td>3</td><td/></row>
+		<row><td>mimekitlite.net40.primary_ou</td><td>MimeKitLite.Net40.Primary_output</td><td>MimeKitLite.Net40.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;MimeKitLite.Net40&gt;|Built</td><td>3</td><td/></row>
+		<row><td>org.bouncycastle.primary_out</td><td>Org.BouncyCastle.Primary_output</td><td>Org.BouncyCastle.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;Org.BouncyCastle&gt;|Built</td><td>3</td><td/></row>
 		<row><td>outlookprivacyplugin.dll.man</td><td>ISX_DEFAULTCOMPONENT</td><td>OUTLOO~1.MAN|OutlookPrivacyPlugin.dll.manifest</td><td>0</td><td/><td/><td/><td>1</td><td>C:\projects\OutlookPrivacyPlugin\OutlookPrivacyPlugin\bin\Release\OutlookPrivacyPlugin.dll.manifest</td><td>1</td><td/></row>
+		<row><td>outlookprivacyplugin.primary</td><td>OutlookPrivacyPlugin.Primary_output</td><td>OutlookPrivacyPlugin.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;OutlookPrivacyPlugin&gt;|Built</td><td>3</td><td/></row>
+		<row><td>outlookprivacyplugin.securit</td><td>OutlookPrivacyPlugin.Security.Primary_output</td><td>OutlookPrivacyPlugin.Security.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;OutlookPrivacyPlugin.Security&gt;|Built</td><td>3</td><td/></row>
 		<row><td>outlookprivacyplugin.vsto</td><td>ISX_DEFAULTCOMPONENT</td><td>OUTLOO~1.VST|OutlookPrivacyPlugin.vsto</td><td>0</td><td/><td/><td/><td>1</td><td>C:\projects\OutlookPrivacyPlugin\OutlookPrivacyPlugin\bin\Release\OutlookPrivacyPlugin.vsto</td><td>1</td><td/></row>
 	</table>
 
@@ -1894,6 +1908,7 @@
 		<col key="yes" def="s72">Tag</col>
 		<col def="S255">Data</col>
 		<row><td>PROJECT_ASSISTANT_DEFAULT_FEATURE</td><td>AlwaysInstall</td></row>
+		<row><td>PROJECT_ASSISTANT_FEATURES</td><td>NonSelectable</td></row>
 		<row><td>RegistryPageEnabled</td><td>Yes</td></row>
 	</table>
 
@@ -2021,8 +2036,12 @@
 		<col def="S0">FTPLocation</col>
 		<col def="S0">HTTPLocation</col>
 		<col def="S0">Miscellaneous</col>
+		<row><td>Deja.Crypto.Primary_output</td><td/><td/><td>_45DC7D0F_820E_4080_92D0_5ACF3ACB8ABC_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISX_DEFAULTCOMPONENT</td><td/><td/><td>_A36C7220_813A_4612_B226_63C1AE978FAB_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>TestApp.Primary_output</td><td/><td/><td>_46744DF1_4AEA_479A_868D_AFF9C49E5E76_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>MimeKitLite.Net40.Primary_output</td><td/><td/><td>_9A3C0975_FA70_4716_B245_662868B5A858_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>Org.BouncyCastle.Primary_output</td><td/><td/><td>_9D3A8CBC_5957_47CA_9FF5_B3026C5A68E9_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>OutlookPrivacyPlugin.Primary_output</td><td/><td/><td>_D013CA63_6681_443F_A39F_FC100FAE0F9F_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>OutlookPrivacyPlugin.Security.Primary_output</td><td/><td/><td>_81B24D4D_9961_46D7_BA53_0AF74D6F89D1_FILTER</td><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="ISCustomActionReference">
@@ -2324,13 +2343,17 @@
 		<col def="S255">TestValue</col>
 		<col def="i4">Type</col>
 		<row><td>CommonFilesFolder</td><td/><td/><td>1</td></row>
+		<row><td>Deja.Crypto</td><td>Deja.Crypto\Deja.Crypto.csproj</td><td/><td>2</td></row>
 		<row><td>ISPROJECTDIR</td><td/><td/><td>1</td></row>
 		<row><td>ISProductFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectDataFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectFolder</td><td/><td/><td>1</td></row>
+		<row><td>MimeKitLite.Net40</td><td>MimeKit\MimeKitLite.Net40.csproj</td><td/><td>2</td></row>
+		<row><td>Org.BouncyCastle</td><td>3rdParty\bccrypto-net-1.7\crypto\Org.BouncyCastle.csproj</td><td/><td>2</td></row>
+		<row><td>OutlookPrivacyPlugin</td><td>OutlookPrivacyPlugin\OutlookPrivacyPlugin.csproj</td><td/><td>2</td></row>
+		<row><td>OutlookPrivacyPlugin.Security</td><td>OutlookPrivacyPlugin.Security\OutlookPrivacyPlugin.Security.csproj</td><td/><td>2</td></row>
 		<row><td>ProgramFilesFolder</td><td/><td/><td>1</td></row>
 		<row><td>SystemFolder</td><td/><td/><td>1</td></row>
-		<row><td>TestApp</td><td>TestApp\TestApp.csproj</td><td/><td>2</td></row>
 		<row><td>WindowsFolder</td><td/><td/><td>1</td></row>
 	</table>
 
@@ -2642,7 +2665,7 @@
 		<col def="I2">Encoded</col>
 		<col def="S0">Comment</col>
 		<col def="I4">TimeStamp</col>
-		<row><td>COMPANY_NAME</td><td>1033</td><td>Deja vu Security</td><td>0</td><td/><td>1923338065</td></row>
+		<row><td>COMPANY_NAME</td><td>1033</td><td>Deja vu Security</td><td>0</td><td/><td>-1432154705</td></row>
 		<row><td>DN_AlwaysInstall</td><td>1033</td><td>Always Install</td><td>0</td><td/><td>1923317585</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_COLOR</td><td>1033</td><td>The color settings of your system are not adequate for running [ProductName].</td><td>0</td><td/><td>1923317585</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_OS</td><td>1033</td><td>The operating system is not adequate for running [ProductName].</td><td>0</td><td/><td>1923317585</td></row>
@@ -3743,8 +3766,8 @@
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>1923317585</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>1923317585</td></row>
 		<row><td>ID_STRING1</td><td>1033</td><td/><td>0</td><td/><td>1923319633</td></row>
-		<row><td>ID_STRING2</td><td>1033</td><td>http://dejavusecurity.com</td><td>0</td><td/><td>1923297137</td></row>
-		<row><td>ID_STRING3</td><td>1033</td><td>Deja vu Security</td><td>0</td><td/><td>1923338065</td></row>
+		<row><td>ID_STRING2</td><td>1033</td><td>http://www.DejavuSecurity.com</td><td>0</td><td/><td>-1432154705</td></row>
+		<row><td>ID_STRING3</td><td>1033</td><td>Deja vu Security</td><td>0</td><td/><td>-1432154705</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>1033</td><td>This feature will remain uninstalled.</td><td>0</td><td/><td>1923317585</td></row>
 	</table>
 
@@ -3967,8 +3990,8 @@
 		<col def="S0">Value</col>
 		<row><td>ActiveLanguage</td><td>1033</td></row>
 		<row><td>Comments</td><td/></row>
-		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="de9f554a3bc05c12be9c31b998217995">
-UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
+		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="6d78a46bf2c52ee27034bbcad20f7f95">
+QwBEAF8AUgBPAE0AAQBFAHgAcAByAGUAcwBzAA==
 			</td></row>
 		<row><td>DefaultProductConfiguration</td><td>Express</td></row>
 		<row><td>EnableSwidtag</td><td>1</td></row>
@@ -3985,7 +4008,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>ISTheme</td><td>InstallShield Blue.theme</td></row>
 		<row><td>ISUSLock</td><td>{1DB54370-D0DA-47E9-9AC2-E2057D96B584}</td></row>
 		<row><td>ISUSSignature</td><td>{8C419816-C932-4804-A7B4-0B46C07E1256}</td></row>
-		<row><td>ISVisitedViews</td><td>viewAssistant,viewObjects,viewProject,viewRelease,viewISToday</td></row>
+		<row><td>ISVisitedViews</td><td>viewAssistant,viewObjects,viewProject,viewRelease,viewISToday,viewSetupTypes,viewAppFiles,viewFeatureFiles,viewDependencies</td></row>
 		<row><td>Limited</td><td>1</td></row>
 		<row><td>LockPermissionMode</td><td>1</td></row>
 		<row><td>MsiExecCmdLineOptions</td><td/></row>

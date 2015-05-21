@@ -901,8 +901,24 @@ namespace OutlookPrivacyPlugin
 			}
 			else
 			{
-				mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
-				mailItem.Body = DecryptAndVerifyHeaderMessage + msg.TextBody;
+				// NOTE: For some reason we cannot change the BodyFormat once it's set.
+				//       So if we are set to HTML we need to wrap the plain text so it's
+				//       displayed okay. Also of course prevent XSS.
+
+				if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
+				{
+					mailItem.Body = DecryptAndVerifyHeaderMessage + msg.TextBody;
+				}
+				else
+				{
+					var sb = new StringBuilder(msg.TextBody.Length + 100);
+					sb.Append("<html><body><pre>");
+					sb.Append(System.Net.WebUtility.HtmlEncode(DecryptAndVerifyHeaderMessage));
+					sb.Append(System.Net.WebUtility.HtmlEncode(msg.TextBody));
+					sb.Append("</pre></body></html>");
+
+					mailItem.HTMLBody = sb.ToString();
+				}
 			}
 
 			// NOTE: Removing existing attachments is perminant, even if the message
