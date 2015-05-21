@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Office = Microsoft.Office.Core;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 
 using System.IO;
 using System.Windows.Forms;
@@ -50,7 +51,11 @@ namespace OutlookPrivacyPlugin
         private static Dictionary<string, Dictionary<string, object>> _conversationState =
             new Dictionary<string, Dictionary<string, object>>(); 
 
-		char[] Passphrase { get; set; }
+		//char[] Passphrase { get; set; }
+		/// <summary>
+		/// Cache of passphrases. Key is keyid.
+		/// </summary>
+		Dictionary<long, char[]> PassphraseCache = new Dictionary<long, char[]>();
 
 		// PGP Headers
 		// http://www.ietf.org/rfc/rfc4880.txt page 54
@@ -663,7 +668,7 @@ namespace OutlookPrivacyPlugin
 
 			if (sigMime != null)
 			{
-				Context = new CryptoContext(Passphrase);
+				Context = new CryptoContext(PasswordCallback);
 				var Crypto = new PgpCrypto(Context);
 				Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
 
@@ -739,8 +744,6 @@ namespace OutlookPrivacyPlugin
 				catch (Exception ex)
 				{
 					logger.Debug(ex.ToString());
-
-					this.Passphrase = null;
 
 					WriteErrorData("VerifyEmail", ex);
 					MessageBox.Show(
@@ -1297,8 +1300,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (Exception ex)
 			{
-				this.Passphrase = null;
-
 				if (ex.Message.ToLower().StartsWith("checksum"))
 				{
 					MessageBox.Show(
@@ -1337,10 +1338,7 @@ namespace OutlookPrivacyPlugin
 		{
 			try
 			{
-				if (!PromptForPasswordAndKey())
-					return null;
-
-				var context = new CryptoContext(Passphrase);
+				var context = new CryptoContext(PasswordCallback);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
@@ -1349,8 +1347,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (CryptoException ex)
 			{
-				this.Passphrase = null;
-
 				WriteErrorData("SignEmail", ex);
 				MessageBox.Show(
 					ex.Message,
@@ -1371,7 +1367,7 @@ namespace OutlookPrivacyPlugin
 		{
 			try
 			{
-				var context = new CryptoContext();
+				var context = new CryptoContext(PasswordCallback);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
@@ -1381,8 +1377,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (CryptoException ex)
 			{
-				this.Passphrase = null;
-
 				WriteErrorData("EncryptEmail", ex);
 				MessageBox.Show(
 					ex.Message,
@@ -1394,8 +1388,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (Exception e)
 			{
-				this.Passphrase = null;
-
 				WriteErrorData("EncryptEmail", e);
 				MessageBox.Show(
 					e.Message,
@@ -1411,10 +1403,7 @@ namespace OutlookPrivacyPlugin
 		{
 			try
 			{
-				if (!PromptForPasswordAndKey())
-					return null;
-
-				var context = new CryptoContext(this.Passphrase);
+				var context = new CryptoContext(PasswordCallback);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
@@ -1424,8 +1413,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (Exception ex)
 			{
-				this.Passphrase = null;
-
 				MessageBox.Show(
 					ex.Message,
 					"Outlook Privacy Error",
@@ -1445,10 +1432,7 @@ namespace OutlookPrivacyPlugin
 		{
 			try
 			{
-				if (!PromptForPasswordAndKey())
-					return null;
-
-				var context = new CryptoContext(this.Passphrase);
+				var context = new CryptoContext(PasswordCallback);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
@@ -1458,8 +1442,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (Exception ex)
 			{
-				this.Passphrase = null;
-
 				WriteErrorData("SignAndEncryptEmail", ex);
 				MessageBox.Show(
 					ex.Message,
@@ -1489,7 +1471,7 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			var Context = new CryptoContext(Passphrase);
+			var Context = new CryptoContext(PasswordCallback);
 			var Crypto = new PgpCrypto(Context);
 
 			try
@@ -1532,8 +1514,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (Exception ex)
 			{
-				this.Passphrase = null;
-
 				WriteErrorData("VerifyEmail", ex);
 				MessageBox.Show(
 					ex.Message,
@@ -1731,25 +1711,53 @@ namespace OutlookPrivacyPlugin
 
 		#endregion
 
-		bool PromptForPasswordAndKey()
+		//bool PromptForPasswordAndKey()
+		//{
+		//	if (this.Passphrase != null)
+		//		return true;
+
+		//	// Popup UI to select the passphrase and private key.
+		//	Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Key");
+		//	passphraseDialog.TopMost = true;
+		//	DialogResult passphraseResult = passphraseDialog.ShowDialog();
+		//	if (passphraseResult != DialogResult.OK)
+		//	{
+		//		// The user closed the passphrase dialog, prevent sending the mail
+		//		return false;
+		//	}
+
+		//	this.Passphrase = passphraseDialog.EnteredPassphrase.ToCharArray();
+		//	passphraseDialog.Close();
+
+		//	return true;
+		//}
+
+		char[] PasswordCallback(PgpSecretKey key)
 		{
-			if (this.Passphrase != null)
-				return true;
+			if (PassphraseCache.ContainsKey(key.PublicKey.KeyId))
+				return PassphraseCache[key.KeyId];
 
-			// Popup UI to select the passphrase and private key.
-			Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Key");
-			passphraseDialog.TopMost = true;
-			DialogResult passphraseResult = passphraseDialog.ShowDialog();
-			if (passphraseResult != DialogResult.OK)
+			// Loop until correct password or user selects cancel
+			do
 			{
-				// The user closed the passphrase dialog, prevent sending the mail
-				return false;
+				var passphraseDialog = new Passphrase(key);
+				var result = passphraseDialog.ShowDialog();
+				if (result == DialogResult.Cancel)
+					return null;
+
+				var pass = passphraseDialog.textBoxPassphrase.Text.ToCharArray();
+
+				try
+				{
+					key.ExtractPrivateKey(pass);
+					PassphraseCache[key.PublicKey.KeyId] = pass;
+					return pass;
+				}
+				catch (Exception ex)
+				{
+				}
 			}
-
-			this.Passphrase = passphraseDialog.EnteredPassphrase.ToCharArray();
-			passphraseDialog.Close();
-
-			return true;
+			while (true);
 		}
 
 		string DecryptAndVerifyHeaderMessage = "";
@@ -1759,10 +1767,7 @@ namespace OutlookPrivacyPlugin
 			DecryptAndVerifyHeaderMessage = "";
 			outContext = null;
 
-			if (!PromptForPasswordAndKey())
-				return null;
-
-			var Context = new CryptoContext(Passphrase);
+			var Context = new CryptoContext(PasswordCallback);
 			var Crypto = new PgpCrypto(Context);
 
 			try
@@ -1795,8 +1800,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (CryptoException ex)
 			{
-				this.Passphrase = null;
-
 				WriteErrorData("DecryptAndVerify", ex);
 				MessageBox.Show(
 					ex.Message,
@@ -1807,7 +1810,6 @@ namespace OutlookPrivacyPlugin
 			}
 			catch (Exception e)
 			{
-				this.Passphrase = null;
 				WriteErrorData("DecryptAndVerify", e);
 
 				if (e.Message.ToLower().StartsWith("checksum"))

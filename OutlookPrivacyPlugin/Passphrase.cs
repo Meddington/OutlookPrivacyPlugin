@@ -2,79 +2,35 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Org.BouncyCastle.Bcpg.OpenPgp;
+
 
 namespace OutlookPrivacyPlugin
 {
 	internal partial class Passphrase : Form
 	{
-		//private readonly string _defaultKey;
-		private const string _enterPhrase = " < enter passphrase > ";
-		private char _passwordChar = '*';	// Global password char, if case it's changed 
-											// before PreparePrivateKeyField()
-
-		public string EnteredPassphrase { get { return this.PrivateKey.Text; } }
-
-		internal Passphrase(string defaultKey, string buttonText)
+		internal Passphrase(PgpSecretKey key)
 		{
 			TopMost = true;
 
 			InitializeComponent();
 
-			//OkButton.Text = buttonText;
-			AcceptButton = OkButton;
-		}
-
-		private void Passphrase_Load(object sender, EventArgs e)
-		{
-			EmptyPrivateKeyField(PrivateKey);
-		}
-
-		private void EmptyPrivateKeyField(Control focusControl)
-		{
-			PrivateKey.PasswordChar = (char)0;
-			PrivateKey.Text = _enterPhrase;
-			PrivateKey.TextAlign = HorizontalAlignment.Center;
-			PrivateKey.ForeColor = Color.LightGray;
-
-			focusControl.Focus();
-		}
-
-		private void PreparePrivateKeyField()
-		{
-			PrivateKey.PasswordChar = _passwordChar;
-			PrivateKey.Text = string.Empty;
-			PrivateKey.TextAlign = HorizontalAlignment.Left;
-			PrivateKey.ForeColor = Color.Black;
-		}
-
-		private void PrivateKey_Enter(object sender, EventArgs e)
-		{
-			if (PrivateKey.Text == _enterPhrase)
-				PreparePrivateKeyField();
-		}
-
-		private void OkButton_Enter(object sender, EventArgs e)
-		{
-			if (string.IsNullOrEmpty(PrivateKey.Text))
-				EmptyPrivateKeyField(OkButton);
-		}
-
-		private void OkButton_Click(object sender, EventArgs e)
-		{
-			if ((PrivateKey.Text == _enterPhrase) || (string.IsNullOrEmpty(PrivateKey.Text)))
-			{
-				// No Passphrase provided, complain!
-				Errors.SetError(PrivateKey, "No passphrase provided!");
-				PrivateKey.Margin = new Padding(3, 3, 20, 3);
-			}
-			else
-			{
-				Errors.SetError(PrivateKey, string.Empty);
-				PrivateKey.Margin = new Padding(3, 3, 3, 3);
-
-				// Hide the form and let our main addin take over again
-				Hide();
-			}
+			var userIds = key.UserIds.GetEnumerator();
+			userIds.MoveNext();
+			var userId = userIds.Current.ToString();
+			var strength = key.PublicKey.BitStrength.ToString();
+			var createDate = key.PublicKey.CreationTime.ToShortDateString();
+			var alg = key.PublicKey.Algorithm.ToString().Replace("Algorithm", "");
+			var fingerPrint = key.PublicKey.GetFingerprint();
+			var fingerPrintLength = fingerPrint.Length;
+			var keyId = 
+				fingerPrint[fingerPrintLength - 4].ToString("X2") +
+				fingerPrint[fingerPrintLength - 3].ToString("X2") +
+				fingerPrint[fingerPrintLength - 2].ToString("X2") +
+				fingerPrint[fingerPrintLength - 1].ToString("X2");
+ 
+			labelKeyInfo.Text = string.Format("\"{0}\"\n{1}-{2} key, ID {3}\n{4}",
+				userId, strength, alg, keyId, createDate);
 		}
 	}
 }
