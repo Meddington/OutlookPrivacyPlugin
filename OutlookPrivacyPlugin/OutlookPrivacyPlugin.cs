@@ -644,6 +644,7 @@ namespace OutlookPrivacyPlugin
 			CryptoContext Context = null;
 
 			byte[] cyphertext = null;
+			byte[] clearbytes = null;
 			string cleartext = mailItem.Body;
 
 			// 1. Decrypt attachement
@@ -652,12 +653,12 @@ namespace OutlookPrivacyPlugin
 			{
 				logger.Trace("Decrypting cypher text.");
 
-			var tempfile = Path.GetTempFileName();
-			encryptedMime.SaveAsFile(tempfile);
+				var tempfile = Path.GetTempFileName();
+				encryptedMime.SaveAsFile(tempfile);
 				cyphertext = File.ReadAllBytes(tempfile);
 				File.Delete(tempfile);
 
-				var clearbytes = DecryptAndVerify(mailItem.To, cyphertext, out Context);
+				clearbytes = DecryptAndVerify(mailItem.To, cyphertext, out Context);
 				if (clearbytes == null)
 					return;
 
@@ -762,14 +763,38 @@ namespace OutlookPrivacyPlugin
 
 			// Extract files from MIME data
 
-			string body = string.Empty;
 			MimeMessage msg = null;
+			TextPart textPart = null;
+			MimeEntity htmlPart = null;
+			bool isHtml = false;
 
-			using(var sin = new MemoryStream(this._encoding.GetBytes(cleartext)))
+			using(var sin = new MemoryStream(clearbytes))
 			{
 				var parser = new MimeParser(sin);
 				msg = parser.ParseMessage();
-				body = msg.TextBody;
+				var iter = new MimeIterator(msg);
+
+				while(iter.MoveNext())
+				{
+					var part = iter.Current as TextPart;
+					if (part == null)
+						continue;
+
+					if (part.IsAttachment)
+						continue;
+
+					// message could include both text and html
+					// if we find html use that over text.
+					if (part.IsHtml)
+					{
+						htmlPart = part;
+						isHtml = true;
+					}
+					else
+					{
+						textPart = part;
+					}
+				}
 			}
 
 			var DecryptAndVerifyHeaderMessage = "** ";
@@ -795,44 +820,89 @@ namespace OutlookPrivacyPlugin
 
 			DecryptAndVerifyHeaderMessage += "\n\n";
 
-			if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
+			if(isHtml)
 			{
-				mailItem.Body = DecryptAndVerifyHeaderMessage + body;
-			}
-			else if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatHTML)
-			{
-				if (!body.TrimStart().ToLower().StartsWith("<html"))
+				var htmlBody = msg.HtmlBody;
+				var htmlBodyLower = msg.HtmlBody.ToLower();
+				var bodyStartIndex = htmlBodyLower.IndexOf("<body");
+				var bodyEndIndex = htmlBodyLower.IndexOf(">", bodyStartIndex);
+				var related = msg.Body as MultipartRelated;
+				var doc = new HtmlAgilityPack.HtmlDocument();
+				var savedImages = new List<MimePart>();
+
+				doc.LoadHtml(htmlBody);
+
+				// Find any embedded images
+				foreach (var img in doc.DocumentNode.SelectNodes("//img[@src]"))
 				{
-					body = DecryptAndVerifyHeaderMessage + body;
-					body = System.Net.WebUtility.HtmlEncode(body);
-					body = body.Replace("\n", "<br />");
+					var src = img.Attributes["src"];
+					int index;
+					Uri uri;
 
-					mailItem.HTMLBody = "<html><head></head><body>" + body + "</body></html>";
-				}
-				else
-				{
-					// Find <body> tag and insert our message.
+					if (src == null || src.Value == null)
+						continue;
 
-					var matches = Regex.Match(body, @"(<body[^<]*>)", RegexOptions.IgnoreCase);
-					if (matches.Success)
-					{
-						var bodyTag = matches.Groups[1].Value;
-
-						// Insert decryption message.
-						mailItem.HTMLBody = body.Replace(
-							bodyTag,
-							bodyTag + DecryptAndVerifyHeaderMessage.Replace("\n", "<br />"));
-					}
+					// parse the <img src=...> attribute value into a Uri
+					if (Uri.IsWellFormedUriString(src.Value, UriKind.Absolute))
+						uri = new Uri(src.Value, UriKind.Absolute);
 					else
-						mailItem.HTMLBody = body;
+						uri = new Uri(src.Value, UriKind.Relative);
+
+					// locate the index of the attachment within the multipart/related (if it exists)
+					string imageCid = src.Value.Substring(4);
+
+					var iter = new MimeIterator(msg);
+					MimePart attachment = null;
+					while (iter.MoveNext())
+					{
+						if (iter.Current.ContentId == imageCid)
+						{
+							attachment = iter.Current as MimePart;
+							break;
+						}
+					}
+
+					if (attachment == null)
+						continue;
+
+					string fileName;
+
+					// save the attachment (if we haven't already saved it)
+					if (!savedImages.Contains(attachment))
+					{
+						fileName = attachment.FileName;
+
+						if (string.IsNullOrEmpty(fileName))
+							fileName = Guid.NewGuid().ToString();
+
+						using (var stream = File.Create(fileName))
+							attachment.ContentObject.DecodeTo(stream);
+
+						try
+						{
+							var att = mailItem.Attachments.Add(fileName, Outlook.OlAttachmentType.olEmbeddeditem, null, "");
+							att.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", imageCid);
+							savedImages.Add(attachment);
+						}
+						finally
+						{
+							// try not to leak temp files :)
+							File.Delete(fileName);
+						}
+					}
 				}
+
+				// Inject decrypt messaage
+				var sb = new StringBuilder(htmlBody);
+				sb.Insert(bodyEndIndex + 1, "<p>" + DecryptAndVerifyHeaderMessage + "</p>");
+
+				mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatHTML;
+				mailItem.HTMLBody = sb.ToString();
 			}
 			else
 			{
-				// May cause mail item not to open correctly
-
 				mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
-				mailItem.Body = body;
+				mailItem.Body = DecryptAndVerifyHeaderMessage + msg.TextBody;
 			}
 
 			// NOTE: Removing existing attachments is perminant, even if the message
@@ -845,14 +915,13 @@ namespace OutlookPrivacyPlugin
 
 				using (FileStream fout = File.OpenWrite(tempFile))
 				{
-					mimeAttachment.WriteTo(fout);
+					mimeAttachment.ContentObject.DecodeTo(fout);
 				}
 
 				mailItem.Attachments.Add(tempFile, Outlook.OlAttachmentType.olByValue, 1, fileName);
-			}
 
-			// ...
-			//mailItem.Save();
+				File.Delete(tempFile);
+			}
 		}
 
 		/// <summary>
