@@ -134,9 +134,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\NLog.3.2.1\lib\net40\NLog.dll</HintPath>
     </Reference>
-    <Reference Include="SharpMimeTools">
-      <HintPath>..\3rdParty\SharpMimeTools\bin\Release\SharpMimeTools.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -276,6 +273,10 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\MimeKit-1.0.15\MimeKit\MimeKitLite.Net40.csproj">
+      <Project>{87b25b2b-10e4-4a09-b682-7267cd3123ba}</Project>
+      <Name>MimeKitLite.Net40</Name>
+    </ProjectReference>
     <ProjectReference Include="..\3rdParty\bccrypto-net-1.7\crypto\Org.BouncyCastle.csproj">
       <Project>{38872a5f-e87e-4fad-b109-8eb7b2e6a4a0}</Project>
       <Name>Org.BouncyCastle</Name>

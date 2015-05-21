@@ -11,7 +11,7 @@ using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using Exception = System.Exception;
-using anmar.SharpMimeTools;
+using MimeKit;
 
 using Deja.Crypto.BcPgp;
 using NLog;
@@ -762,9 +762,15 @@ namespace OutlookPrivacyPlugin
 
 			// Extract files from MIME data
 
+			string body = string.Empty;
+			MimeMessage msg = null;
 
-			SharpMessage msg = new SharpMessage(cleartext);
-			string body = mailItem.Body;
+			using(var sin = new MemoryStream(this._encoding.GetBytes(cleartext)))
+			{
+				var parser = new MimeParser(sin);
+				msg = parser.ParseMessage();
+				body = msg.TextBody;
+			}
 
 			var DecryptAndVerifyHeaderMessage = "** ";
 
@@ -791,13 +797,13 @@ namespace OutlookPrivacyPlugin
 
 			if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
 			{
-				mailItem.Body = DecryptAndVerifyHeaderMessage + msg.Body;
+				mailItem.Body = DecryptAndVerifyHeaderMessage + body;
 			}
 			else if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatHTML)
 			{
-				if (!msg.Body.TrimStart().ToLower().StartsWith("<html"))
+				if (!body.TrimStart().ToLower().StartsWith("<html"))
 				{
-					body = DecryptAndVerifyHeaderMessage + msg.Body;
+					body = DecryptAndVerifyHeaderMessage + body;
 					body = System.Net.WebUtility.HtmlEncode(body);
 					body = body.Replace("\n", "<br />");
 
@@ -807,18 +813,18 @@ namespace OutlookPrivacyPlugin
 				{
 					// Find <body> tag and insert our message.
 
-					var matches = Regex.Match(msg.Body, @"(<body[^<]*>)", RegexOptions.IgnoreCase);
+					var matches = Regex.Match(body, @"(<body[^<]*>)", RegexOptions.IgnoreCase);
 					if (matches.Success)
 					{
 						var bodyTag = matches.Groups[1].Value;
 
 						// Insert decryption message.
-						mailItem.HTMLBody = msg.Body.Replace(
+						mailItem.HTMLBody = body.Replace(
 							bodyTag,
 							bodyTag + DecryptAndVerifyHeaderMessage.Replace("\n", "<br />"));
 					}
 					else
-						mailItem.HTMLBody = msg.Body;
+						mailItem.HTMLBody = body;
 				}
 			}
 			else
@@ -826,23 +832,26 @@ namespace OutlookPrivacyPlugin
 				// May cause mail item not to open correctly
 
 				mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
-				mailItem.Body = msg.Body;
+				mailItem.Body = body;
 			}
 
-			foreach (SharpAttachment mimeAttachment in msg.Attachments)
+			// NOTE: Removing existing attachments is perminant, even if the message
+			//       is not saved.
+
+			foreach (var mimeAttachment in msg.Attachments)
 			{
-				mimeAttachment.Stream.Position = 0;
-				var fileName = mimeAttachment.Name;
+				var fileName = mimeAttachment.FileName;
 				var tempFile = Path.Combine(Path.GetTempPath(), fileName);
 
 				using (FileStream fout = File.OpenWrite(tempFile))
 				{
-					mimeAttachment.Stream.CopyTo(fout);
+					mimeAttachment.WriteTo(fout);
 				}
 
 				mailItem.Attachments.Add(tempFile, Outlook.OlAttachmentType.olByValue, 1, fileName);
 			}
 
+			// ...
 			//mailItem.Save();
 		}
 
@@ -1710,27 +1719,6 @@ namespace OutlookPrivacyPlugin
 		}
 
 		#endregion
-
-		//bool PromptForPasswordAndKey()
-		//{
-		//	if (this.Passphrase != null)
-		//		return true;
-
-		//	// Popup UI to select the passphrase and private key.
-		//	Passphrase passphraseDialog = new Passphrase(_settings.DefaultKey, "Key");
-		//	passphraseDialog.TopMost = true;
-		//	DialogResult passphraseResult = passphraseDialog.ShowDialog();
-		//	if (passphraseResult != DialogResult.OK)
-		//	{
-		//		// The user closed the passphrase dialog, prevent sending the mail
-		//		return false;
-		//	}
-
-		//	this.Passphrase = passphraseDialog.EnteredPassphrase.ToCharArray();
-		//	passphraseDialog.Close();
-
-		//	return true;
-		//}
 
 		char[] PasswordCallback(PgpSecretKey key)
 		{
