@@ -168,7 +168,7 @@ namespace Deja.Crypto.BcPgp
 			return IsKeyValid(secKey.PublicKey);
 		}
 
-		public string[] GetPublicKeyUserIdsForEncryption()
+		public PgpPublicKey[] GetPublicKeyUserIdsForEncryption()
 		{
 			logger.Debug("GetPublicKeyUserIdsForEncryption");
 
@@ -177,7 +177,7 @@ namespace Deja.Crypto.BcPgp
 				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 				{
 					var pgpPub = new PgpPublicKeyRingBundle(decoderStream);
-					var keyUserIds = new List<string>();
+					var keyUserIds = new List<PgpPublicKey>();
 
 					foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
 					{
@@ -199,15 +199,15 @@ namespace Deja.Crypto.BcPgp
 
 									foreach (string id in pubKey.GetUserIds())
 									{
-										if (!keyUserIds.Contains(id))
-											keyUserIds.Add(id);
+										if (!keyUserIds.Contains(k))
+											keyUserIds.Add(k);
 									}
 								}
 							}
 
 							foreach (string id in k.GetUserIds())
 							{
-								keyUserIds.Add(id);
+								keyUserIds.Add(k);
 							}
 						}
 					}

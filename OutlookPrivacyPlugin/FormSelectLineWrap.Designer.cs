@@ -1,6 +1,6 @@
 ﻿namespace OutlookPrivacyPlugin
 {
-	partial class SelectLineWrap
+	partial class FormSelectLineWrap
 	{
 		/// <summary>
 		/// Required designer variable.

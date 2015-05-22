@@ -7,9 +7,9 @@ using Org.BouncyCastle.Bcpg.OpenPgp;
 
 namespace OutlookPrivacyPlugin
 {
-	internal partial class Passphrase : Form
+	internal partial class FormPassphrase : Form
 	{
-		internal Passphrase(PgpSecretKey key)
+		internal FormPassphrase(PgpSecretKey key)
 		{
 			TopMost = true;
 

@@ -184,52 +184,54 @@
     can be found.
   -->
   <ItemGroup>
-    <Compile Include="About.cs">
+    <Compile Include="FormAbout.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="About.Designer.cs">
-      <DependentUpon>About.cs</DependentUpon>
+    <Compile Include="FormAbout.Designer.cs">
+      <DependentUpon>FormAbout.cs</DependentUpon>
     </Compile>
     <Compile Include="Attachment.cs" />
+    <Compile Include="FormKeySelection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormKeySelection.Designer.cs">
+      <DependentUpon>FormKeySelection.cs</DependentUpon>
+    </Compile>
     <Compile Include="GnuKey.cs" />
     <Compile Include="GnuPGCommandBar.cs" />
     <Compile Include="GnuPGRibbon.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="GpgMePgp.cs" />
     <Compile Include="OutlookWrapper.cs" />
-    <Compile Include="Passphrase.cs">
+    <Compile Include="FormPassphrase.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Passphrase.Designer.cs">
-      <DependentUpon>Passphrase.cs</DependentUpon>
+    <Compile Include="FormPassphrase.Designer.cs">
+      <DependentUpon>FormPassphrase.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Recipient.cs">
+    <Compile Include="FormSettings.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Recipient.Designer.cs">
-      <DependentUpon>Recipient.cs</DependentUpon>
+    <Compile Include="FormSettings.Designer.cs">
+      <DependentUpon>FormSettings.cs</DependentUpon>
     </Compile>
-    <Compile Include="Settings.cs">
+    <Compile Include="FormSelectLineWrap.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Settings.Designer.cs">
-      <DependentUpon>Settings.cs</DependentUpon>
+    <Compile Include="FormSelectLineWrap.Designer.cs">
+      <DependentUpon>FormSelectLineWrap.cs</DependentUpon>
     </Compile>
-    <Compile Include="SelectLineWrap.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="SelectLineWrap.Designer.cs">
-      <DependentUpon>SelectLineWrap.cs</DependentUpon>
-    </Compile>
-    <EmbeddedResource Include="About.resx">
-      <DependentUpon>About.cs</DependentUpon>
+    <EmbeddedResource Include="FormAbout.resx">
+      <DependentUpon>FormAbout.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Passphrase.resx">
-      <DependentUpon>Passphrase.cs</DependentUpon>
+    <EmbeddedResource Include="FormKeySelection.resx">
+      <DependentUpon>FormKeySelection.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormPassphrase.resx">
+      <DependentUpon>FormPassphrase.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -241,14 +243,11 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="Recipient.resx">
-      <DependentUpon>Recipient.cs</DependentUpon>
+    <EmbeddedResource Include="FormSettings.resx">
+      <DependentUpon>FormSettings.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Settings.resx">
-      <DependentUpon>Settings.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="SelectLineWrap.resx">
-      <DependentUpon>SelectLineWrap.cs</DependentUpon>
+    <EmbeddedResource Include="FormSelectLineWrap.resx">
+      <DependentUpon>FormSelectLineWrap.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="App.config" />
     <None Include="oop.snk" />

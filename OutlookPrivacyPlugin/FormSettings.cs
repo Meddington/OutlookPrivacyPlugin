@@ -5,9 +5,9 @@ using System.Drawing;
 
 namespace OutlookPrivacyPlugin
 {
-	internal partial class Settings : Form
+	internal partial class FormSettings : Form
 	{
-		internal Settings(Properties.Settings settings)
+		internal FormSettings(Properties.Settings settings)
 		{
 			InitializeComponent();
 

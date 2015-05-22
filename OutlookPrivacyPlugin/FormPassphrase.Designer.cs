@@ -1,6 +1,6 @@
 ﻿namespace OutlookPrivacyPlugin
 {
-  internal partial class Passphrase
+  internal partial class FormPassphrase
   {
     /// <summary>
     /// Required designer variable.

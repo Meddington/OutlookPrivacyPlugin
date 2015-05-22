@@ -9,9 +9,9 @@ using System.Windows.Forms;
 
 namespace OutlookPrivacyPlugin
 {
-	public partial class SelectLineWrap : Form
+	public partial class FormSelectLineWrap : Form
 	{
-		public SelectLineWrap()
+		public FormSelectLineWrap()
 		{
 			InitializeComponent();
 		}

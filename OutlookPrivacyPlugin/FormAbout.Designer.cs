@@ -1,6 +1,6 @@
 ﻿namespace OutlookPrivacyPlugin
 {
-  internal partial class About
+  internal partial class FormAbout
   {
     /// <summary>
     /// Required designer variable.
@@ -27,7 +27,7 @@
     /// </summary>
     private void InitializeComponent()
     {
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(About));
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormAbout));
 			this.AboutLabel = new System.Windows.Forms.Label();
 			this.IconLabel = new System.Windows.Forms.LinkLabel();
 			this.ClipboardLink = new System.Windows.Forms.LinkLabel();

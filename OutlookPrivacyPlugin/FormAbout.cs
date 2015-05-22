@@ -6,9 +6,9 @@ using System.Windows.Forms;
 
 namespace OutlookPrivacyPlugin
 {
-  internal partial class About : Form
+  internal partial class FormAbout : Form
   {
-    internal About()
+    internal FormAbout()
     {
       InitializeComponent();
     }

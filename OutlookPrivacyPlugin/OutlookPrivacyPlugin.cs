@@ -1228,10 +1228,19 @@ namespace OutlookPrivacyPlugin
 					foreach (Outlook.Recipient mailRecipient in mailItem.Recipients)
 						mailRecipients.Add(GetAddressCN(((Outlook.Recipient)mailRecipient).Address));
 
-					var recipientDialog = new Recipient(mailRecipients); // Passing in the first addres, maybe it matches
-					recipientDialog.TopMost = true;
-					var recipientResult = recipientDialog.ShowDialog();
+					var recipientDialog = new FormKeySelection(
+						mailRecipients,
+						GetKeysForEncryption,
+						needToEncrypt,
+						needToSign);
 
+					recipientDialog.TopMost = true;
+
+					DialogResult recipientResult = recipientDialog.DialogResult;
+
+					if(recipientDialog.DialogResult == DialogResult.Ignore)
+						recipientResult = recipientDialog.ShowDialog();
+					
 					if (recipientResult != DialogResult.OK)
 					{
 						// The user closed the recipient dialog, prevent sending the mail
@@ -1239,12 +1248,13 @@ namespace OutlookPrivacyPlugin
 						return;
 					}
 
-					foreach (string r in recipientDialog.SelectedKeys)
-						recipients.Add(r);
+					needToEncrypt = recipientDialog.Encrypt;
+					needToSign = recipientDialog.Sign;
 
-					recipientDialog.Close();
+					foreach (var r in recipientDialog.SelectedKeys)
+						recipients.Add(r.Key);
 
-					if (recipients.Count == 0)
+					if (needToEncrypt && recipients.Count == 0)
 					{
 						MessageBox.Show(
 							"OutlookGnuPG needs a recipient when encrypting. No keys were detected/selected.",
@@ -1313,7 +1323,7 @@ namespace OutlookPrivacyPlugin
 
 					if(longLines)
 					{
-						var dialog = new SelectLineWrap();
+						var dialog = new FormSelectLineWrap();
 						var result = dialog.ShowDialog();
 						if (result == DialogResult.Cancel)
 							return;
@@ -1813,7 +1823,7 @@ namespace OutlookPrivacyPlugin
 			// Loop until correct password or user selects cancel
 			do
 			{
-				var passphraseDialog = new Passphrase(key);
+				var passphraseDialog = new FormPassphrase(key);
 				var result = passphraseDialog.ShowDialog();
 				if (result == DialogResult.Cancel)
 					return null;
@@ -1909,14 +1919,14 @@ namespace OutlookPrivacyPlugin
 		#region General Logic
 		internal void About()
 		{
-			About aboutBox = new About();
+			FormAbout aboutBox = new FormAbout();
 			aboutBox.TopMost = true;
 			aboutBox.ShowDialog();
 		}
 
 		internal void Settings()
 		{
-			Settings settingsBox = new Settings(_settings);
+			FormSettings settingsBox = new FormSettings(_settings);
 			settingsBox.TopMost = true;
 			DialogResult result = settingsBox.ShowDialog();
 
@@ -1944,17 +1954,30 @@ namespace OutlookPrivacyPlugin
 			var crypto = new PgpCrypto(new CryptoContext());
 			var keys = new List<GnuKey>();
 
-			foreach (var key in crypto.GetPublicKeyUserIdsForEncryption())
+			foreach (PgpPublicKey key in crypto.GetPublicKeyUserIdsForEncryption())
 			{
-				var match = Regex.Match(key, @"<(.*)>");
-				if (!match.Success)
-					continue;
+				foreach (string user in key.GetUserIds())
+				{
+					var match = Regex.Match(user, @"<(.*)>");
+					if (!match.Success)
+						continue;
 
-				var k = new GnuKey();
-				k.Key = match.Groups[1].Value;
-				k.KeyDisplay = key;
+					var k = new GnuKey();
+					k.Key = match.Groups[1].Value;
+					k.KeyDisplay = user;
 
-				keys.Add(k);
+					var fingerprint = key.GetFingerprint();
+					k.KeyId =
+						fingerprint[fingerprint.Length - 4].ToString("X2") +
+						fingerprint[fingerprint.Length - 3].ToString("X2") +
+						fingerprint[fingerprint.Length - 2].ToString("X2") +
+						fingerprint[fingerprint.Length - 1].ToString("X2");
+
+					if (key.ValidDays != 0)
+						k.Expiry = key.CreationTime.AddDays(key.ValidDays).ToShortDateString();
+
+					keys.Add(k);
+				}
 			}
 
 			return keys;

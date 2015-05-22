@@ -1,6 +1,6 @@
 ﻿namespace OutlookPrivacyPlugin
 {
-  internal partial class Settings
+  internal partial class FormSettings
   {
     /// <summary>
     /// Required designer variable.
