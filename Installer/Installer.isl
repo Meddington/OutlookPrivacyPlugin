@@ -345,7 +345,6 @@
 		<row><td>Org.BouncyCastle.Primary_output</td><td>{68FB6256-8773-4EB0-A7D1-92A1E20FF780}</td><td>INSTALLDIR</td><td>2</td><td/><td>org.bouncycastle.primary_out</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>OutlookPrivacyPlugin.Primary_output</td><td>{BA78DFF6-3375-4A15-9311-A0AF3E43D950}</td><td>INSTALLDIR</td><td>2</td><td/><td>outlookprivacyplugin.primary</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>OutlookPrivacyPlugin.Security.Primary_output</td><td>{F301CBB6-3FCA-4182-866F-145F8DBE6D77}</td><td>INSTALLDIR</td><td>2</td><td/><td>outlookprivacyplugin.securit</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-
 	</table>
 
 	<table name="Condition">
@@ -4383,7 +4382,7 @@ QwBEAF8AUgBPAE0AAQBFAHgAcAByAGUAcwBzAA==
 		<row><td>PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS</td><td>##IDS_PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS##</td><td/></row>
 		<row><td>ProductCode</td><td>{68E34B9C-F9B5-4346-B394-F22B2A726306}</td><td/></row>
 		<row><td>ProductName</td><td>Outlook Privacy Plugin</td><td/></row>
-		<row><td>ProductVersion</td><td>1.00.0000</td><td/></row>
+		<row><td>ProductVersion</td><td>2.0.5622.40719</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>

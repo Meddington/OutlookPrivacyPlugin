@@ -708,7 +708,7 @@ namespace OutlookPrivacyPlugin
 
 					var clearsigUpper = new StringBuilder();
 
-					clearsigUpper.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\n\r\n", sigHash));
+					clearsigUpper.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\nCharset: {1}\r\n\r\n", sigHash, encoding.BodyName.ToUpper()));
 					clearsigUpper.Append("Content-Type: text/plain; charset=");
 					clearsigUpper.Append(encoding.BodyName.ToUpper());
 					clearsigUpper.Append("\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
@@ -723,7 +723,7 @@ namespace OutlookPrivacyPlugin
 
 					var clearsigLower = new StringBuilder(clearsigUpper.Length);
 
-					clearsigLower.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\n\r\n", sigHash));
+					clearsigLower.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\nCharset: {1}\r\n\r\n", sigHash, encoding.BodyName.ToUpper()));
 					clearsigLower.Append("Content-Type: text/plain; charset=");
 					clearsigLower.Append(encoding.BodyName.ToLower());
 					clearsigLower.Append("\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
