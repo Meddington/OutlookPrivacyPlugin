@@ -684,7 +684,7 @@ namespace OutlookPrivacyPlugin
 
 			if (sigMime != null)
 			{
-				Context = new CryptoContext(PasswordCallback);
+				Context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var Crypto = new PgpCrypto(Context);
 				Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
 
@@ -1469,7 +1469,7 @@ namespace OutlookPrivacyPlugin
 		{
 			try
 			{
-				var context = new CryptoContext(PasswordCallback);
+				var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
@@ -1498,7 +1498,7 @@ namespace OutlookPrivacyPlugin
 		{
 			try
 			{
-				var context = new CryptoContext(PasswordCallback);
+				var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
@@ -1534,7 +1534,7 @@ namespace OutlookPrivacyPlugin
 		{
 			try
 			{
-				var context = new CryptoContext(PasswordCallback);
+				var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
@@ -1563,7 +1563,7 @@ namespace OutlookPrivacyPlugin
 		{
 			try
 			{
-				var context = new CryptoContext(PasswordCallback);
+				var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = "Outlook Privacy Plugin";
@@ -1602,7 +1602,7 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			var Context = new CryptoContext(PasswordCallback);
+			var Context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 			var Crypto = new PgpCrypto(Context);
 
 			try
@@ -1877,7 +1877,7 @@ namespace OutlookPrivacyPlugin
 			DecryptAndVerifyHeaderMessage = "";
 			outContext = null;
 
-			var Context = new CryptoContext(PasswordCallback);
+			var Context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 			var Crypto = new PgpCrypto(Context);
 
 			try
@@ -1953,11 +1953,10 @@ namespace OutlookPrivacyPlugin
 
 		internal void Settings()
 		{
-			FormSettings settingsBox = new FormSettings(_settings);
+			var settingsBox = new FormSettings(_settings);
 			settingsBox.TopMost = true;
-			DialogResult result = settingsBox.ShowDialog();
 
-			if (result != DialogResult.OK)
+			if (settingsBox.ShowDialog() != DialogResult.OK)
 				return;
 
 			_settings.Encrypt2Self = settingsBox.Encrypt2Self;
@@ -1969,6 +1968,8 @@ namespace OutlookPrivacyPlugin
 			_settings.DefaultDomain = settingsBox.DefaultDomain;
 			_settings.Default2PlainFormat = settingsBox.Default2PlainFormat;
 			_settings.IgnoreIntegrityCheck = settingsBox.IgnoreIntegrityCheck;
+			_settings.Cipher = settingsBox.Cipher;
+			_settings.Digest = settingsBox.Digest;
 			_settings.Save();
 		}
 

@@ -83,6 +83,43 @@ namespace Deja.Crypto.BcPgp
 			}
 		}
 
+		internal SymmetricKeyAlgorithmTag GetSymAlgTagFromString(string alg)
+		{
+			switch(alg)
+			{
+				case "Cast5":
+					return SymmetricKeyAlgorithmTag.Cast5;
+				case "AES-128":
+					return SymmetricKeyAlgorithmTag.Aes128;
+				case "AES-192":
+					return SymmetricKeyAlgorithmTag.Aes192;
+				case "AES-256":
+					return SymmetricKeyAlgorithmTag.Aes256;
+			}
+
+			throw new InvalidParameterException("Error, '" + alg + "' is an invalid encryption algorithm.");
+
+		}
+
+		internal HashAlgorithmTag GetHashAlgTagFromString(string alg)
+		{
+			switch(alg)
+			{
+				case "SHA-1":
+					return HashAlgorithmTag.Sha1;
+				case "SHA-224":
+					return HashAlgorithmTag.Sha224;
+				case "SHA-256":
+					return HashAlgorithmTag.Sha256;
+				case "SHA-384":
+					return HashAlgorithmTag.Sha384;
+				case "SHA-512":
+					return HashAlgorithmTag.Sha512;
+			}
+
+			throw new InvalidParameterException("Error, '"+alg+"' is an invalid digest algorithm.");
+		}
+
 		/// <summary>
 		/// Is key allowed for signing?
 		/// </summary>
@@ -561,7 +598,7 @@ namespace Deja.Crypto.BcPgp
 
 			// Setup signature stuff //
 			var tag = senderKey.PublicKey.Algorithm;
-			var signatureData = new PgpSignatureGenerator(tag, HashAlgorithmTag.Sha256);
+			var signatureData = new PgpSignatureGenerator(tag, GetHashAlgTagFromString(Context.Digest));
 			signatureData.InitSign(PgpSignature.BinaryDocument, senderKey.ExtractPrivateKey(Context.PasswordCallback(senderKey)));
 
 			foreach (string userId in senderKey.PublicKey.GetUserIds())
@@ -617,7 +654,7 @@ namespace Deja.Crypto.BcPgp
 				throw new SecretKeyNotFoundException("Error, unable to locate signing key \"" + key + "\".");
 
 			// Setup signature stuff //
-			var signatureData = new PgpSignatureGenerator(senderKey.PublicKey.Algorithm, HashAlgorithmTag.Sha1);
+			var signatureData = new PgpSignatureGenerator(senderKey.PublicKey.Algorithm, GetHashAlgTagFromString(Context.Digest));
 			signatureData.InitSign(PgpSignature.CanonicalTextDocument, senderKey.ExtractPrivateKey(Context.PasswordCallback(senderKey)));
 
 			foreach (string userId in senderKey.PublicKey.GetUserIds())
@@ -640,7 +677,7 @@ namespace Deja.Crypto.BcPgp
 					foreach (var header in headers)
 						armoredOut.SetHeader(header.Key, header.Value);
 
-					armoredOut.BeginClearText(HashAlgorithmTag.Sha1);
+					armoredOut.BeginClearText(GetHashAlgTagFromString(Context.Digest));
 
 					// Remove any extra trailing whitespace.
 					// this should not include \r or \n.
@@ -711,7 +748,7 @@ namespace Deja.Crypto.BcPgp
 
 			var compressedData = new PgpCompressedDataGenerator(CompressionAlgorithmTag.Zip);
 			var literalData = new PgpLiteralDataGenerator();
-			var cryptData = new PgpEncryptedDataGenerator(SymmetricKeyAlgorithmTag.Cast5, true, new SecureRandom());
+			var cryptData = new PgpEncryptedDataGenerator(GetSymAlgTagFromString(Context.Cipher), true, new SecureRandom());
 
 			foreach (var recipient in recipients)
 			{
@@ -796,7 +833,7 @@ namespace Deja.Crypto.BcPgp
 
 			var compressedData = new PgpCompressedDataGenerator(CompressionAlgorithmTag.ZLib);
 			var literalData = new PgpLiteralDataGenerator();
-			var cryptData = new PgpEncryptedDataGenerator(SymmetricKeyAlgorithmTag.Cast5, true, new SecureRandom());
+			var cryptData = new PgpEncryptedDataGenerator(GetSymAlgTagFromString(Context.Cipher), true, new SecureRandom());
 
 			foreach (var recipient in recipients)
 			{
@@ -810,7 +847,7 @@ namespace Deja.Crypto.BcPgp
 			// Setup signature stuff //
 			var signatureData = new PgpSignatureGenerator(
 				senderSignKey.PublicKey.Algorithm,
-				HashAlgorithmTag.Sha256);
+				GetHashAlgTagFromString(Context.Digest));
 			signatureData.InitSign(
 				isBinary ? PgpSignature.BinaryDocument : PgpSignature.CanonicalTextDocument,
 				senderSignKey.ExtractPrivateKey(Context.PasswordCallback(senderSignKey)));

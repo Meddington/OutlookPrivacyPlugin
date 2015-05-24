@@ -17,7 +17,7 @@ namespace TestApp
 		{
 			password = args[0].ToCharArray();
 
-			var context = new CryptoContext(PasswordCallback);
+			var context = new CryptoContext(PasswordCallback, "AES-128", "SHA-1");
 			var crypto = new PgpCrypto(context);
 
 			Console.WriteLine(ASCIIEncoding.ASCII.GetString(crypto.DecryptAndVerify(File.ReadAllBytes(args[1]), true)));

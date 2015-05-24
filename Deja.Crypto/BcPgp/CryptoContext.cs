@@ -32,6 +32,8 @@ namespace Deja.Crypto.BcPgp
 			SignatureValidated = false;
 			IsCompressed = false;
 			FailedIntegrityCheck = true;
+			Cipher = "AES-128";
+			Digest = "SHA-1";
 
 			GetPasswordCallback PasswordCallback = null;
 			OnePassSignature = null;
@@ -84,14 +86,17 @@ namespace Deja.Crypto.BcPgp
 			throw new ApplicationException("Error, failed to locate keyrings! Please specify location using GNUPGHOME environmental variable.");
 		}
 
-		public CryptoContext(GetPasswordCallback passwordCallback)
+		public CryptoContext(GetPasswordCallback passwordCallback, string cipher, string digest)
 			: this()
 		{
 			PasswordCallback = passwordCallback;
+			Digest = digest;
+			Cipher = cipher;
 		}
 
-		public CryptoContext(GetPasswordCallback passwordCallback, string publicKeyRing, string secretKeyRing)
-			: this(passwordCallback)
+		public CryptoContext(GetPasswordCallback passwordCallback, string publicKeyRing, string secretKeyRing,
+			string cipher, string digest)
+			: this(passwordCallback, cipher, digest)
 		{
 			PublicKeyRingFile = publicKeyRing;
 			PrivateKeyRingFile = secretKeyRing;
@@ -109,6 +114,8 @@ namespace Deja.Crypto.BcPgp
 			OnePassSignature = null;
 			Signature = null;
 			SignedBy = null;
+			Cipher = context.Cipher;
+			Digest = context.Digest;
 
 			PasswordCallback = context.PasswordCallback;
 			PublicKeyRingFile = context.PublicKeyRingFile;
@@ -116,6 +123,9 @@ namespace Deja.Crypto.BcPgp
 		}
 
 		public GetPasswordCallback PasswordCallback { get; set; }
+
+		public string Cipher { get; set; }
+		public string Digest { get; set; }
 
         public string PublicKeyRingFile { get; set; }
         public string PrivateKeyRingFile { get; set; }

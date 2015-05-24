@@ -24,12 +24,27 @@ namespace OutlookPrivacyPlugin
 
 			IgnoreIntegrityCheck = settings.IgnoreIntegrityCheck;
 
+			Cipher = settings.Cipher;
+			Digest = settings.Digest;
+
 			// Temporary disable all settings regarding auto-verify/decrypt
 			// MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
 		}
 
 		private string m_DefaultKey;
 		internal string DefaultKey { get { return m_DefaultKey; } set { m_DefaultKey = value; } }
+
+		internal string Cipher
+		{
+			get { return comboBoxCipher.Text; }
+			set { comboBoxCipher.Text = value; }
+		}
+
+		internal string Digest
+		{
+			get { return comboBoxDigest.Text; }
+			set { comboBoxDigest.Text = value; }
+		}
 
 		internal bool IgnoreIntegrityCheck
 		{
@@ -110,12 +125,6 @@ namespace OutlookPrivacyPlugin
 		//        CenterToScreen();
 		//    }
 		//}
-
-		private void OkButton_Click(object sender, System.EventArgs e)
-		{
-			DialogResult = DialogResult.OK;
-			Close();
-		}
 
 		private void DefaultDomainTextBox_TextChanged(object sender, System.EventArgs e)
 		{

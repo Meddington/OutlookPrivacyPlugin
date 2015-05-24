@@ -50,5 +50,11 @@
     <Setting Name="IgnoreIntegrityCheck" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="Cipher" Type="System.String" Scope="User">
+      <Value Profile="(Default)">AES-128</Value>
+    </Setting>
+    <Setting Name="Digest" Type="System.String" Scope="User">
+      <Value Profile="(Default)">SHA-1</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

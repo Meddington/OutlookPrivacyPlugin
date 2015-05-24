@@ -214,5 +214,29 @@ namespace OutlookPrivacyPlugin.Properties {
                 this["IgnoreIntegrityCheck"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("AES-128")]
+        public string Cipher {
+            get {
+                return ((string)(this["Cipher"]));
+            }
+            set {
+                this["Cipher"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("SHA-1")]
+        public string Digest {
+            get {
+                return ((string)(this["Digest"]));
+            }
+            set {
+                this["Digest"] = value;
+            }
+        }
     }
 }
