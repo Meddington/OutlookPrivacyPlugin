@@ -359,6 +359,8 @@ namespace OutlookPrivacyPlugin
             // TODO - use dictionary of conversation id to mapp these properties!
             //mailItem.ConversationID
 
+			_encoding = Encoding.GetEncoding(mailItem.InternetCodepage);
+
 			// New mail (Compose)
 			if (mailItem.Sent == false)
 			{
@@ -637,6 +639,19 @@ namespace OutlookPrivacyPlugin
 			return builder.ToString();
 		}
 
+		string AddMessageToHtmlBody(string htmlBody, string msg)
+		{
+			var htmlBodyLower = htmlBody.ToLower();
+			var bodyStartIndex = htmlBodyLower.IndexOf("<body");
+			var bodyEndIndex = htmlBodyLower.IndexOf(">", bodyStartIndex);
+
+			// Inject decrypt messaage
+			var sb = new StringBuilder(htmlBody);
+			sb.Insert(bodyEndIndex + 1, "<p>" + msg + "</p>");
+
+			return sb.ToString();
+		}
+
 		void HandlePgpMime(Outlook.MailItem mailItem, Microsoft.Office.Interop.Outlook.Attachment encryptedMime,
 			Microsoft.Office.Interop.Outlook.Attachment sigMime, string sigHash = "sha1")
 		{
@@ -686,25 +701,44 @@ namespace OutlookPrivacyPlugin
 					// the rules for are the same with the addition of two heaer fields.
 					// Ultimately we need to get these fields out of email itself.
 
+					// NOTE: encoding could be uppercase or lowercase. Try both.
+					//       this is definetly hacky :/
+
 					var encoding = GetEncodingFromMail(mailItem);
 
-					var clearsig = string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\n\r\n", sigHash);
-					//clearsig += "Content-Type: text/plain; charset=ISO-8859-1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n";
-					clearsig += "Content-Type: text/plain; charset=" + 
-						encoding.BodyName.ToUpper()+
-						"\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n";
+					var clearsigUpper = new StringBuilder();
 
-					clearsig += PgpClearDashEscapeAndQuoteEncode(
+					clearsigUpper.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\n\r\n", sigHash));
+					clearsigUpper.Append("Content-Type: text/plain; charset=");
+					clearsigUpper.Append(encoding.BodyName.ToUpper());
+					clearsigUpper.Append("\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
+
+					clearsigUpper.Append(PgpClearDashEscapeAndQuoteEncode(
 						encoding.GetString(
 						(byte[])mailItem.PropertyAccessor.GetProperty(
-							"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102")));
+							"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102"))));
 
-					clearsig += "\r\n"+detachedsig;
+					clearsigUpper.Append("\r\n");
+					clearsigUpper.Append(detachedsig);
 
-					logger.Trace(clearsig);
+					var clearsigLower = new StringBuilder(clearsigUpper.Length);
 
+					clearsigLower.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\n\r\n", sigHash));
+					clearsigLower.Append("Content-Type: text/plain; charset=");
+					clearsigLower.Append(encoding.BodyName.ToLower());
+					clearsigLower.Append("\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
 
-					if (Crypto.VerifyClear(_encoding.GetBytes(clearsig)))
+					clearsigLower.Append(PgpClearDashEscapeAndQuoteEncode(
+						encoding.GetString(
+						(byte[])mailItem.PropertyAccessor.GetProperty(
+							"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102"))));
+
+					clearsigLower.Append("\r\n");
+					clearsigLower.Append(detachedsig);
+
+					logger.Trace(clearsigUpper.ToString());
+
+					if (Crypto.VerifyClear(_encoding.GetBytes(clearsigUpper.ToString())) || Crypto.VerifyClear(_encoding.GetBytes(clearsigLower.ToString())))
 					{
 						Context = Crypto.Context;
 
@@ -712,9 +746,9 @@ namespace OutlookPrivacyPlugin
 							"\" with KeyId " + Context.SignedByKeyId + ".\n\n";
 
 						if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-						{
 							mailItem.Body = message + mailItem.Body;
-						}
+						else
+							mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
 					}
 					else
 					{
@@ -724,9 +758,9 @@ namespace OutlookPrivacyPlugin
 							"\" with KeyId " + Context.SignedByKeyId + ".\n\n";
 
 						if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-						{
 							mailItem.Body = message + mailItem.Body;
-						}
+						else
+							mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
 					}
 				}
 				catch (PublicKeyNotFoundException ex)
@@ -738,9 +772,9 @@ namespace OutlookPrivacyPlugin
 					var message = "** Unable to verify signature, missing public key.\n\n";
 
 					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-					{
 						mailItem.Body = message + mailItem.Body;
-					}
+					else
+						mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
 				}
 				catch (Exception ex)
 				{
@@ -823,9 +857,6 @@ namespace OutlookPrivacyPlugin
 			if(isHtml)
 			{
 				var htmlBody = msg.HtmlBody;
-				var htmlBodyLower = msg.HtmlBody.ToLower();
-				var bodyStartIndex = htmlBodyLower.IndexOf("<body");
-				var bodyEndIndex = htmlBodyLower.IndexOf(">", bodyStartIndex);
 				var related = msg.Body as MultipartRelated;
 				var doc = new HtmlAgilityPack.HtmlDocument();
 				var savedImages = new List<MimePart>();
@@ -892,12 +923,8 @@ namespace OutlookPrivacyPlugin
 					}
 				}
 
-				// Inject decrypt messaage
-				var sb = new StringBuilder(htmlBody);
-				sb.Insert(bodyEndIndex + 1, "<p>" + DecryptAndVerifyHeaderMessage + "</p>");
-
 				mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatHTML;
-				mailItem.HTMLBody = sb.ToString();
+				mailItem.HTMLBody = AddMessageToHtmlBody(htmlBody, DecryptAndVerifyHeaderMessage);
 			}
 			else
 			{
