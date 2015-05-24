@@ -1,11 +1,22 @@
+
+using System;
+using System.Collections.Generic;
+
 namespace OutlookPrivacyPlugin
 {
-  public class GnuKey
-  {
-    private string m_KeyDisplay;
-    public string KeyDisplay { get { return m_KeyDisplay; } set { m_KeyDisplay = value; } }
+	public class GnuKey
+	{
+		public string KeyDisplay { get; set; }
+		public string Key { get; set; }
+		public string Expiry { get; set; }
+		public string KeyId { get; set; }
+	}
 
-    private string m_Key;
-    public string Key { get { return m_Key; } set { m_Key = value; } }
-  }
+	internal class GnuKeySorter : IComparer<GnuKey>
+	{
+		public int Compare(GnuKey x, GnuKey y)
+		{
+			return x.KeyDisplay.CompareTo(y.KeyDisplay);
+		}
+	}
 }

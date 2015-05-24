@@ -27,7 +27,7 @@
     <NoStandardLibraries>false</NoStandardLibraries>
     <RootNamespace>OutlookPrivacyPlugin</RootNamespace>
     <AssemblyName>OutlookPrivacyPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <DefineConstants>VSTO40</DefineConstants>
     <IsWebBootstrapper>False</IsWebBootstrapper>
     <TargetFrameworkProfile />
@@ -127,14 +127,15 @@
   -->
   <ItemGroup>
     <Reference Include="Accessibility" />
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>..\packages\HtmlAgilityPack.1.4.9\lib\Net40\HtmlAgilityPack.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Office.Interop.Outlook, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="NLog">
-      <HintPath>..\packages\NLog.2.1.0\lib\net45\NLog.dll</HintPath>
-    </Reference>
-    <Reference Include="SharpMimeTools">
-      <HintPath>..\3rdParty\SharpMimeTools\bin\Release\SharpMimeTools.dll</HintPath>
+    <Reference Include="NLog, Version=3.2.1.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\NLog.3.2.1\lib\net40\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -183,46 +184,54 @@
     can be found.
   -->
   <ItemGroup>
-    <Compile Include="About.cs">
+    <Compile Include="FormAbout.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="About.Designer.cs">
-      <DependentUpon>About.cs</DependentUpon>
+    <Compile Include="FormAbout.Designer.cs">
+      <DependentUpon>FormAbout.cs</DependentUpon>
     </Compile>
     <Compile Include="Attachment.cs" />
+    <Compile Include="FormKeySelection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormKeySelection.Designer.cs">
+      <DependentUpon>FormKeySelection.cs</DependentUpon>
+    </Compile>
     <Compile Include="GnuKey.cs" />
     <Compile Include="GnuPGCommandBar.cs" />
     <Compile Include="GnuPGRibbon.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="GpgMePgp.cs" />
     <Compile Include="OutlookWrapper.cs" />
-    <Compile Include="Passphrase.cs">
+    <Compile Include="FormPassphrase.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Passphrase.Designer.cs">
-      <DependentUpon>Passphrase.cs</DependentUpon>
+    <Compile Include="FormPassphrase.Designer.cs">
+      <DependentUpon>FormPassphrase.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Recipient.cs">
+    <Compile Include="FormSettings.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Recipient.Designer.cs">
-      <DependentUpon>Recipient.cs</DependentUpon>
+    <Compile Include="FormSettings.Designer.cs">
+      <DependentUpon>FormSettings.cs</DependentUpon>
     </Compile>
-    <Compile Include="Settings.cs">
+    <Compile Include="FormSelectLineWrap.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Settings.Designer.cs">
-      <DependentUpon>Settings.cs</DependentUpon>
+    <Compile Include="FormSelectLineWrap.Designer.cs">
+      <DependentUpon>FormSelectLineWrap.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="About.resx">
-      <DependentUpon>About.cs</DependentUpon>
+    <EmbeddedResource Include="FormAbout.resx">
+      <DependentUpon>FormAbout.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Passphrase.resx">
-      <DependentUpon>Passphrase.cs</DependentUpon>
+    <EmbeddedResource Include="FormKeySelection.resx">
+      <DependentUpon>FormKeySelection.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormPassphrase.resx">
+      <DependentUpon>FormPassphrase.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -234,11 +243,11 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="Recipient.resx">
-      <DependentUpon>Recipient.cs</DependentUpon>
+    <EmbeddedResource Include="FormSettings.resx">
+      <DependentUpon>FormSettings.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Settings.resx">
-      <DependentUpon>Settings.cs</DependentUpon>
+    <EmbeddedResource Include="FormSelectLineWrap.resx">
+      <DependentUpon>FormSelectLineWrap.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="App.config" />
     <None Include="oop.snk" />
@@ -266,6 +275,14 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\MimeKit-1.0.15\MimeKit\MimeKitLite.Net40.csproj">
+      <Project>{87b25b2b-10e4-4a09-b682-7267cd3123ba}</Project>
+      <Name>MimeKitLite.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\3rdParty\bccrypto-net-1.7\crypto\Org.BouncyCastle.csproj">
+      <Project>{38872a5f-e87e-4fad-b109-8eb7b2e6a4a0}</Project>
+      <Name>Org.BouncyCastle</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Deja.Crypto\Deja.Crypto.csproj">
       <Project>{228e6b06-76ac-42ae-8ee6-035da96043ec}</Project>
       <Name>Deja.Crypto</Name>

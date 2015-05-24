@@ -1,16 +1,4 @@
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or any
-// later version.
-//
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -203,7 +191,11 @@ namespace OutlookPrivacyPlugin
 			var smtp = Globals.OutlookPrivacyPlugin.GetSMTPAddress(mailItem);
 			
 			var crypto = new Deja.Crypto.BcPgp.PgpCrypto(new Deja.Crypto.BcPgp.CryptoContext());
-			var publicKey = crypto.PublicKey(smtp, new Dictionary<string, string>());
+			
+			var headers = new Dictionary<string, string>();
+			headers["Version"] = "Outlook Privacy Plugin";
+
+			var publicKey = crypto.PublicKey(smtp, headers);
 
 			if(publicKey == null)
 			{
@@ -212,7 +204,7 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			var tempFile = Path.Combine(Path.GetTempPath(), "public_key.gpg");
+			var tempFile = Path.Combine(Path.GetTempPath(), "public_key.asc");
 			File.WriteAllText(tempFile, publicKey);
 
 			try
@@ -221,7 +213,7 @@ namespace OutlookPrivacyPlugin
 					tempFile, 
 					Outlook.OlAttachmentType.olByValue, 
 					1, 
-					"public_key.gpg");
+					"public_key.asc");
 				
 				mailItem.Save();
 			}
@@ -284,12 +276,12 @@ namespace OutlookPrivacyPlugin
 			if (control.Id == SignButton.Id)
 			{
 				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
-				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Sign");
+				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Sign", false);
 			}
 			else if (control.Id == EncryptButton.Id)
 			{
 				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
-				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Encrypt");
+				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 			}
 			else
 				logger.Trace("GetPressed: Button did not match encrypt or sign!");

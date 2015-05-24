@@ -18,6 +18,13 @@ namespace Deja.Crypto.BcPgp
 		readonly string _publicFilename = "pubring.gpg";
 		readonly string _privateFilename = "secring.gpg";
 
+		/// <summary>
+		/// Return password for provided key
+		/// </summary>
+		/// <param name="key">Private key to provide password for.</param>
+		/// <returns>Password to secret key</returns>
+		public delegate char[] GetPasswordCallback(PgpSecretKey key);
+
 		public CryptoContext()
 		{
 			IsEncrypted = false;
@@ -25,8 +32,10 @@ namespace Deja.Crypto.BcPgp
 			SignatureValidated = false;
 			IsCompressed = false;
 			FailedIntegrityCheck = true;
+			Cipher = "AES-128";
+			Digest = "SHA-1";
 
-			Password = null;
+			GetPasswordCallback PasswordCallback = null;
 			OnePassSignature = null;
 			Signature = null;
 
@@ -77,12 +86,17 @@ namespace Deja.Crypto.BcPgp
 			throw new ApplicationException("Error, failed to locate keyrings! Please specify location using GNUPGHOME environmental variable.");
 		}
 
-		public CryptoContext(char[] password) : this()
+		public CryptoContext(GetPasswordCallback passwordCallback, string cipher, string digest)
+			: this()
 		{
-			Password = password;
+			PasswordCallback = passwordCallback;
+			Digest = digest;
+			Cipher = cipher;
 		}
 
-		public CryptoContext(char[] password, string publicKeyRing, string secretKeyRing) : this(password)
+		public CryptoContext(GetPasswordCallback passwordCallback, string publicKeyRing, string secretKeyRing,
+			string cipher, string digest)
+			: this(passwordCallback, cipher, digest)
 		{
 			PublicKeyRingFile = publicKeyRing;
 			PrivateKeyRingFile = secretKeyRing;
@@ -100,13 +114,19 @@ namespace Deja.Crypto.BcPgp
 			OnePassSignature = null;
 			Signature = null;
 			SignedBy = null;
+			Cipher = context.Cipher;
+			Digest = context.Digest;
 
-			Password = context.Password;
+			PasswordCallback = context.PasswordCallback;
 			PublicKeyRingFile = context.PublicKeyRingFile;
 			PrivateKeyRingFile = context.PrivateKeyRingFile;
 		}
 
-		public char[] Password { get; set; }
+		public GetPasswordCallback PasswordCallback { get; set; }
+
+		public string Cipher { get; set; }
+		public string Digest { get; set; }
+
         public string PublicKeyRingFile { get; set; }
         public string PrivateKeyRingFile { get; set; }
 
@@ -139,17 +159,30 @@ namespace Deja.Crypto.BcPgp
 		{
 			get
 			{
+				var crypto = new PgpCrypto(new CryptoContext());
+				PgpSecretKey key = null;
+
 				if (SignedBy == null)
 				{
 					if (OnePassSignature != null)
-					{
-						return OnePassSignature.KeyId.ToString("X");
-					}
+						key = crypto.GetSecretKey(OnePassSignature.KeyId);
 					else
 						return "Unknown KeyId";
 				}
+				else
+				{
+					key = crypto.GetSecretKey(SignedBy.KeyId);
+				}
 
-				return SignedBy.KeyId.ToString("X");
+				var fingerPrint = key.PublicKey.GetFingerprint();
+				var fingerPrintLength = fingerPrint.Length;
+				var keyId =
+					fingerPrint[fingerPrintLength - 4].ToString("X2") +
+					fingerPrint[fingerPrintLength - 3].ToString("X2") +
+					fingerPrint[fingerPrintLength - 2].ToString("X2") +
+					fingerPrint[fingerPrintLength - 1].ToString("X2");
+
+				return keyId;
 			}
 		}
 
