@@ -202,6 +202,11 @@
     <Compile Include="GnuPGRibbon.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Language\Localized.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Localized.resx</DependentUpon>
+    </Compile>
     <Compile Include="OutlookWrapper.cs" />
     <Compile Include="FormPassphrase.cs">
       <SubType>Form</SubType>
@@ -232,6 +237,10 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormPassphrase.resx">
       <DependentUpon>FormPassphrase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Language\Localized.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Localized.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

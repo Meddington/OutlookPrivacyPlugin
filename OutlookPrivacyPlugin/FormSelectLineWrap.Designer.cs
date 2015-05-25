@@ -28,6 +28,7 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormSelectLineWrap));
 			this.label1 = new System.Windows.Forms.Label();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.radioButtonEdit = new System.Windows.Forms.RadioButton();
@@ -41,13 +42,8 @@
 			// 
 			// label1
 			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(13, 13);
+			resources.ApplyResources(this.label1, "label1");
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(524, 34);
-			this.label1.TabIndex = 0;
-			this.label1.Text = "You have very long lines in your mail. They should be handled differently to avoi" +
-    "d \r\nbad signatures.";
 			// 
 			// groupBox1
 			// 
@@ -55,89 +51,61 @@
 			this.groupBox1.Controls.Add(this.radioButtonMime);
 			this.groupBox1.Controls.Add(this.radioButtonAsIs);
 			this.groupBox1.Controls.Add(this.radioButtonWrap);
-			this.groupBox1.Location = new System.Drawing.Point(16, 65);
+			resources.ApplyResources(this.groupBox1, "groupBox1");
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(521, 153);
-			this.groupBox1.TabIndex = 2;
 			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "How do you want to proceed?";
 			// 
 			// radioButtonEdit
 			// 
-			this.radioButtonEdit.AutoSize = true;
-			this.radioButtonEdit.Location = new System.Drawing.Point(7, 112);
+			resources.ApplyResources(this.radioButtonEdit, "radioButtonEdit");
 			this.radioButtonEdit.Name = "radioButtonEdit";
-			this.radioButtonEdit.Size = new System.Drawing.Size(113, 21);
-			this.radioButtonEdit.TabIndex = 3;
-			this.radioButtonEdit.Text = "Edit manually";
 			this.radioButtonEdit.UseVisualStyleBackColor = true;
 			// 
 			// radioButtonMime
 			// 
-			this.radioButtonMime.AutoSize = true;
-			this.radioButtonMime.Location = new System.Drawing.Point(7, 85);
+			resources.ApplyResources(this.radioButtonMime, "radioButtonMime");
 			this.radioButtonMime.Name = "radioButtonMime";
-			this.radioButtonMime.Size = new System.Drawing.Size(471, 21);
-			this.radioButtonMime.TabIndex = 2;
-			this.radioButtonMime.Text = "Use PGP/MIME (good signature, but some receivers cannot decode it)";
 			this.radioButtonMime.UseVisualStyleBackColor = true;
-			this.radioButtonMime.Visible = false;
 			// 
 			// radioButtonAsIs
 			// 
-			this.radioButtonAsIs.AutoSize = true;
-			this.radioButtonAsIs.Location = new System.Drawing.Point(7, 58);
+			resources.ApplyResources(this.radioButtonAsIs, "radioButtonAsIs");
 			this.radioButtonAsIs.Name = "radioButtonAsIs";
-			this.radioButtonAsIs.Size = new System.Drawing.Size(262, 21);
-			this.radioButtonAsIs.TabIndex = 1;
-			this.radioButtonAsIs.Text = "Send as is (and risk a bad signature)";
 			this.radioButtonAsIs.UseVisualStyleBackColor = true;
 			// 
 			// radioButtonWrap
 			// 
-			this.radioButtonWrap.AutoSize = true;
+			resources.ApplyResources(this.radioButtonWrap, "radioButtonWrap");
 			this.radioButtonWrap.Checked = true;
-			this.radioButtonWrap.Location = new System.Drawing.Point(7, 31);
 			this.radioButtonWrap.Name = "radioButtonWrap";
-			this.radioButtonWrap.Size = new System.Drawing.Size(406, 21);
-			this.radioButtonWrap.TabIndex = 0;
 			this.radioButtonWrap.TabStop = true;
-			this.radioButtonWrap.Text = "Wrap automatically (good signature, but may not look good)";
 			this.radioButtonWrap.UseVisualStyleBackColor = true;
 			// 
 			// buttonOk
 			// 
 			this.buttonOk.DialogResult = System.Windows.Forms.DialogResult.OK;
-			this.buttonOk.Location = new System.Drawing.Point(354, 224);
+			resources.ApplyResources(this.buttonOk, "buttonOk");
 			this.buttonOk.Name = "buttonOk";
-			this.buttonOk.Size = new System.Drawing.Size(87, 32);
-			this.buttonOk.TabIndex = 3;
-			this.buttonOk.Text = "OK";
 			this.buttonOk.UseVisualStyleBackColor = true;
 			// 
 			// buttonCancel
 			// 
 			this.buttonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-			this.buttonCancel.Location = new System.Drawing.Point(447, 224);
+			resources.ApplyResources(this.buttonCancel, "buttonCancel");
 			this.buttonCancel.Name = "buttonCancel";
-			this.buttonCancel.Size = new System.Drawing.Size(90, 32);
-			this.buttonCancel.TabIndex = 4;
-			this.buttonCancel.Text = "Cancel";
 			this.buttonCancel.UseVisualStyleBackColor = true;
 			// 
-			// SelectLineWrap
+			// FormSelectLineWrap
 			// 
 			this.AcceptButton = this.buttonOk;
-			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+			resources.ApplyResources(this, "$this");
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.CancelButton = this.buttonCancel;
-			this.ClientSize = new System.Drawing.Size(557, 269);
 			this.Controls.Add(this.buttonCancel);
 			this.Controls.Add(this.buttonOk);
 			this.Controls.Add(this.groupBox1);
 			this.Controls.Add(this.label1);
-			this.Name = "SelectLineWrap";
-			this.Text = "Select Line Wrap";
+			this.Name = "FormSelectLineWrap";
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
 			this.ResumeLayout(false);
