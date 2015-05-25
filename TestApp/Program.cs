@@ -28,7 +28,7 @@ namespace TestApp
 			Console.WriteLine("Done");
 		}
 
-		static char[] PasswordCallback(PgpSecretKey key)
+		static char[] PasswordCallback(PgpSecretKey masterKey, PgpSecretKey key)
 		{
 			return password;
 		}

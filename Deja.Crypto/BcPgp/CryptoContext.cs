@@ -23,7 +23,7 @@ namespace Deja.Crypto.BcPgp
 		/// </summary>
 		/// <param name="key">Private key to provide password for.</param>
 		/// <returns>Password to secret key</returns>
-		public delegate char[] GetPasswordCallback(PgpSecretKey key);
+		public delegate char[] GetPasswordCallback(PgpSecretKey masterKey, PgpSecretKey key);
 
 		public CryptoContext()
 		{
@@ -136,6 +136,7 @@ namespace Deja.Crypto.BcPgp
         public bool IsSigned { get; set; }
         public bool SignatureValidated { get; set; }
 		public PgpPublicKey SignedBy{ get; set; }
+
 		public string SignedByUserId
 		{
 			get
@@ -160,21 +161,21 @@ namespace Deja.Crypto.BcPgp
 			get
 			{
 				var crypto = new PgpCrypto(new CryptoContext());
-				PgpSecretKey key = null;
+				PgpPublicKey key = null;
 
 				if (SignedBy == null)
 				{
 					if (OnePassSignature != null)
-						key = crypto.GetSecretKey(OnePassSignature.KeyId);
+						key = crypto.GetPublicKey(OnePassSignature.KeyId);
 					else
 						return "Unknown KeyId";
 				}
 				else
 				{
-					key = crypto.GetSecretKey(SignedBy.KeyId);
+					key = crypto.GetPublicKey(SignedBy.KeyId);
 				}
 
-				var fingerPrint = key.PublicKey.GetFingerprint();
+				var fingerPrint = key.GetFingerprint();
 				var fingerPrintLength = fingerPrint.Length;
 				var keyId =
 					fingerPrint[fingerPrintLength - 4].ToString("X2") +

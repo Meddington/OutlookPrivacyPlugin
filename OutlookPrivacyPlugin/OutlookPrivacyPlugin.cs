@@ -17,6 +17,7 @@ using Deja.Crypto.BcPgp;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
+using OutlookPrivacyPlugin.Language;
 
 namespace OutlookPrivacyPlugin
 {
@@ -367,12 +368,12 @@ namespace OutlookPrivacyPlugin
 				ribbon.SignButton.Checked = _settings.AutoSign || (bool) GetProperty(mailItem, "GnuPGSetting.Sign", false);
                 ribbon.EncryptButton.Checked = _settings.AutoEncrypt || (bool)GetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 
-				if (mailItem.Body.IndexOf("\n** Message decrypted. Valid signature") > -1)
+				if (mailItem.Body.IndexOf("\n** " + Localized.MsgDecryptValidSig) > -1)
 				{
 					ribbon.SignButton.Checked = true;
 					ribbon.EncryptButton.Checked = true;
 				}
-				else if (mailItem.Body.IndexOf("\n** Message decrypted.") > -1)
+				else if (mailItem.Body.IndexOf("\n** " + Localized.MsgDecrypt) > -1)
 				{
 					ribbon.EncryptButton.Checked = true;
 				}
@@ -708,7 +709,7 @@ namespace OutlookPrivacyPlugin
 
 					var clearsigUpper = new StringBuilder();
 
-					clearsigUpper.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\n\r\n", sigHash));
+					clearsigUpper.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\nCharset: {1}\r\n\r\n", sigHash, encoding.BodyName.ToUpper()));
 					clearsigUpper.Append("Content-Type: text/plain; charset=");
 					clearsigUpper.Append(encoding.BodyName.ToUpper());
 					clearsigUpper.Append("\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
@@ -723,7 +724,7 @@ namespace OutlookPrivacyPlugin
 
 					var clearsigLower = new StringBuilder(clearsigUpper.Length);
 
-					clearsigLower.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\n\r\n", sigHash));
+					clearsigLower.Append(string.Format("-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: {0}\r\nCharset: {1}\r\n\r\n", sigHash, encoding.BodyName.ToUpper()));
 					clearsigLower.Append("Content-Type: text/plain; charset=");
 					clearsigLower.Append(encoding.BodyName.ToLower());
 					clearsigLower.Append("\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
@@ -742,8 +743,8 @@ namespace OutlookPrivacyPlugin
 					{
 						Context = Crypto.Context;
 
-						var message = "** Valid signature from \"" + Context.SignedByUserId +
-							"\" with KeyId " + Context.SignedByKeyId + ".\n\n";
+						var message = "** " + string.Format(Localized.MsgValidSig,
+							Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
 
 						if (mailType == Outlook.OlBodyFormat.olFormatPlain)
 							mailItem.Body = message + mailItem.Body;
@@ -754,8 +755,8 @@ namespace OutlookPrivacyPlugin
 					{
 						Context = Crypto.Context;
 
-						var message = "** Invalid signature from \"" + Context.SignedByUserId +
-							"\" with KeyId " + Context.SignedByKeyId + ".\n\n";
+						var message = "** " + string.Format(Localized.MsgInvalidSig,
+							Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
 
 						if (mailType == Outlook.OlBodyFormat.olFormatPlain)
 							mailItem.Body = message + mailItem.Body;
@@ -769,7 +770,7 @@ namespace OutlookPrivacyPlugin
 
 					Context = Crypto.Context;
 
-					var message = "** Unable to verify signature, missing public key.\n\n";
+					var message = "** " + Localized.MsgSigMissingPubKey + "\n\n";
 
 					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
 						mailItem.Body = message + mailItem.Body;
@@ -834,23 +835,23 @@ namespace OutlookPrivacyPlugin
 			var DecryptAndVerifyHeaderMessage = "** ";
 
 			if (Context.IsEncrypted)
-				DecryptAndVerifyHeaderMessage += "Message decrypted. ";
+				DecryptAndVerifyHeaderMessage += Localized.MsgDecrypt + " ";
 
 			if (Context.FailedIntegrityCheck)
-				DecryptAndVerifyHeaderMessage += "Failed integrity check! ";
+				DecryptAndVerifyHeaderMessage += Localized.MsgFailedIntegrityCheck + " ";
 
 			if (Context.IsSigned && Context.SignatureValidated)
 			{
-				DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId +
-					"\" with KeyId " + Context.SignedByKeyId;
+				DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgValidSig,
+					Context.SignedByUserId, Context.SignedByKeyId);
 			}
 			else if (Context.IsSigned)
 			{
-				DecryptAndVerifyHeaderMessage += "Invalid signature from \"" + Context.SignedByUserId +
-					"\" with KeyId " + Context.SignedByKeyId + ".";
+				DecryptAndVerifyHeaderMessage +=  string.Format(Localized.MsgInvalidSig,
+					Context.SignedByUserId, Context.SignedByKeyId);
 			}
 			else
-				DecryptAndVerifyHeaderMessage += "Message was unsigned.";
+				DecryptAndVerifyHeaderMessage += Localized.MsgUnsigned;
 
 			DecryptAndVerifyHeaderMessage += "\n\n";
 
@@ -1206,7 +1207,7 @@ namespace OutlookPrivacyPlugin
 				return exUser.PrimarySmtpAddress;
 			}
 
-			throw new Exception("Error, unable to determine senders address.");
+			throw new Exception(Localized.ErrorUnableToDetermineSenderAddress);
 		}
 
 		#region Send Logic
@@ -1237,7 +1238,7 @@ namespace OutlookPrivacyPlugin
 				if (mailType != Outlook.OlBodyFormat.olFormatPlain)
 				{
 					MessageBox.Show(
-						"OutlookGnuPG can only sign/encrypt plain text mails. Please change the format, or disable signing/encrypting for this mail.",
+						Localized.ErrorInvalidFormat,
 						"Invalid Mail Format",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
@@ -1284,7 +1285,7 @@ namespace OutlookPrivacyPlugin
 					if (needToEncrypt && recipients.Count == 0)
 					{
 						MessageBox.Show(
-							"OutlookGnuPG needs a recipient when encrypting. No keys were detected/selected.",
+							Localized.ErrorInvalidRecipientKey,
 							"Invalid Recipient Key",
 							MessageBoxButtons.OK,
 							MessageBoxIcon.Error);
@@ -1434,7 +1435,7 @@ namespace OutlookPrivacyPlugin
 				if (ex.Message.ToLower().StartsWith("checksum"))
 				{
 					MessageBox.Show(
-						"Incorrect passphrase possibly entered.",
+						Localized.ErrorBadPassphrase,
 						"Outlook Privacy Error",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
@@ -1594,7 +1595,7 @@ namespace OutlookPrivacyPlugin
 			if (Regex.IsMatch(mailItem.Body, _pgpSignedHeader) == false)
 			{
 				MessageBox.Show(
-					"Outlook Privacy cannot help here.",
+					Localized.ErrorMsgNotSigned,
 					"Mail is not signed",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Exclamation);
@@ -1611,8 +1612,8 @@ namespace OutlookPrivacyPlugin
 				{
 					Context = Crypto.Context;
 
-					var message = "** Valid signature from \"" + Context.SignedByUserId +
-						"\" with KeyId " + Context.SignedByKeyId + ".\n\n";
+					var message = "** " + string.Format(Localized.MsgValidSig,
+						Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
 
 					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
 					{
@@ -1623,8 +1624,8 @@ namespace OutlookPrivacyPlugin
 				{
 					Context = Crypto.Context;
 
-					var message = "** Invalid signature from \"" + Context.SignedByUserId +
-						"\" with KeyId " + Context.SignedByKeyId + ".\n\n";
+					var message = "** " + string.Format(Localized.MsgInvalidSig,
+						Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
 
 					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
 					{
@@ -1636,7 +1637,7 @@ namespace OutlookPrivacyPlugin
 			{
 				Context = Crypto.Context;
 
-				const string message = "** Unable to verify signature, missing public key.\n\n";
+				string message = "** "+ Localized.MsgSigMissingPubKey+"\n\n";
 
 				if (mailType == Outlook.OlBodyFormat.olFormatPlain)
 				{
@@ -1683,7 +1684,7 @@ namespace OutlookPrivacyPlugin
 			if (Regex.IsMatch(mailItem.Body, _pgpEncryptedHeader) == false)
 			{
 				MessageBox.Show(
-					"Outlook Privacy Plugin cannot help here.",
+					Localized.ErrorMsgNotEncrypted,
 					"Mail is not encrypted",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Exclamation);
@@ -1842,7 +1843,7 @@ namespace OutlookPrivacyPlugin
 
 		#endregion
 
-		char[] PasswordCallback(PgpSecretKey key)
+		char[] PasswordCallback(PgpSecretKey masterKey, PgpSecretKey key)
 		{
 			if (PassphraseCache.ContainsKey(key.PublicKey.KeyId))
 				return PassphraseCache[key.KeyId];
@@ -1850,7 +1851,7 @@ namespace OutlookPrivacyPlugin
 			// Loop until correct password or user selects cancel
 			do
 			{
-				var passphraseDialog = new FormPassphrase(key);
+				var passphraseDialog = new FormPassphrase(masterKey, key);
 				var result = passphraseDialog.ShowDialog();
 				if (result == DialogResult.Cancel)
 					return null;
@@ -1888,20 +1889,20 @@ namespace OutlookPrivacyPlugin
 				DecryptAndVerifyHeaderMessage = "** ";
 
 				if (Context.IsEncrypted)
-					DecryptAndVerifyHeaderMessage += "Message decrypted. ";
+					DecryptAndVerifyHeaderMessage += Localized.MsgDecrypt + " ";
 
 				if (Context.IsSigned && Context.SignatureValidated)
 				{
-					DecryptAndVerifyHeaderMessage += "Valid signature from \"" + Context.SignedByUserId +
-						"\" with KeyId " + Context.SignedByKeyId;
+					DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgValidSig,
+						Context.SignedByUserId, Context.SignedByKeyId);
 				}
 				else if (Context.IsSigned)
 				{
-					DecryptAndVerifyHeaderMessage += "Invalid signature from \"" + Context.SignedByUserId +
-						"\" with KeyId " + Context.SignedByKeyId + ".";
+					DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgInvalidSig,
+						Context.SignedByUserId, Context.SignedByKeyId);
 				}
 				else
-					DecryptAndVerifyHeaderMessage += "Message was unsigned.";
+					DecryptAndVerifyHeaderMessage += Localized.MsgUnsigned;
 
 				DecryptAndVerifyHeaderMessage += "\n\n";
 
@@ -1925,7 +1926,7 @@ namespace OutlookPrivacyPlugin
 				if (e.Message.ToLower().StartsWith("checksum"))
 				{
 					MessageBox.Show(
-						"Incorrect passphrase possibly entered.",
+						Localized.ErrorBadPassphrase,
 						"Outlook Privacy Error",
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
