@@ -1843,7 +1843,7 @@ namespace OutlookPrivacyPlugin
 
 		#endregion
 
-		char[] PasswordCallback(PgpSecretKey key)
+		char[] PasswordCallback(PgpSecretKey masterKey, PgpSecretKey key)
 		{
 			if (PassphraseCache.ContainsKey(key.PublicKey.KeyId))
 				return PassphraseCache[key.KeyId];
@@ -1851,7 +1851,7 @@ namespace OutlookPrivacyPlugin
 			// Loop until correct password or user selects cancel
 			do
 			{
-				var passphraseDialog = new FormPassphrase(key);
+				var passphraseDialog = new FormPassphrase(masterKey, key);
 				var result = passphraseDialog.ShowDialog();
 				if (result == DialogResult.Cancel)
 					return null;

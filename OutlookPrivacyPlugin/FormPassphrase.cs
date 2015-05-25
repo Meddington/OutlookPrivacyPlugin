@@ -9,13 +9,13 @@ namespace OutlookPrivacyPlugin
 {
 	internal partial class FormPassphrase : Form
 	{
-		internal FormPassphrase(PgpSecretKey key)
+		internal FormPassphrase(PgpSecretKey masterKey, PgpSecretKey key)
 		{
 			TopMost = true;
 
 			InitializeComponent();
 
-			var userIds = key.UserIds.GetEnumerator();
+			var userIds = masterKey.UserIds.GetEnumerator();
 			userIds.MoveNext();
 			var userId = userIds.Current.ToString();
 			var strength = key.PublicKey.BitStrength.ToString();

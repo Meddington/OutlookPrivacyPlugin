@@ -361,45 +361,31 @@ namespace Deja.Crypto.BcPgp
 
 						logger.Debug("Found correct master key, searching for encryption key...");
 
+						PgpPublicKey encryptionKey = null;
 						foreach (PgpPublicKey k in kRing.GetPublicKeys())
 						{
 							if (!IsEncryptionKey(k))
+							{
 								logger.Debug("Key {0} !IsEncryptionKey", masterKey.KeyId.ToString("X"));
+								continue;
+							}
 
 							if (!IsKeyValid(k))
+							{
 								logger.Debug("Key {0} !IsKeyValid", masterKey.KeyId.ToString("X"));
+								continue;
+							}
 
-							if (IsEncryptionKey(k) && IsKeyValid(k))
+							// Prefer sub-keys to master keys
+							if (!k.IsMasterKey)
 								return k;
+
+							// Use master if no other options available.
+							encryptionKey = k;
 						}
 
-						//foreach (PgpPublicKey k in kRing.GetPublicKeys())
-						//{
-						//    if (!IsKeyValid(k) || !IsEncryptionKey(k))
-						//        continue;
-
-						//    if (!k.IsMasterKey)
-						//    {
-						//        foreach (PgpSignature sig in k.GetSignaturesOfType(24))
-						//        {
-						//            var pubKey = this.GetPublicKey(sig.KeyId);
-						//            if (!pubKey.IsMasterKey)
-						//                continue;
-
-						//            foreach (string id in pubKey.GetUserIds())
-						//            {
-						//                if (id.ToLower().IndexOf(emailSearch) > -1)
-						//                    return k;
-						//            }
-						//        }
-						//    }
-
-						//    foreach (string id in k.GetUserIds())
-						//    {
-						//        if (id.ToLower().IndexOf(emailSearch) > -1)
-						//            return k;
-						//    }
-						//}
+						if (encryptionKey != null)
+							 return encryptionKey;
 					}
 
 					return null;
@@ -423,6 +409,31 @@ namespace Deja.Crypto.BcPgp
 						{
 							if (k.KeyId == keyId)
 								return k;
+						}
+					}
+
+					return null;
+				}
+			}
+		}
+
+		public PgpPublicKey GetMasterPublicKey(long keyId)
+		{
+			logger.Debug("GetMasterPublicKey: {0}", keyId);
+
+			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
+			{
+				using (var decodeStream = PgpUtilities.GetDecoderStream(inputStream))
+				{
+					var pgpPub = new PgpPublicKeyRingBundle(decodeStream);
+
+					foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+					{
+						var masterKey = kRing.GetPublicKey();
+						foreach (PgpPublicKey k in kRing.GetPublicKeys())
+						{
+							if (k.KeyId == keyId)
+								return masterKey;
 						}
 					}
 
@@ -464,39 +475,22 @@ namespace Deja.Crypto.BcPgp
 							continue;
 						}
 
+						PgpSecretKey encryptionKey = null;
 						foreach (PgpSecretKey k in kRing.GetSecretKeys())
 						{
-							if (IsEncryptionKey(k.PublicKey) && IsKeyValid(k))
+							if (!IsEncryptionKey(k.PublicKey) || !IsKeyValid(k))
+								continue;
+
+							// prefer sub-key over master key
+							if(!k.IsMasterKey)
 								return k;
+
+							encryptionKey = k;
 						}
 
-						//foreach (PgpSecretKey k in kRing.GetSecretKeys())
-						//{
-						//    if (!IsKeyValid(k) || !IsEncryptionKey(k.PublicKey))
-						//        continue;
+						if(encryptionKey != null)
+							return encryptionKey;
 
-						//    if (!k.IsMasterKey && k.PublicKey != null)
-						//    {
-						//        foreach (PgpSignature sig in k.PublicKey.GetSignaturesOfType(24))
-						//        {
-						//            var pubKey = this.GetPublicKey(sig.KeyId);
-						//            if (!pubKey.IsMasterKey)
-						//                continue;
-
-						//            foreach (string id in pubKey.GetUserIds())
-						//            {
-						//                if (id.ToLower().IndexOf(emailSearch) > -1)
-						//                    return k;
-						//            }
-						//        }
-						//    }
-
-						//    foreach (string id in k.PublicKey.GetUserIds())
-						//    {
-						//        if (id.ToLower().IndexOf(emailSearch) > -1)
-						//            return k;
-						//    }
-						//}
 					}
 
 					return null;
@@ -504,9 +498,10 @@ namespace Deja.Crypto.BcPgp
 			}
 		}
 
-		public PgpSecretKey GetSecretKeyForSigning(string email)
+		public PgpSecretKey GetSecretKeyForSigning(string email, out PgpSecretKey masterKey)
 		{
 			logger.Debug("GetSecretKeyForSigning: {0}", email);
+			masterKey = null;
 
 			using (var inputStream = File.OpenRead(Context.PrivateKeyRingFile))
 			{
@@ -517,32 +512,50 @@ namespace Deja.Crypto.BcPgp
 
 					foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
 					{
+						masterKey = kRing.GetSecretKey();
+
+						// Skip key's that don't match
+						if (masterKey.PublicKey.GetUserIds().Cast<string>().Any(id => id.ToLower().IndexOf(emailSearch) == -1))
+							continue;
+
+						PgpSecretKey signingKey = null;
 						foreach (PgpSecretKey k in kRing.GetSecretKeys())
 						{
-							if (!IsSigningKey(k.PublicKey))
+							if (!IsSigningKey(k.PublicKey) || !IsKeyValid(k))
 								continue;
 
+							// Prever sub-key over master key
 							if (!k.IsMasterKey)
-							{
-								foreach (PgpSignature sig in k.PublicKey.GetSignaturesOfType(24))
-								{
-									var pubKey = this.GetPublicKey(sig.KeyId);
-									if (!pubKey.IsMasterKey)
-										continue;
+								return k;
 
-									foreach (string id in pubKey.GetUserIds())
-									{
-										if (id.ToLower().IndexOf(emailSearch) > -1)
-											return k;
-									}
-								}
-							}
+							signingKey = k;
+						}
 
-							foreach (string id in k.PublicKey.GetUserIds())
-							{
-								if (id.ToLower().IndexOf(emailSearch) > -1)
-									return k;
-							}
+						if (signingKey != null)
+							return signingKey;
+					}
+
+					return null;
+				}
+			}
+		}
+
+		public PgpSecretKey GetMasterSecretKey(long subKeyId)
+		{
+			using (var inputStream = File.OpenRead(Context.PrivateKeyRingFile))
+			{
+				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				{
+					var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
+
+					foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
+					{
+						var masterKey = kRing.GetSecretKey();
+
+						foreach (PgpSecretKey k in kRing.GetSecretKeys())
+						{
+							if (k.KeyId == subKeyId)
+								return masterKey;
 						}
 					}
 
@@ -589,7 +602,8 @@ namespace Deja.Crypto.BcPgp
 
 			Context = new CryptoContext(Context);
 
-			var senderKey = GetSecretKeyForSigning(key);
+			PgpSecretKey senderMasterKey;
+			var senderKey = GetSecretKeyForSigning(key, out senderMasterKey);
 			if (senderKey == null)
 				throw new SecretKeyNotFoundException("Error, unable to locate signing key \"" + key + "\".");
 
@@ -599,7 +613,7 @@ namespace Deja.Crypto.BcPgp
 			// Setup signature stuff //
 			var tag = senderKey.PublicKey.Algorithm;
 			var signatureData = new PgpSignatureGenerator(tag, GetHashAlgTagFromString(Context.Digest));
-			signatureData.InitSign(PgpSignature.BinaryDocument, senderKey.ExtractPrivateKey(Context.PasswordCallback(senderKey)));
+			signatureData.InitSign(PgpSignature.BinaryDocument, senderKey.ExtractPrivateKey(Context.PasswordCallback(senderMasterKey, senderKey)));
 
 			foreach (string userId in senderKey.PublicKey.GetUserIds())
 			{
@@ -649,13 +663,14 @@ namespace Deja.Crypto.BcPgp
 		{
 			Context = new CryptoContext(Context);
 
-			var senderKey = GetSecretKeyForSigning(key);
+			PgpSecretKey senderMasterKey;
+			var senderKey = GetSecretKeyForSigning(key, out senderMasterKey);
 			if (senderKey == null)
 				throw new SecretKeyNotFoundException("Error, unable to locate signing key \"" + key + "\".");
 
 			// Setup signature stuff //
 			var signatureData = new PgpSignatureGenerator(senderKey.PublicKey.Algorithm, GetHashAlgTagFromString(Context.Digest));
-			signatureData.InitSign(PgpSignature.CanonicalTextDocument, senderKey.ExtractPrivateKey(Context.PasswordCallback(senderKey)));
+			signatureData.InitSign(PgpSignature.CanonicalTextDocument, senderKey.ExtractPrivateKey(Context.PasswordCallback(senderMasterKey, senderKey)));
 
 			foreach (string userId in senderKey.PublicKey.GetUserIds())
 			{
@@ -827,7 +842,8 @@ namespace Deja.Crypto.BcPgp
 			if (senderKey == null)
 				throw new SecretKeyNotFoundException("Error, Unable to locate sender encryption key \"" + key + "\".");
 
-			var senderSignKey = GetSecretKeyForSigning(key);
+			PgpSecretKey senderMasterSignkey;
+			var senderSignKey = GetSecretKeyForSigning(key, out senderMasterSignkey);
 			if (senderSignKey == null)
 				throw new SecretKeyNotFoundException("Error, Unable to locate sender signing key \"" + key + "\".");
 
@@ -850,7 +866,7 @@ namespace Deja.Crypto.BcPgp
 				GetHashAlgTagFromString(Context.Digest));
 			signatureData.InitSign(
 				isBinary ? PgpSignature.BinaryDocument : PgpSignature.CanonicalTextDocument,
-				senderSignKey.ExtractPrivateKey(Context.PasswordCallback(senderSignKey)));
+				senderSignKey.ExtractPrivateKey(Context.PasswordCallback(senderMasterSignkey, senderSignKey)));
 
 			foreach (string userId in senderKey.PublicKey.GetUserIds())
 			{
@@ -1113,14 +1129,21 @@ namespace Deja.Crypto.BcPgp
 					{
 						// NOTE: When content is encrypted to multiple recipients, only one of these blocks
 						//       will match a known KeyId.  If a match is never made, then there is a problem :)
-						Context.SecretKey = GetSecretKey(encryptedData.KeyId);
-						if (Context.SecretKey == null)
+
+						var masterSecretKey = GetMasterSecretKey(encryptedData.KeyId);
+						var secretKey = GetSecretKey(encryptedData.KeyId);
+
+						Context.SecretKey = masterSecretKey;
+
+						if (masterSecretKey == null || secretKey == null)
 							continue;
 
 						logger.Trace("DecryptHandlePgpObject: Found key: " + encryptedData.KeyId);
 						secretKeyMatched = true;
 
-						using (var cleartextIn = encryptedData.GetDataStream(Context.SecretKey.ExtractPrivateKey(Context.PasswordCallback(Context.SecretKey))))
+						using (var cleartextIn = encryptedData.GetDataStream(
+							secretKey.ExtractPrivateKey(
+							Context.PasswordCallback(masterSecretKey, secretKey))))
 						{
 							var clearFactory = new PgpObjectFactory(cleartextIn);
 							var nextObj = clearFactory.NextPgpObject();
@@ -1243,7 +1266,7 @@ namespace Deja.Crypto.BcPgp
 					{
 						logger.Trace("DecryptHandlePgpObject: Context.OnePassSignature.Verify passed");
 						Context.SignatureValidated = true;
-						Context.SignedBy = GetPublicKey(Context.Signature.KeyId);
+						Context.SignedBy = GetMasterPublicKey(Context.Signature.KeyId);
 					}
 					else
 					{

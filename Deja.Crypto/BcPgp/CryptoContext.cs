@@ -23,7 +23,7 @@ namespace Deja.Crypto.BcPgp
 		/// </summary>
 		/// <param name="key">Private key to provide password for.</param>
 		/// <returns>Password to secret key</returns>
-		public delegate char[] GetPasswordCallback(PgpSecretKey key);
+		public delegate char[] GetPasswordCallback(PgpSecretKey masterKey, PgpSecretKey key);
 
 		public CryptoContext()
 		{
