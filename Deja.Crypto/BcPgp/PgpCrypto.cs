@@ -1246,6 +1246,7 @@ namespace Deja.Crypto.BcPgp
 				}
 
 				Context.Signature = signatureList[0];
+				Context.IsSigned = true;
 
 				if (Context.IsSigned && Context.OnePassSignature == null)
 				{
@@ -1257,8 +1258,6 @@ namespace Deja.Crypto.BcPgp
 				}
 				else if (Context.OnePassSignature == null)
 				{
-					logger.Error("DecryptHandlePgpObject: Error, OnePassSignature was not found!");
-					throw new CryptoException("Error, OnePassSignature was not found!");
 				}
 				else
 				{
@@ -1290,6 +1289,31 @@ namespace Deja.Crypto.BcPgp
 
 				if (Context.OnePassSignature != null)
 					Context.OnePassSignature.Update(ret, 0, ret.Length);
+				else if (Context.Signature != null)
+				{
+					var publicKey = GetPublicKey(Context.Signature.KeyId);
+					if (publicKey == null)
+					{
+						logger.Debug("DecryptHandlePgpObject: Failed to find public key: " + Context.OnePassSignature.KeyId);
+						Context.Signature = null;
+					}
+					else
+					{
+						Context.Signature.InitVerify(publicKey);
+						Context.Signature.Update(ret, 0, ret.Length);
+
+						if (Context.Signature.Verify())
+						{
+							logger.Trace("DecryptHandlePgpObject: Context.Signature.Verify passed");
+							Context.SignatureValidated = true;
+							Context.SignedBy = GetMasterPublicKey(Context.Signature.KeyId);
+						}
+						else
+						{
+							logger.Trace("DecryptHandlePgpObject: Context.Signature.Verify failed");
+						}
+					}
+				}
 			}
 			else if (obj is PgpMarker)
 			{

@@ -136,6 +136,7 @@ namespace Deja.Crypto.BcPgp
         public bool IsSigned { get; set; }
         public bool SignatureValidated { get; set; }
 		public PgpPublicKey SignedBy{ get; set; }
+
 		public string SignedByUserId
 		{
 			get
