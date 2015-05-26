@@ -118,16 +118,16 @@ Enter file contents here<?xml version="1.0" encoding="utf-8"?>
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ErrorBadPassphrase" xml:space="preserve">
-    <value>Incorrect passphrase possibly entered.</value>
+    <value>Das eingegebene Kennwort ist falsch.</value>
   </data>
   <data name="ErrorInvalidFormat" xml:space="preserve">
-    <value>Can only sign/encrypt plain text mails. Please change the format, or disable signing/encrypting for this mail.</value>
+    <value>Es können nur Text E-mails signiert/verschlüsselt werden. Bitte ändere das Format oder deaktiviere, die Signierung/Verschlüsselung für diese Email.</value>
   </data>
   <data name="ErrorInvalidRecipientKey" xml:space="preserve">
-    <value>Need a recipient when encrypting. No keys were detected/selected.</value>
+    <value>Für eine Verschlüsselung wird ein Empfänger benötigt. Es wurde kein Empfänger ausgewählt.</value>
   </data>
   <data name="ErrorMsgNotEncrypted" xml:space="preserve">
-    <value>Outlook Privacy Plugin cannot help here, message is not encrypted.</value>
+    <value>Outlook Privacy Plugin kann hier nicht helfen, die Nachricht ist nicht Verschlüsselt.</value>
   </data>
   <data name="ErrorMsgNotSigned" xml:space="preserve">
     <value>Outlook Privacy cannot help here, message is not signed.</value>
