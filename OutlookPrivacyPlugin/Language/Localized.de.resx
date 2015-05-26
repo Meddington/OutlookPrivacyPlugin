@@ -127,33 +127,33 @@ Enter file contents here<?xml version="1.0" encoding="utf-8"?>
     <value>Für eine Verschlüsselung wird ein Empfänger benötigt. Es wurde kein Empfänger ausgewählt.</value>
   </data>
   <data name="ErrorMsgNotEncrypted" xml:space="preserve">
-    <value>Outlook Privacy Plugin kann hier nicht helfen, die Nachricht ist nicht Verschlüsselt.</value>
+    <value>Die Nachricht ist nicht verschlüsselt.</value>
   </data>
   <data name="ErrorMsgNotSigned" xml:space="preserve">
-    <value>Outlook Privacy cannot help here, message is not signed.</value>
+    <value>Die Nachricht ist nicht signiert.</value>
   </data>
   <data name="ErrorUnableToDetermineSenderAddress" xml:space="preserve">
-    <value>Error, unable to determine senders address.</value>
+    <value>Fehler, die Absenderadresse kann nicht ermittelt werden.</value>
   </data>
   <data name="MsgDecrypt" xml:space="preserve">
-    <value>Message decrypted.</value>
+    <value>Nachricht wurde entschlüsselt.</value>
   </data>
   <data name="MsgDecryptValidSig" xml:space="preserve">
-    <value>Message decrypted. Valid signature</value>
+    <value>Nachricht wurde entschlüsselt. Die Signatur ist gültig.</value>
   </data>
   <data name="MsgFailedIntegrityCheck" xml:space="preserve">
-    <value>Failed integrity check!</value>
+    <value>Fehlerhafte Integritätsprüfung!</value>
   </data>
   <data name="MsgInvalidSig" xml:space="preserve">
-    <value>Invalid signature from "{0}" with KeyId {1}.</value>
+    <value>Vorsicht: Ungültige Signatur von "{0}" mit KeyId {1}.</value>
   </data>
   <data name="MsgSigMissingPubKey" xml:space="preserve">
-    <value>Unable to verify signature, missing public key.</value>
+    <value>Vorsicht: Die Signatur kann nicht überpfüft werden, es wurde kein öffentlicher Schlüssel gefunden.</value>
   </data>
   <data name="MsgUnsigned" xml:space="preserve">
-    <value>Message was unsigned.</value>
+    <value>Nachricht ist nicht Signiert.</value>
   </data>
   <data name="MsgValidSig" xml:space="preserve">
-    <value>Valid signature from "{0}" with KeyId {1}.</value>
+    <value>Gültige Signatur von "{0}" mit KeyId {1}.</value>
   </data>
 </root>
