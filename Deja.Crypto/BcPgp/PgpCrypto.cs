@@ -1127,23 +1127,33 @@ namespace Deja.Crypto.BcPgp
 				{
 					try
 					{
+						// If we have already found a key to use, skip others. It is possible
+						// to have all the keys in our ring.
+						if (Context.SecretKey != null)
+							continue;
+
 						// NOTE: When content is encrypted to multiple recipients, only one of these blocks
 						//       will match a known KeyId.  If a match is never made, then there is a problem :)
 
 						var masterSecretKey = GetMasterSecretKey(encryptedData.KeyId);
 						var secretKey = GetSecretKey(encryptedData.KeyId);
 
-						Context.SecretKey = masterSecretKey;
-
 						if (masterSecretKey == null || secretKey == null)
 							continue;
+
+						var passphrase = Context.PasswordCallback(masterSecretKey, secretKey);
+
+						// Incorrect passphrase or cancel
+						if (passphrase == null)
+							continue;
+
+						Context.SecretKey = masterSecretKey;
 
 						logger.Trace("DecryptHandlePgpObject: Found key: " + encryptedData.KeyId);
 						secretKeyMatched = true;
 
 						using (var cleartextIn = encryptedData.GetDataStream(
-							secretKey.ExtractPrivateKey(
-							Context.PasswordCallback(masterSecretKey, secretKey))))
+							secretKey.ExtractPrivateKey(passphrase)))
 						{
 							var clearFactory = new PgpObjectFactory(cleartextIn);
 							var nextObj = clearFactory.NextPgpObject();
