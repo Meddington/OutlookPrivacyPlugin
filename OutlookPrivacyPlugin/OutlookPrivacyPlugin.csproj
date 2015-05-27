@@ -238,6 +238,7 @@
     <EmbeddedResource Include="FormPassphrase.resx">
       <DependentUpon>FormPassphrase.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Language\Localized.de.resx" />
     <EmbeddedResource Include="Language\Localized.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Localized.Designer.cs</LastGenOutput>

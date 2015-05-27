@@ -558,7 +558,7 @@ namespace OutlookPrivacyPlugin
 
 				//return _conversationState[mailItem.ConversationIndex][name];
 			}
-			catch(Exception ex)
+			catch(Exception)
 			{
 				return defaultReturn;
 			}
@@ -868,7 +868,6 @@ namespace OutlookPrivacyPlugin
 				foreach (var img in doc.DocumentNode.SelectNodes("//img[@src]"))
 				{
 					var src = img.Attributes["src"];
-					int index;
 					Uri uri;
 
 					if (src == null || src.Value == null)
@@ -1864,7 +1863,7 @@ namespace OutlookPrivacyPlugin
 					PassphraseCache[key.PublicKey.KeyId] = pass;
 					return pass;
 				}
-				catch (Exception ex)
+				catch (Exception)
 				{
 				}
 			}
