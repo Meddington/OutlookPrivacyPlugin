@@ -1,6 +1,0 @@
-Name: gpgme-sharp
-Description: Libgpgme bindings for .NET
-Version: @VERSION@
-
-Requires: 
-Libs: -r:@LIBDIR@/gpgme-sharp.dll

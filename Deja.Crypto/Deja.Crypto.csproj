@@ -66,7 +66,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\3rdParty\bccrypto-net-1.7\crypto\Org.BouncyCastle.csproj">
+    <ProjectReference Include="..\3rdParty\bccrypto-net-05282015\crypto\Org.BouncyCastle.csproj">
       <Project>{38872a5f-e87e-4fad-b109-8eb7b2e6a4a0}</Project>
       <Name>Org.BouncyCastle</Name>
     </ProjectReference>

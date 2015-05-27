@@ -1,5 +1,0 @@
-C:\projects\outlook-privacy-plugin\References\SharpMimeTools\bin\Debug\SharpMimeTools.dll
-C:\projects\outlook-privacy-plugin\References\SharpMimeTools\bin\Debug\SharpMimeTools.pdb
-C:\projects\outlook-privacy-plugin\References\SharpMimeTools\obj\Debug\SharpMimeTools.dll
-C:\projects\outlook-privacy-plugin\References\SharpMimeTools\obj\Debug\SharpMimeTools.pdb
-C:\projects\outlook-privacy-plugin\References\SharpMimeTools\obj\Debug\SharpMimeTools.csprojResolveAssemblyReference.cache

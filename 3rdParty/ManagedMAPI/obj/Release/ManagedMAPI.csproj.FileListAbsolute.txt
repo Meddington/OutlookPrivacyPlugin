@@ -1,4 +1,0 @@
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\bin\Release\ManagedMAPI.dll
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\bin\Release\ManagedMAPI.pdb
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\obj\Release\ManagedMAPI.dll
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\obj\Release\ManagedMAPI.pdb

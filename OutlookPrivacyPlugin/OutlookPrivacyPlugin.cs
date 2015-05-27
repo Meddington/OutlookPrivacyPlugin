@@ -2001,8 +2001,8 @@ namespace OutlookPrivacyPlugin
 						fingerprint[fingerprint.Length - 2].ToString("X2") +
 						fingerprint[fingerprint.Length - 1].ToString("X2");
 
-					if (key.ValidDays != 0)
-						k.Expiry = key.CreationTime.AddDays(key.ValidDays).ToShortDateString();
+					if (key.GetValidSeconds() != 0)
+						k.Expiry = key.CreationTime.AddSeconds(key.GetValidSeconds()).ToShortDateString();
 
 					keys.Add(k);
 				}

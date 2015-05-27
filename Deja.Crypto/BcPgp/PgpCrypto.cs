@@ -185,9 +185,9 @@ namespace Deja.Crypto.BcPgp
 				return false;
 
 			// Check if key has expired
-			if (pubKey.ValidDays != 0)
+			if (pubKey.GetValidSeconds() != 0)
 			{
-				var expireTime = pubKey.CreationTime.AddDays(pubKey.ValidDays);
+				var expireTime = pubKey.CreationTime.AddSeconds(pubKey.GetValidSeconds());
 				if (DateTime.Now > expireTime)
 					return false;
 			}

@@ -1,5 +1,0 @@
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\bin\Debug\ManagedMAPI.dll
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\bin\Debug\ManagedMAPI.pdb
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\obj\Debug\ManagedMAPI.dll
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\obj\Debug\ManagedMAPI.pdb
-C:\projects\outlook-privacy-plugin\3rdParty\ManagedMAPI\obj\Debug\ManagedMAPI.csprojResolveAssemblyReference.cache

@@ -17,7 +17,6 @@ using System.Security.Permissions;
 [assembly: AssemblyCulture("")]
 
 [assembly: CLSCompliant(true)]
-[assembly: System.Security.Permissions.PermissionSet(System.Security.Permissions.SecurityAction.RequestMinimum, Name = "FullTrust")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 

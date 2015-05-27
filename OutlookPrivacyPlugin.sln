@@ -5,8 +5,6 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutlookPrivacyPlugin", "OutlookPrivacyPlugin\OutlookPrivacyPlugin.csproj", "{1BF6A6EE-74FC-40DD-ABC2-6F8D12A76610}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Org.BouncyCastle", "3rdParty\bccrypto-net-1.7\crypto\Org.BouncyCastle.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deja.Crypto", "Deja.Crypto\Deja.Crypto.csproj", "{228E6B06-76AC-42AE-8EE6-035DA96043EC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutlookPrivacyPlugin.Security", "OutlookPrivacyPlugin.Security\OutlookPrivacyPlugin.Security.csproj", "{56E8E807-0807-45E0-B19A-98912AE47630}"
@@ -24,6 +22,8 @@ Project("{6141683F-8A12-4E36-9623-2EB02B2C2303}") = "Installer", "Installer\Inst
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MimeKitLite.Net40", "MimeKit\MimeKitLite.Net40.csproj", "{87B25B2B-10E4-4A09-B682-7267CD3123BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Org.BouncyCastle", "3rdParty\bccrypto-net-05282015\crypto\Org.BouncyCastle.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,16 +44,6 @@ Global
 		{1BF6A6EE-74FC-40DD-ABC2-6F8D12A76610}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1BF6A6EE-74FC-40DD-ABC2-6F8D12A76610}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
 		{1BF6A6EE-74FC-40DD-ABC2-6F8D12A76610}.SingleImage|Any CPU.Build.0 = Release|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.CD_ROM|Any CPU.ActiveCfg = Release|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.CD_ROM|Any CPU.Build.0 = Release|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.DVD-5|Any CPU.ActiveCfg = Debug|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.DVD-5|Any CPU.Build.0 = Debug|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
-		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.SingleImage|Any CPU.Build.0 = Release|Any CPU
 		{228E6B06-76AC-42AE-8EE6-035DA96043EC}.CD_ROM|Any CPU.ActiveCfg = Release|Any CPU
 		{228E6B06-76AC-42AE-8EE6-035DA96043EC}.CD_ROM|Any CPU.Build.0 = Release|Any CPU
 		{228E6B06-76AC-42AE-8EE6-035DA96043EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -103,6 +93,16 @@ Global
 		{87B25B2B-10E4-4A09-B682-7267CD3123BA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{87B25B2B-10E4-4A09-B682-7267CD3123BA}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
 		{87B25B2B-10E4-4A09-B682-7267CD3123BA}.SingleImage|Any CPU.Build.0 = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.CD_ROM|Any CPU.ActiveCfg = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.CD_ROM|Any CPU.Build.0 = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.DVD-5|Any CPU.ActiveCfg = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.DVD-5|Any CPU.Build.0 = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.SingleImage|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

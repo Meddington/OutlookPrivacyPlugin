@@ -1,5 +1,0 @@
-C:\projects\outlook-privacy-plugin\3rdParty\gpgme-sharp\gpgme-sharp\bin\Release\gpgme-sharp.dll.config
-C:\projects\outlook-privacy-plugin\3rdParty\gpgme-sharp\gpgme-sharp\bin\Release\gpgme-sharp.dll
-C:\projects\outlook-privacy-plugin\3rdParty\gpgme-sharp\gpgme-sharp\bin\Release\gpgme-sharp.pdb
-C:\projects\outlook-privacy-plugin\3rdParty\gpgme-sharp\gpgme-sharp\obj\Release\gpgme-sharp.dll
-C:\projects\outlook-privacy-plugin\3rdParty\gpgme-sharp\gpgme-sharp\obj\Release\gpgme-sharp.pdb

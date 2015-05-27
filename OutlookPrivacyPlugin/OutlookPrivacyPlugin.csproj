@@ -289,7 +289,7 @@
       <Project>{87b25b2b-10e4-4a09-b682-7267cd3123ba}</Project>
       <Name>MimeKitLite.Net40</Name>
     </ProjectReference>
-    <ProjectReference Include="..\3rdParty\bccrypto-net-1.7\crypto\Org.BouncyCastle.csproj">
+    <ProjectReference Include="..\3rdParty\bccrypto-net-05282015\crypto\Org.BouncyCastle.csproj">
       <Project>{38872a5f-e87e-4fad-b109-8eb7b2e6a4a0}</Project>
       <Name>Org.BouncyCastle</Name>
     </ProjectReference>
