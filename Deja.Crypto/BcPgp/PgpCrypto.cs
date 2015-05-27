@@ -236,8 +236,10 @@ namespace Deja.Crypto.BcPgp
 
 									foreach (string id in pubKey.GetUserIds())
 									{
-                                        if (!keyUserIds.Contains(pubKey))
-                                            keyUserIds.Add(pubKey);
+										if (!keyUserIds.Contains(pubKey))
+										{
+											keyUserIds.Add(pubKey);
+										}
 									}
 								}
 							}
