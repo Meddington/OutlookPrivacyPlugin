@@ -63,6 +63,11 @@ namespace Deja.Crypto.BcPgp
 			gpgHome = Path.Combine(gpgHome, "gnupg");
 			gpgLocations.Add(gpgHome);
 
+			// many systems also use C:\Users\[name]\.gnupg as well.
+			gpgHome = System.Environment.GetEnvironmentVariable("USERPROFILE");
+			gpgHome = Path.Combine(gpgHome, "./gnupg");
+			gpgLocations.Add(gpgHome);
+
 			// Try all possible locations
 			foreach(var home in gpgLocations)
 			{
