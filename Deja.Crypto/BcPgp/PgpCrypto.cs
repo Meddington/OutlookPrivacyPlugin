@@ -226,25 +226,17 @@ namespace Deja.Crypto.BcPgp
 							if (!IsEncryptionKey(k))
 								continue;
 
-							if (!k.IsMasterKey)
+							if (k.IsMasterKey)
 							{
-								foreach (PgpSignature sig in k.GetSignaturesOfType(24))
-								{
-									var pubKey = this.GetPublicKey(sig.KeyId);
-									if (!pubKey.IsMasterKey)
-										continue;
-
-									foreach (string id in pubKey.GetUserIds())
-									{
-										if (!keyUserIds.Contains(k))
-											keyUserIds.Add(k);
-									}
-								}
+								if (keyUserIds.Where(kk => kk.KeyId == k.KeyId).Count() == 0)
+									keyUserIds.Add(k);
 							}
-
-							foreach (string id in k.GetUserIds())
+							else
 							{
-								keyUserIds.Add(k);
+								var masterKey = GetMasterPublicKey(k.KeyId);
+
+								if (keyUserIds.Where(kk => kk.KeyId == masterKey.KeyId).Count() == 0)
+									keyUserIds.Add(masterKey);
 							}
 						}
 					}
