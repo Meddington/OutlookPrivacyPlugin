@@ -130,12 +130,17 @@ namespace Deja.Crypto.BcPgp
 		/// <returns></returns>
 		public bool IsSigningKey(PgpPublicKey key)
 		{
-			if (!IsSigningAlg(key))
-				return false;
+			// Check only flags.
+			//if (!IsSigningAlg(key))
+			//	return false;
 
 			foreach (PgpSignature sig in key.GetSignatures())
 			{
-				var keyFlags = sig.GetHashedSubPackets().GetKeyFlags();
+				var hashedSubPackets = sig.GetHashedSubPackets();
+				if (hashedSubPackets == null)
+					continue;
+
+				var keyFlags = hashedSubPackets.GetKeyFlags();
 
 				if ((keyFlags & KeyFlags.SignData) > 0)
 					return true;
@@ -154,15 +159,17 @@ namespace Deja.Crypto.BcPgp
 		/// <returns></returns>
 		public bool IsEncryptionKey(PgpPublicKey key)
 		{
-			if (!IsEncryptionAlg(key))
-				return false;
+			// Instead of checking the alg, lets just check the key flags.
+			//if (!IsEncryptionAlg(key))
+			//	return false;
 
 			foreach (PgpSignature sig in key.GetSignatures())
 			{
-				if (sig.GetHashedSubPackets() == null)
+				var hashedSubPackets = sig.GetHashedSubPackets();
+				if (hashedSubPackets == null)
 					continue;
 
-				var keyFlags = sig.GetHashedSubPackets().GetKeyFlags();
+				var keyFlags = hashedSubPackets.GetKeyFlags();
 
 				if ((keyFlags & KeyFlags.EncryptComms) > 0)
 					return true;
