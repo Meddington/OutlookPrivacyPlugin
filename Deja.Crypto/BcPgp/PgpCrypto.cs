@@ -85,15 +85,15 @@ namespace Deja.Crypto.BcPgp
 
 		internal SymmetricKeyAlgorithmTag GetSymAlgTagFromString(string alg)
 		{
-			switch(alg)
+			switch(alg.ToLower())
 			{
-				case "Cast5":
+				case "cast5":
 					return SymmetricKeyAlgorithmTag.Cast5;
-				case "AES-128":
+				case "aes-128":
 					return SymmetricKeyAlgorithmTag.Aes128;
-				case "AES-192":
+				case "aes-192":
 					return SymmetricKeyAlgorithmTag.Aes192;
-				case "AES-256":
+				case "aes-256":
 					return SymmetricKeyAlgorithmTag.Aes256;
 			}
 
@@ -103,17 +103,17 @@ namespace Deja.Crypto.BcPgp
 
 		internal HashAlgorithmTag GetHashAlgTagFromString(string alg)
 		{
-			switch(alg)
+			switch(alg.ToLower())
 			{
-				case "SHA-1":
+				case "sha-1":
 					return HashAlgorithmTag.Sha1;
-				case "SHA-224":
+				case "sha-224":
 					return HashAlgorithmTag.Sha224;
-				case "SHA-256":
+				case "sha-256":
 					return HashAlgorithmTag.Sha256;
-				case "SHA-384":
+				case "sha-384":
 					return HashAlgorithmTag.Sha384;
-				case "SHA-512":
+				case "sha-512":
 					return HashAlgorithmTag.Sha512;
 			}
 
@@ -210,39 +210,31 @@ namespace Deja.Crypto.BcPgp
 			logger.Debug("GetPublicKeyUserIdsForEncryption");
 
 			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				var pgpPub = new PgpPublicKeyRingBundle(decoderStream);
+				var keyUserIds = new List<PgpPublicKey>();
+
+				foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpPublicKeyRingBundle(decoderStream);
-					var keyUserIds = new List<PgpPublicKey>();
-
-					foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+					foreach (PgpPublicKey k in kRing.GetPublicKeys())
 					{
-						foreach (PgpPublicKey k in kRing.GetPublicKeys())
-						{
-							if (!IsKeyValid(k))
-								continue;
+						if (!IsKeyValid(k))
+							continue;
 
-							if (!IsEncryptionKey(k))
-								continue;
+						if (!IsEncryptionKey(k))
+							continue;
 
-							if (k.IsMasterKey)
-							{
-								if (keyUserIds.Where(kk => kk.KeyId == k.KeyId).Count() == 0)
-									keyUserIds.Add(k);
-							}
-							else
-							{
-								var masterKey = GetMasterPublicKey(k.KeyId);
+						var masterKey = k;
+						if (!k.IsMasterKey)
+							masterKey = GetMasterPublicKey(k.KeyId);
 
-								if (keyUserIds.Where(kk => kk.KeyId == masterKey.KeyId).Count() == 0)
-									keyUserIds.Add(masterKey);
-							}
-						}
+						if (!keyUserIds.Any(kk => kk.KeyId == masterKey.KeyId))
+							keyUserIds.Add(masterKey);
 					}
-
-					return keyUserIds.ToArray();
 				}
+
+				return keyUserIds.ToArray();
 			}
 		}
 
@@ -251,28 +243,27 @@ namespace Deja.Crypto.BcPgp
 			logger.Debug("GetPublicKeyUserIdsForSign");
 
 			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				var pgpPub = new PgpPublicKeyRingBundle(decoderStream);
+				var keyUserIds = new List<string>();
+
+				foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpPublicKeyRingBundle(decoderStream);
-					var keyUserIds = new List<string>();
-
-					foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+					foreach (PgpPublicKey k in kRing.GetPublicKeys())
 					{
-						foreach (PgpPublicKey k in kRing.GetPublicKeys())
-						{
-							if (!IsKeyValid(k) || !IsSigningKey(k))
-								continue;
+						if (!IsKeyValid(k) || !IsSigningKey(k))
+							continue;
 
-							foreach (string id in k.GetUserIds())
-							{
+						foreach (string id in k.GetUserIds())
+						{
+							if(!keyUserIds.Contains(id))
 								keyUserIds.Add(id);
-							}
 						}
 					}
-
-					return keyUserIds.ToArray();
 				}
+
+				return keyUserIds.ToArray();
 			}
 		}
 
@@ -281,42 +272,28 @@ namespace Deja.Crypto.BcPgp
 			logger.Debug("GetSecretKeyUserIds");
 
 			using (var inputStream = File.OpenRead(Context.PrivateKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
+				var keyUserIds = new List<string>();
+
+				foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
-					var keyUserIds = new List<string>();
-
-					foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
+					foreach (PgpSecretKey k in kRing.GetSecretKeys())
 					{
-						foreach (PgpSecretKey k in kRing.GetSecretKeys())
+						var masterKey = k;
+						if (!k.IsMasterKey)
+							masterKey = GetMasterSecretKey(k.KeyId);
+
+						foreach (string id in masterKey.UserIds)
 						{
-							if (!k.IsMasterKey)
-							{
-								foreach (PgpSignature sig in k.PublicKey.GetSignaturesOfType(24))
-								{
-									var pubKey = this.GetPublicKey(sig.KeyId);
-									if (!pubKey.IsMasterKey)
-										continue;
-
-									foreach (string id in pubKey.GetUserIds())
-									{
-										if (!keyUserIds.Contains(id))
-											keyUserIds.Add(id);
-									}
-								}
-							}
-
-							foreach (string id in k.PublicKey.GetUserIds())
-							{
-								if (!keyUserIds.Contains(id))
-									keyUserIds.Add(id);
-							}
+							if (!keyUserIds.Contains(id))
+								keyUserIds.Add(id);
 						}
 					}
-
-					return keyUserIds.ToArray();
 				}
+
+				return keyUserIds.ToArray();
 			}
 		}
 
@@ -333,55 +310,46 @@ namespace Deja.Crypto.BcPgp
 			logger.Debug("GetPublicKeyForEncryption: {0}", email);
 
 			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				var pgpPub = new PgpPublicKeyRingBundle(decoderStream);
+				var emailSearch = "<" + email.ToLower().Trim() + ">";
+
+				// Each KeyRing is a single key set (master + subs)
+				foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpPublicKeyRingBundle(decoderStream);
-					var emailSearch = "<" + email.ToLower().Trim() + ">";
+					var masterKey = kRing.GetPublicKey();
+					if (!masterKey.IsMasterKey)
+						masterKey = GetMasterPublicKey(masterKey.KeyId);
 
-					// Each KeyRing is a single key set (master + subs)
-					foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+					// Skip key's that don't match
+					if (!masterKey.GetUserIds().Cast<string>().Any(id => id.ToLower().Contains(emailSearch)))
 					{
-						var masterKey = kRing.GetPublicKey();
-
-						// Skip key's that don't match
-						if (masterKey.GetUserIds().Cast<string>().Any(id => id.ToLower().IndexOf(emailSearch) == -1))
-						{
-							logger.Debug("Skipping key ring: {0}", masterKey.KeyId.ToString("X"));
-							continue;
-						}
-
-						logger.Debug("Found correct master key, searching for encryption key...");
-
-						PgpPublicKey encryptionKey = null;
-						foreach (PgpPublicKey k in kRing.GetPublicKeys())
-						{
-							if (!IsEncryptionKey(k))
-							{
-								logger.Debug("Key {0} !IsEncryptionKey", masterKey.KeyId.ToString("X"));
-								continue;
-							}
-
-							if (!IsKeyValid(k))
-							{
-								logger.Debug("Key {0} !IsKeyValid", masterKey.KeyId.ToString("X"));
-								continue;
-							}
-
-							// Prefer sub-keys to master keys
-							if (!k.IsMasterKey)
-								return k;
-
-							// Use master if no other options available.
-							encryptionKey = k;
-						}
-
-						if (encryptionKey != null)
-							 return encryptionKey;
+						logger.Debug("Skipping key ring: {0}", masterKey.KeyId.ToString("X"));
+						continue;
 					}
 
-					return null;
+					logger.Debug("Found correct master key, searching for encryption key...");
+
+					PgpPublicKey encryptionKey = null;
+					foreach (PgpPublicKey k in kRing.GetPublicKeys())
+					{
+						if (!IsKeyValid(k) || !IsEncryptionKey(k))
+							continue;
+
+						// Prefer sub-keys to master keys
+						if (!k.IsMasterKey)
+							return k;
+
+						// Use master if no other options available.
+						encryptionKey = k;
+					}
+
+					if (encryptionKey != null)
+							return encryptionKey;
 				}
+
+				return null;
 			}
 		}
 
@@ -390,22 +358,20 @@ namespace Deja.Crypto.BcPgp
 			logger.Debug("GetPublicKey: {0}", keyId);
 
 			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
+			using (var decodeStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decodeStream = PgpUtilities.GetDecoderStream(inputStream))
+				var pgpPub = new PgpPublicKeyRingBundle(decodeStream);
+
+				foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpPublicKeyRingBundle(decodeStream);
-
-					foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+					foreach (PgpPublicKey k in kRing.GetPublicKeys())
 					{
-						foreach (PgpPublicKey k in kRing.GetPublicKeys())
-						{
-							if (k.KeyId == keyId)
-								return k;
-						}
+						if (k.KeyId == keyId)
+							return k;
 					}
-
-					return null;
 				}
+
+				return null;
 			}
 		}
 
@@ -414,79 +380,79 @@ namespace Deja.Crypto.BcPgp
 			logger.Debug("GetMasterPublicKey: {0}", keyId);
 
 			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
+			using (var decodeStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decodeStream = PgpUtilities.GetDecoderStream(inputStream))
-				{
-					var pgpPub = new PgpPublicKeyRingBundle(decodeStream);
+				var pgpPub = new PgpPublicKeyRingBundle(decodeStream);
 
-					foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+				foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+				{
+					// The master key is normally the first key returned.
+					var masterKey = kRing.GetPublicKey();
+					if(!masterKey.IsMasterKey)
 					{
-						var masterKey = kRing.GetPublicKey();
 						foreach (PgpPublicKey k in kRing.GetPublicKeys())
-						{
-							if (k.KeyId == keyId)
-								return masterKey;
-						}
+							if (k.IsMasterKey)
+								masterKey = k;
 					}
 
-					return null;
+					foreach (PgpPublicKey k in kRing.GetPublicKeys())
+					{
+						if (k.KeyId == keyId)
+							return masterKey;
+					}
 				}
+
+				return null;
 			}
 		}
 
 		public PgpSecretKey GetSecretKeyForEncryption(string email)
 		{
+			logger.Debug("GetSecretKeyForEncryption: {0}", email);
+
 			if (email == null)
 				return null;
 
-			if (Context.PrivateKeyRingFile == null)
+			if (Context.PrivateKeyRingFile == null || !File.Exists(Context.PrivateKeyRingFile))
 				return null;
 
-			logger.Debug("GetSecretKeyForEncryption: {0}", email);
-
 			using (var inputStream = File.OpenRead(Context.PrivateKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				if (inputStream == null)
+				var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
+				var emailSearch = "<" + email.ToLower().Trim() + ">";
+
+				if (pgpPub == null)
 					return null;
 
-				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
-					var emailSearch = "<" + email.ToLower().Trim() + ">";
+					var masterKey = kRing.GetSecretKey();
+					if (!masterKey.IsMasterKey)
+						masterKey = GetMasterSecretKey(masterKey.KeyId);
 
-					if (pgpPub == null)
-						return null;
+					// Skip key's that don't match
+					if (!masterKey.UserIds.Cast<string>().Any(id => id.ToLower().Contains(emailSearch)))
+						continue;
 
-					foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
+					PgpSecretKey encryptionKey = null;
+					foreach (PgpSecretKey k in kRing.GetSecretKeys())
 					{
-						var masterKey = kRing.GetSecretKey();
-
-						// Skip key's that don't match
-						if (masterKey.PublicKey.GetUserIds().Cast<string>().Any(id => id.ToLower().IndexOf(emailSearch) == -1))
-						{
+						if (!IsEncryptionKey(k.PublicKey) || !IsKeyValid(k))
 							continue;
-						}
 
-						PgpSecretKey encryptionKey = null;
-						foreach (PgpSecretKey k in kRing.GetSecretKeys())
-						{
-							if (!IsEncryptionKey(k.PublicKey) || !IsKeyValid(k))
-								continue;
+						// prefer sub-key over master key
+						if(!k.IsMasterKey)
+							return k;
 
-							// prefer sub-key over master key
-							if(!k.IsMasterKey)
-								return k;
-
-							encryptionKey = k;
-						}
-
-						if(encryptionKey != null)
-							return encryptionKey;
-
+						encryptionKey = k;
 					}
 
-					return null;
+					if(encryptionKey != null)
+						return encryptionKey;
 				}
+
+				return null;
 			}
 		}
 
@@ -496,63 +462,69 @@ namespace Deja.Crypto.BcPgp
 			masterKey = null;
 
 			using (var inputStream = File.OpenRead(Context.PrivateKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
+				var emailSearch = "<" + email.ToLower().Trim() + ">";
+
+				foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
-					var emailSearch = "<" + email.ToLower().Trim() + ">";
+					masterKey = kRing.GetSecretKey();
+					if (!masterKey.IsMasterKey)
+						masterKey = GetMasterSecretKey(masterKey.KeyId);
 
-					foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
+					// Skip key's that don't match
+					if (!masterKey.UserIds.Cast<string>().Any(id => id.ToLower().Contains(emailSearch)))
+						continue;
+
+					PgpSecretKey signingKey = null;
+					foreach (PgpSecretKey k in kRing.GetSecretKeys())
 					{
-						masterKey = kRing.GetSecretKey();
-
-						// Skip key's that don't match
-						if (masterKey.PublicKey.GetUserIds().Cast<string>().Any(id => id.ToLower().IndexOf(emailSearch) == -1))
+						if (!IsSigningKey(k.PublicKey) || !IsKeyValid(k))
 							continue;
 
-						PgpSecretKey signingKey = null;
-						foreach (PgpSecretKey k in kRing.GetSecretKeys())
-						{
-							if (!IsSigningKey(k.PublicKey) || !IsKeyValid(k))
-								continue;
+						// Prever sub-key over master key
+						if (!k.IsMasterKey)
+							return k;
 
-							// Prever sub-key over master key
-							if (!k.IsMasterKey)
-								return k;
-
-							signingKey = k;
-						}
-
-						if (signingKey != null)
-							return signingKey;
+						signingKey = k;
 					}
 
-					return null;
+					if (signingKey != null)
+						return signingKey;
 				}
+
+				return null;
 			}
 		}
 
 		public PgpSecretKey GetMasterSecretKey(long subKeyId)
 		{
 			using (var inputStream = File.OpenRead(Context.PrivateKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
+
+				foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
-
-					foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
+					var masterKey = kRing.GetSecretKey();
+					if(!masterKey.IsMasterKey)
 					{
-						var masterKey = kRing.GetSecretKey();
-
 						foreach (PgpSecretKey k in kRing.GetSecretKeys())
 						{
-							if (k.KeyId == subKeyId)
-								return masterKey;
+							if (k.IsMasterKey)
+								masterKey = k;
 						}
 					}
 
-					return null;
+					foreach (PgpSecretKey k in kRing.GetSecretKeys())
+					{
+						if (k.KeyId == subKeyId)
+							return masterKey;
+					}
 				}
+
+				return null;
 			}
 		}
 
@@ -561,22 +533,20 @@ namespace Deja.Crypto.BcPgp
 			logger.Debug("GetSecretKey: {0}", id);
 
 			using (var inputStream = File.OpenRead(Context.PrivateKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
 			{
-				using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+				var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
+
+				foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
 				{
-					var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
-
-					foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
+					foreach (PgpSecretKey k in kRing.GetSecretKeys())
 					{
-						foreach (PgpSecretKey k in kRing.GetSecretKeys())
-						{
-							if (k.KeyId == id)
-								return k;
-						}
+						if (k.KeyId == id)
+							return k;
 					}
-
-					return null;
 				}
+
+				return null;
 			}
 		}
 
