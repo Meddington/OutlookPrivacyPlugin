@@ -4386,7 +4386,7 @@ QwBEAF8AUgBPAE0AAQBFAHgAcAByAGUAcwBzAA==
 		<row><td>PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS</td><td>##IDS_PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS##</td><td/></row>
 		<row><td>ProductCode</td><td>{68E34B9C-F9B5-4346-B394-F22B2A726306}</td><td/></row>
 		<row><td>ProductName</td><td>Outlook Privacy Plugin</td><td/></row>
-		<row><td>ProductVersion</td><td>2.0.5626.14497</td><td/></row>
+		<row><td>ProductVersion</td><td>2.0.5627.23349</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>
