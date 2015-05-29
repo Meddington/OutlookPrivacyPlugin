@@ -63,21 +63,27 @@ namespace Deja.Crypto.BcPgp
 			gpgHome = Path.Combine(gpgHome, "gnupg");
 			gpgLocations.Add(gpgHome);
 
+			// many systems also use C:\Users\[name]\.gnupg as well.
+			gpgHome = System.Environment.GetEnvironmentVariable("USERPROFILE");
+			gpgHome = Path.Combine(gpgHome, ".gnupg");
+			gpgLocations.Add(gpgHome);
+
+
 			// Try all possible locations
 			foreach(var home in gpgLocations)
 			{
 				if (File.Exists(Path.Combine(home, _privateFilename)))
 				{
-					PublicKeyRingFile = Path.Combine(gpgHome, _publicFilename);
-					PrivateKeyRingFile = Path.Combine(gpgHome, _privateFilename);
+					PublicKeyRingFile = Path.Combine(home, _publicFilename);
+					PrivateKeyRingFile = Path.Combine(home, _privateFilename);
 					return;
 				}
 
 				// Portable gnupg will use a subfolder named 'home'
 				if (File.Exists(Path.Combine(home, "home", _privateFilename)))
 				{
-					PublicKeyRingFile = Path.Combine(gpgHome, "home", _publicFilename);
-					PrivateKeyRingFile = Path.Combine(gpgHome, "home", _privateFilename);
+					PublicKeyRingFile = Path.Combine(home, "home", _publicFilename);
+					PrivateKeyRingFile = Path.Combine(home, "home", _privateFilename);
 					return;
 				}
 			}
