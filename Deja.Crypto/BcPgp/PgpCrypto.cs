@@ -159,10 +159,7 @@ namespace Deja.Crypto.BcPgp
 		/// <returns></returns>
 		public bool IsEncryptionKey(PgpPublicKey key)
 		{
-			// Instead of checking the alg, lets just check the key flags.
-			//if (!IsEncryptionAlg(key))
-			//	return false;
-
+			// First check key use flags
 			foreach (PgpSignature sig in key.GetSignatures())
 			{
 				var hashedSubPackets = sig.GetHashedSubPackets();
@@ -175,6 +172,17 @@ namespace Deja.Crypto.BcPgp
 					return true;
 
 				if ((keyFlags & KeyFlags.EncryptStorage) > 0)
+					return true;
+			}
+
+			// NOTE: Some keys do not have flags set. Instead use
+			//       the alg type. But only those specific to encryption.
+
+			switch(key.Algorithm)
+			{
+				case PublicKeyAlgorithmTag.EC:
+				case PublicKeyAlgorithmTag.RsaEncrypt:
+				case PublicKeyAlgorithmTag.ElGamalEncrypt:
 					return true;
 			}
 
@@ -226,6 +234,14 @@ namespace Deja.Crypto.BcPgp
 				{
 					foreach (PgpPublicKey k in kRing.GetPublicKeys())
 					{
+						// Break on key with specific user id. For testing only.
+						//var idIter = GetMasterPublicKey(k.KeyId).GetUserIds().GetEnumerator();
+						//idIter.MoveNext();
+						//if(((string)idIter.Current).StartsWith("And"))
+						//{
+						//	System.Diagnostics.Debugger.Break();
+						//}
+
 						if (!IsKeyValid(k))
 							continue;
 
