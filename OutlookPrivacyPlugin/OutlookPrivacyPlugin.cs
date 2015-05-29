@@ -405,7 +405,6 @@ namespace OutlookPrivacyPlugin
 					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
 						StringBuilder body = new StringBuilder(mailItem.Body);
-						//mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
 
 						Stack<int> indexes = new Stack<int>();
 						for (int cnt = 0; cnt < body.Length; cnt++)
@@ -528,6 +527,12 @@ namespace OutlookPrivacyPlugin
 					ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
 					ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
 				}
+
+				if(ribbon.VerifyButton.Enabled || ribbon.DecryptButton.Enabled)
+				{
+					if (_settings.SaveDecrypted)
+						mailItem.Save();
+				}
 			}
 
 			ribbon.InvalidateButtons();
@@ -539,11 +544,6 @@ namespace OutlookPrivacyPlugin
             var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
 			
             mailItem.PropertyAccessor.SetProperty(schema, value);
-
-            //if(!_conversationState.ContainsKey(mailItem.ConversationID))
-            //    _conversationState[mailItem.ConversationIndex] = new Dictionary<string, object>();
-
-            //_conversationState[mailItem.ConversationIndex][name] = value;
 		}
 
 		public static object GetProperty(Outlook.MailItem mailItem, string name, object defaultReturn = null)
@@ -554,9 +554,6 @@ namespace OutlookPrivacyPlugin
 				var schema = "http://schemas.microsoft.com/mapi/string/{27EE45DA-1B2C-4E5B-B437-93E9820CC1FA}/" + name;
 
 				return mailItem.PropertyAccessor.GetProperty(schema);
-				//return null;
-
-				//return _conversationState[mailItem.ConversationIndex][name];
 			}
 			catch(Exception)
 			{
@@ -1048,12 +1045,13 @@ namespace OutlookPrivacyPlugin
 					{
                             timer.Stop();
                             ((Outlook._MailItem)mailItem).Close(
+								_settings.SaveDecrypted ? Microsoft.Office.Interop.Outlook.OlInspectorClose.olSave :
                                 Microsoft.Office.Interop.Outlook.OlInspectorClose.olDiscard);
                         });
 
 					    timer.Start();
 
-					    Cancel = true;
+						Cancel = true;
 					}
 				}
 			}
@@ -1778,29 +1776,6 @@ namespace OutlookPrivacyPlugin
 							// Assume attachment wasn't encrypted
 						}
 					}
-					//else if (attachment.FileName == "PGPexch.htm.pgp")
-					//{
-					//	// This is the HTML email message.
-
-					//	var TempFile = Path.GetTempFileName();
-					//	attachment.SaveAsFile(TempFile);
-
-					//	// Decrypt file
-					//	var cyphertext = File.ReadAllBytes(TempFile);
-					//	File.Delete(TempFile);
-
-					//	try
-					//	{
-					//		var plaintext = DecryptAndVerify(mailItem.To, cyphertext);
-
-					//		mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatHTML;
-					//		mailItem.HTMLBody = _encoding.GetString(plaintext);
-					//	}
-					//	catch
-					//	{
-					//		// Odd!
-					//	}
-					//}
 					else
 					{
 						a.FileName = Regex.Replace(attachment.FileName, @"\.(pgp\.asc|gpg\.asc|pgp|gpg|asc)$", "");
@@ -1834,9 +1809,6 @@ namespace OutlookPrivacyPlugin
 
 				foreach (var attachment in attachments)
 					mailItem.Attachments.Add(attachment.TempFile, attachment.AttachmentType, 1, attachment.FileName);
-
-				// Warning: Saving could save the message back to the server, not just locally
-				//mailItem.Save();
 			}
 		}
 
@@ -1970,6 +1942,7 @@ namespace OutlookPrivacyPlugin
 			_settings.IgnoreIntegrityCheck = settingsBox.IgnoreIntegrityCheck;
 			_settings.Cipher = settingsBox.Cipher;
 			_settings.Digest = settingsBox.Digest;
+			_settings.SaveDecrypted = settingsBox.SaveDecrypted;
 			_settings.Save();
 		}
 

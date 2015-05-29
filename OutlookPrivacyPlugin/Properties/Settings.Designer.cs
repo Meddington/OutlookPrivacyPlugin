@@ -238,5 +238,17 @@ namespace OutlookPrivacyPlugin.Properties {
                 this["Digest"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SaveDecrypted {
+            get {
+                return ((bool)(this["SaveDecrypted"]));
+            }
+            set {
+                this["SaveDecrypted"] = value;
+            }
+        }
     }
 }

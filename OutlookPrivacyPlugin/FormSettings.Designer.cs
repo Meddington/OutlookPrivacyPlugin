@@ -57,6 +57,7 @@
 			this.OkButton = new System.Windows.Forms.Button();
 			this.Errors = new System.Windows.Forms.ErrorProvider(this.components);
 			this.GnuPgExeFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
+			this.checkBoxSaveDecrypted = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.MainContainer)).BeginInit();
 			this.MainContainer.Panel1.SuspendLayout();
 			this.MainContainer.Panel2.SuspendLayout();
@@ -151,6 +152,7 @@
 			this.ReadTableLayout.Controls.Add(this.VerifyCheckBox, 1, 0);
 			this.ReadTableLayout.Controls.Add(this.DecryptCheckBox, 1, 1);
 			this.ReadTableLayout.Controls.Add(this.IgnoreIntegrityCheckBox, 1, 3);
+			this.ReadTableLayout.Controls.Add(this.checkBoxSaveDecrypted, 1, 4);
 			this.ReadTableLayout.Name = "ReadTableLayout";
 			// 
 			// VerifyCheckBox
@@ -273,6 +275,12 @@
 			// 
 			this.GnuPgExeFolderDialog.ShowNewFolderButton = false;
 			// 
+			// checkBoxSaveDecrypted
+			// 
+			resources.ApplyResources(this.checkBoxSaveDecrypted, "checkBoxSaveDecrypted");
+			this.checkBoxSaveDecrypted.Name = "checkBoxSaveDecrypted";
+			this.checkBoxSaveDecrypted.UseVisualStyleBackColor = true;
+			// 
 			// FormSettings
 			// 
 			this.AcceptButton = this.OkButton;
@@ -338,5 +346,6 @@
 	private System.Windows.Forms.Label label1;
 	public System.Windows.Forms.ComboBox comboBoxCipher;
 	private System.Windows.Forms.Label label3;
+	private System.Windows.Forms.CheckBox checkBoxSaveDecrypted;
   }
 }

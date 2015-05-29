@@ -56,5 +56,8 @@
     <Setting Name="Digest" Type="System.String" Scope="User">
       <Value Profile="(Default)">SHA-1</Value>
     </Setting>
+    <Setting Name="SaveDecrypted" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

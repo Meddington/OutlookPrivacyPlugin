@@ -20,6 +20,8 @@ namespace OutlookPrivacyPlugin
 			DefaultKey = settings.DefaultKey;
 			DefaultDomain = settings.DefaultDomain;
 
+			SaveDecrypted = settings.SaveDecrypted;
+
 			Default2PlainFormat = settings.Default2PlainFormat;
 
 			IgnoreIntegrityCheck = settings.IgnoreIntegrityCheck;
@@ -33,6 +35,12 @@ namespace OutlookPrivacyPlugin
 
 		private string m_DefaultKey;
 		internal string DefaultKey { get { return m_DefaultKey; } set { m_DefaultKey = value; } }
+
+		internal bool SaveDecrypted
+		{
+			get { return checkBoxSaveDecrypted.Checked; }
+			set { checkBoxSaveDecrypted.Checked = value; }
+		}
 
 		internal string Cipher
 		{
@@ -97,34 +105,6 @@ namespace OutlookPrivacyPlugin
 		private void BrowseButton_Click(object sender, System.EventArgs e)
 		{
 		}
-
-		//private void PopulatePrivateKeys(bool gotGnu)
-		//{
-		//    IList<GnuKey> keys = gotGnu ? Globals.OutlookPrivacyPlugin.GetPrivateKeys() : new List<GnuKey>();
-
-		//    KeyBox.DataSource = keys;
-		//    KeyBox.DisplayMember = "KeyDisplay";
-		//    KeyBox.ValueMember = "Key";
-
-		//    if (KeyBox.Items.Count <= 0)
-		//        return;
-
-		//    KeyBox.SelectedValue = DefaultKey;
-
-		//    // Enlarge dialog to fit the longest key
-		//    using (Graphics g = CreateGraphics())
-		//    {
-		//        int maxSize = Width;
-		//        foreach (GnuKey key in keys)
-		//        {
-		//            int textWidth = (int)g.MeasureString(key.KeyDisplay, KeyBox.Font).Width + 50 + 27;
-		//            if (textWidth > maxSize)
-		//                maxSize = textWidth;
-		//        }
-		//        Width = maxSize;
-		//        CenterToScreen();
-		//    }
-		//}
 
 		private void DefaultDomainTextBox_TextChanged(object sender, System.EventArgs e)
 		{
