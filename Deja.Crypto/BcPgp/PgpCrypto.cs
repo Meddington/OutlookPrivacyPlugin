@@ -39,24 +39,13 @@ namespace Deja.Crypto.BcPgp
 			var alg = key.Algorithm;
 			switch (alg)
 			{
-				case PublicKeyAlgorithmTag.DiffieHellman:
-				case PublicKeyAlgorithmTag.EC:
-				case PublicKeyAlgorithmTag.ElGamalEncrypt:
-				case PublicKeyAlgorithmTag.RsaEncrypt:
-					return false;
-
 				case PublicKeyAlgorithmTag.Dsa:
 				case PublicKeyAlgorithmTag.RsaSign:
-				case PublicKeyAlgorithmTag.RsaGeneral:
-				case PublicKeyAlgorithmTag.ElGamalGeneral:
 				case PublicKeyAlgorithmTag.ECDsa:
 					return true;
-
-				default:
-					// Lol, how did we get here?
-					logger.Debug("IsSigningAlg: Unsupported key algorithm: " + alg.ToString());
-					throw new ApplicationException("Unsupported key algorithm.");
 			}
+
+			return true;
 		}
 
 		public bool IsEncryptionAlg(PgpPublicKey key)
@@ -67,20 +56,11 @@ namespace Deja.Crypto.BcPgp
 				case PublicKeyAlgorithmTag.DiffieHellman:
 				case PublicKeyAlgorithmTag.EC:
 				case PublicKeyAlgorithmTag.ElGamalEncrypt:
-				case PublicKeyAlgorithmTag.ElGamalGeneral:
 				case PublicKeyAlgorithmTag.RsaEncrypt:
-				case PublicKeyAlgorithmTag.RsaGeneral:
 					return true;
-
-				case PublicKeyAlgorithmTag.Dsa:
-				case PublicKeyAlgorithmTag.RsaSign:
-				case PublicKeyAlgorithmTag.ECDsa:
-					return false;
-
-				default:
-					// Lol, how did we get here?
-					throw new ApplicationException("Unsupported key algorithm.");
 			}
+
+			return false;
 		}
 
 		internal SymmetricKeyAlgorithmTag GetSymAlgTagFromString(string alg)
@@ -130,10 +110,6 @@ namespace Deja.Crypto.BcPgp
 		/// <returns></returns>
 		public bool IsSigningKey(PgpPublicKey key)
 		{
-			// Check only flags.
-			//if (!IsSigningAlg(key))
-			//	return false;
-
 			foreach (PgpSignature sig in key.GetSignatures())
 			{
 				var hashedSubPackets = sig.GetHashedSubPackets();
@@ -145,6 +121,9 @@ namespace Deja.Crypto.BcPgp
 				if ((keyFlags & KeyFlags.SignData) > 0)
 					return true;
 			}
+
+			if (IsSigningAlg(key))
+				return true;
 
 			return false;
 		}
@@ -178,13 +157,8 @@ namespace Deja.Crypto.BcPgp
 			// NOTE: Some keys do not have flags set. Instead use
 			//       the alg type. But only those specific to encryption.
 
-			switch(key.Algorithm)
-			{
-				case PublicKeyAlgorithmTag.EC:
-				case PublicKeyAlgorithmTag.RsaEncrypt:
-				case PublicKeyAlgorithmTag.ElGamalEncrypt:
-					return true;
-			}
+			if (IsEncryptionAlg(key))
+				return true;
 
 			return false;
 		}
