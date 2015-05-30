@@ -49,4 +49,6 @@ Outlook Privacy Plugin should automatically find your keyrings. However, if they
 
  * Sending PGP/MIME emails
  * Sending HTML email
+ * Decrypting in preview pain
+ 
 
