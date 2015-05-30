@@ -1042,7 +1042,7 @@ namespace OutlookPrivacyPlugin
 
                         var timer = new System.Windows.Forms.Timer { Interval = 250 };
                         timer.Tick += new EventHandler((o, e) =>
-					{
+						{
                             timer.Stop();
                             ((Outlook._MailItem)mailItem).Close(
 								_settings.SaveDecrypted ? Microsoft.Office.Interop.Outlook.OlInspectorClose.olSave :
