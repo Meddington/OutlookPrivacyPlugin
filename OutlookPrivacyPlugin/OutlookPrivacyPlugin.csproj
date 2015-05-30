@@ -197,6 +197,12 @@
     <Compile Include="FormKeySelection.Designer.cs">
       <DependentUpon>FormKeySelection.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormRegionStatus.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="FormRegionStatus.Designer.cs">
+      <DependentUpon>FormRegionStatus.cs</DependentUpon>
+    </Compile>
     <Compile Include="GnuKey.cs" />
     <Compile Include="GnuPGCommandBar.cs" />
     <Compile Include="GnuPGRibbon.cs">
@@ -237,6 +243,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormPassphrase.resx">
       <DependentUpon>FormPassphrase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormRegionStatus.resx">
+      <DependentUpon>FormRegionStatus.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Language\Localized.de.resx" />
     <EmbeddedResource Include="Language\Localized.resx">

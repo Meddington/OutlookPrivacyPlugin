@@ -60,9 +60,11 @@ namespace OutlookPrivacyPlugin
 
 		// PGP Headers
 		// http://www.ietf.org/rfc/rfc4880.txt page 54
-		const string _pgpSignedHeader = "BEGIN PGP SIGNED MESSAGE";
-		const string _pgpEncryptedHeader = "BEGIN PGP MESSAGE";
-		const string _pgpHeaderPattern = "BEGIN PGP( SIGNED)? MESSAGE";
+		public const string _pgpSignedHeader = "BEGIN PGP SIGNED MESSAGE";
+		public const string _pgpEncryptedHeader = "BEGIN PGP MESSAGE";
+		public const string _pgpHeaderPattern = "BEGIN PGP( SIGNED)? MESSAGE";
+
+		public static OutlookPrivacyPlugin Instance;
 
 		private void OutlookGnuPG_Startup(object sender, EventArgs e)
 		{
@@ -81,6 +83,7 @@ namespace OutlookPrivacyPlugin
 
 			// NLOG END
 
+			Instance = this;
 
 			_settings = new Properties.Settings();
 
@@ -389,153 +392,161 @@ namespace OutlookPrivacyPlugin
 			else
 			// Read mail
 			{
-                SetProperty(mailItem, "GnuPGSetting.Sign", false);
-                SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
-
-                // Default: disable read-buttons
-				ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
-
-				// Look for PGP headers
-				Match match = null;
-				if (mailItem.Body != null)
-					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
-
-				if (match != null && (_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
-				{
-					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
-					{
-						StringBuilder body = new StringBuilder(mailItem.Body);
-
-						Stack<int> indexes = new Stack<int>();
-						for (int cnt = 0; cnt < body.Length; cnt++)
-						{
-							if (body[cnt] > 127)
-								indexes.Push(cnt);
-						}
-
-						while (true)
-						{
-							if (indexes.Count == 0)
-								break;
-
-							int index = indexes.Pop();
-							body.Remove(index, 1);
-						}
-
-						mailItem.Body = body.ToString();
-						//mailItem.Save();
-					}
-
-					_autoDecrypt = false;
-					DecryptEmail(mailItem);
-					// Update match again, in case decryption failed/cancelled.
-					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
-
-					SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
-				}
-				else if (match != null && _settings.AutoVerify && match.Value == _pgpSignedHeader)
-				{
-					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
-					{
-						StringBuilder body = new StringBuilder(mailItem.Body);
-						mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
-
-						Stack<int> indexes = new Stack<int>();
-						for (int cnt = 0; cnt < body.Length; cnt++)
-						{
-							if (body[cnt] > 127)
-								indexes.Push(cnt);
-						}
-
-						while (true)
-						{
-							if (indexes.Count == 0)
-								break;
-
-							int index = indexes.Pop();
-							body.Remove(index, 1);
-						}
-
-						mailItem.Body = body.ToString();
-						//mailItem.Save();
-					}
-
-					VerifyEmail(mailItem);
-				}
-				else
-				{
-					bool foundPgpMime = false;
-					string sigHash = "sha1";
-					Microsoft.Office.Interop.Outlook.Attachment encryptedMime = null;
-					Microsoft.Office.Interop.Outlook.Attachment sigMime = null;
-
-					var contentType = ReadContentType(mailItem);
-
-					logger.Trace("MIME: Message content-type: " + (string)contentType);
-
-					if (((string)contentType).Contains("application/pgp-signature"))
-					{
-						// PGP MIM Signed message it looks like
-						//multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="Iq9CNK2GBN9g0PCsVJK4WdkEAR0887CbX"; charset="iso-8859-1"
-
-						logger.Trace("MIME: Found application/pgp-signature: " + contentType);
-
-						var sigMatch = Regex.Match((string)contentType, @"micalg=pgp-([^; ]*)");
-						sigHash = sigMatch.Groups[1].Value;
-
-						logger.Trace("MIME: sigHash: " + sigHash);
-					}
-
-					// Look for PGP MIME
-					foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
-					{
-						var mimeEncoding = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001F");
-
-						logger.Trace("MIME: Attachment type: " + mimeEncoding);
-
-						if (mimeEncoding == "application/pgp-encrypted")
-						{
-							logger.Trace("MIME: Found application/pgp-encrypted.");
-							foundPgpMime = true;
-						}
-						else if (mimeEncoding == "application/pgp-signature")
-						{
-							logger.Trace("MIME: Found application/pgp-signature");
-							sigMime = attachment;
-						}
-						else if (foundPgpMime && encryptedMime == null && mimeEncoding == "application/octet-stream")
-						{
-							// Should be first attachment *after* PGP_MIME version identification
-
-							logger.Trace("MIME: Found octet-stream following pgp-encrypted.");
-							encryptedMime = attachment;
-						}
-					}
-
-					if (encryptedMime != null || sigMime != null)
-					{
-						logger.Trace("MIME: Calling HandlePgpMime");
-						HandlePgpMime(mailItem, encryptedMime, sigMime, sigHash);
-
-						if(encryptedMime != null)
-							SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
-					}
-				}
-
-				if (match != null)
-				{
-					ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
-					ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
-				}
-
-				if(ribbon.VerifyButton.Enabled || ribbon.DecryptButton.Enabled)
-				{
-					if (_settings.SaveDecrypted)
-						mailItem.Save();
-				}
+				HandleOpenRead(mailItem);
 			}
 
 			ribbon.InvalidateButtons();
+		}
+
+		public CryptoContext HandleOpenRead(Outlook.MailItem mailItem)
+		{
+			CryptoContext context = null;
+
+			SetProperty(mailItem, "GnuPGSetting.Sign", false);
+			SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
+
+			// Default: disable read-buttons
+			ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
+
+			// Look for PGP headers
+			Match match = null;
+			if (mailItem.Body != null)
+				match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+
+			if (match != null && (_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
+			{
+				if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
+				{
+					StringBuilder body = new StringBuilder(mailItem.Body);
+
+					Stack<int> indexes = new Stack<int>();
+					for (int cnt = 0; cnt < body.Length; cnt++)
+					{
+						if (body[cnt] > 127)
+							indexes.Push(cnt);
+					}
+
+					while (true)
+					{
+						if (indexes.Count == 0)
+							break;
+
+						int index = indexes.Pop();
+						body.Remove(index, 1);
+					}
+
+					mailItem.Body = body.ToString();
+					//mailItem.Save();
+				}
+
+				_autoDecrypt = false;
+				context = DecryptEmail(mailItem);
+				// Update match again, in case decryption failed/cancelled.
+				match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+
+				SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
+			}
+			else if (match != null && _settings.AutoVerify && match.Value == _pgpSignedHeader)
+			{
+				if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
+				{
+					StringBuilder body = new StringBuilder(mailItem.Body);
+					mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
+
+					Stack<int> indexes = new Stack<int>();
+					for (int cnt = 0; cnt < body.Length; cnt++)
+					{
+						if (body[cnt] > 127)
+							indexes.Push(cnt);
+					}
+
+					while (true)
+					{
+						if (indexes.Count == 0)
+							break;
+
+						int index = indexes.Pop();
+						body.Remove(index, 1);
+					}
+
+					mailItem.Body = body.ToString();
+					//mailItem.Save();
+				}
+				context = VerifyEmail(mailItem);
+			}
+			else
+			{
+				bool foundPgpMime = false;
+				string sigHash = "sha1";
+				Microsoft.Office.Interop.Outlook.Attachment encryptedMime = null;
+				Microsoft.Office.Interop.Outlook.Attachment sigMime = null;
+
+				var contentType = ReadContentType(mailItem);
+
+				logger.Trace("MIME: Message content-type: " + (string)contentType);
+
+				if (((string)contentType).Contains("application/pgp-signature"))
+				{
+					// PGP MIM Signed message it looks like
+					//multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="Iq9CNK2GBN9g0PCsVJK4WdkEAR0887CbX"; charset="iso-8859-1"
+
+					logger.Trace("MIME: Found application/pgp-signature: " + contentType);
+
+					var sigMatch = Regex.Match((string)contentType, @"micalg=pgp-([^; ]*)");
+					sigHash = sigMatch.Groups[1].Value;
+
+					logger.Trace("MIME: sigHash: " + sigHash);
+				}
+
+				// Look for PGP MIME
+				foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+				{
+					var mimeEncoding = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001F");
+
+					logger.Trace("MIME: Attachment type: " + mimeEncoding);
+
+					if (mimeEncoding == "application/pgp-encrypted")
+					{
+						logger.Trace("MIME: Found application/pgp-encrypted.");
+						foundPgpMime = true;
+					}
+					else if (mimeEncoding == "application/pgp-signature")
+					{
+						logger.Trace("MIME: Found application/pgp-signature");
+						sigMime = attachment;
+					}
+					else if (foundPgpMime && encryptedMime == null && mimeEncoding == "application/octet-stream")
+					{
+						// Should be first attachment *after* PGP_MIME version identification
+
+						logger.Trace("MIME: Found octet-stream following pgp-encrypted.");
+						encryptedMime = attachment;
+					}
+				}
+
+				if (encryptedMime != null || sigMime != null)
+				{
+					logger.Trace("MIME: Calling HandlePgpMime");
+					context = HandlePgpMime(mailItem, encryptedMime, sigMime, sigHash);
+
+					if (encryptedMime != null)
+						SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
+				}
+			}
+
+			if (match != null)
+			{
+				ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
+				ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
+			}
+
+			if (ribbon.VerifyButton.Enabled || ribbon.DecryptButton.Enabled)
+			{
+				if (_settings.SaveDecrypted)
+					mailItem.Save();
+			}
+
+			return context;
 		}
 
 		public static void SetProperty(Outlook.MailItem mailItem, string name, object value)
@@ -650,7 +661,7 @@ namespace OutlookPrivacyPlugin
 			return sb.ToString();
 		}
 
-		void HandlePgpMime(Outlook.MailItem mailItem, Microsoft.Office.Interop.Outlook.Attachment encryptedMime,
+		CryptoContext HandlePgpMime(Outlook.MailItem mailItem, Microsoft.Office.Interop.Outlook.Attachment encryptedMime,
 			Microsoft.Office.Interop.Outlook.Attachment sigMime, string sigHash = "sha1")
 		{
 			logger.Trace("> HandlePgpMime");
@@ -673,7 +684,7 @@ namespace OutlookPrivacyPlugin
 
 				clearbytes = DecryptAndVerify(mailItem.To, cyphertext, out Context);
 				if (clearbytes == null)
-					return;
+					return null;
 
 				cleartext = this._encoding.GetString(clearbytes);
 			}
@@ -740,25 +751,25 @@ namespace OutlookPrivacyPlugin
 					{
 						Context = Crypto.Context;
 
-						var message = "** " + string.Format(Localized.MsgValidSig,
-							Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
+						//var message = "** " + string.Format(Localized.MsgValidSig,
+						//	Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
 
-						if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-							mailItem.Body = message + mailItem.Body;
-						else
-							mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
+						//if (mailType == Outlook.OlBodyFormat.olFormatPlain)
+						//	mailItem.Body = message + mailItem.Body;
+						//else
+						//	mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
 					}
 					else
 					{
 						Context = Crypto.Context;
 
-						var message = "** " + string.Format(Localized.MsgInvalidSig,
-							Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
+						//var message = "** " + string.Format(Localized.MsgInvalidSig,
+						//	Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
 
-						if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-							mailItem.Body = message + mailItem.Body;
-						else
-							mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
+						//if (mailType == Outlook.OlBodyFormat.olFormatPlain)
+						//	mailItem.Body = message + mailItem.Body;
+						//else
+						//	mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
 					}
 				}
 				catch (PublicKeyNotFoundException ex)
@@ -767,12 +778,12 @@ namespace OutlookPrivacyPlugin
 
 					Context = Crypto.Context;
 
-					var message = "** " + Localized.MsgSigMissingPubKey + "\n\n";
+					//var message = "** " + Localized.MsgSigMissingPubKey + "\n\n";
 
-					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-						mailItem.Body = message + mailItem.Body;
-					else
-						mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
+					//if (mailType == Outlook.OlBodyFormat.olFormatPlain)
+					//	mailItem.Body = message + mailItem.Body;
+					//else
+					//	mailItem.HTMLBody = AddMessageToHtmlBody(mailItem.HTMLBody, message);
 				}
 				catch (Exception ex)
 				{
@@ -786,12 +797,12 @@ namespace OutlookPrivacyPlugin
 						MessageBoxIcon.Error);
 				}
 
-				return;
+				return Context;
 
 			}
 
 			if (Context == null)
-				return;
+				return null;
 
 			// Extract files from MIME data
 
@@ -829,28 +840,28 @@ namespace OutlookPrivacyPlugin
 				}
 			}
 
-			var DecryptAndVerifyHeaderMessage = "** ";
+			//var DecryptAndVerifyHeaderMessage = "** ";
 
-			if (Context.IsEncrypted)
-				DecryptAndVerifyHeaderMessage += Localized.MsgDecrypt + " ";
+			//if (Context.IsEncrypted)
+			//	DecryptAndVerifyHeaderMessage += Localized.MsgDecrypt + " ";
 
-			if (Context.FailedIntegrityCheck)
-				DecryptAndVerifyHeaderMessage += Localized.MsgFailedIntegrityCheck + " ";
+			//if (Context.FailedIntegrityCheck)
+			//	DecryptAndVerifyHeaderMessage += Localized.MsgFailedIntegrityCheck + " ";
 
-			if (Context.IsSigned && Context.SignatureValidated)
-			{
-				DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgValidSig,
-					Context.SignedByUserId, Context.SignedByKeyId);
-			}
-			else if (Context.IsSigned)
-			{
-				DecryptAndVerifyHeaderMessage +=  string.Format(Localized.MsgInvalidSig,
-					Context.SignedByUserId, Context.SignedByKeyId);
-			}
-			else
-				DecryptAndVerifyHeaderMessage += Localized.MsgUnsigned;
+			//if (Context.IsSigned && Context.SignatureValidated)
+			//{
+			//	DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgValidSig,
+			//		Context.SignedByUserId, Context.SignedByKeyId);
+			//}
+			//else if (Context.IsSigned)
+			//{
+			//	DecryptAndVerifyHeaderMessage +=  string.Format(Localized.MsgInvalidSig,
+			//		Context.SignedByUserId, Context.SignedByKeyId);
+			//}
+			//else
+			//	DecryptAndVerifyHeaderMessage += Localized.MsgUnsigned;
 
-			DecryptAndVerifyHeaderMessage += "\n\n";
+			//DecryptAndVerifyHeaderMessage += "\n\n";
 
 			if(isHtml)
 			{
@@ -921,7 +932,7 @@ namespace OutlookPrivacyPlugin
 				}
 
 				mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatHTML;
-				mailItem.HTMLBody = AddMessageToHtmlBody(htmlBody, DecryptAndVerifyHeaderMessage);
+				mailItem.HTMLBody = htmlBody; //AddMessageToHtmlBody(htmlBody, DecryptAndVerifyHeaderMessage);
 			}
 			else
 			{
@@ -931,13 +942,13 @@ namespace OutlookPrivacyPlugin
 
 				if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
 				{
-					mailItem.Body = DecryptAndVerifyHeaderMessage + msg.TextBody;
+					mailItem.Body = msg.TextBody; // DecryptAndVerifyHeaderMessage + msg.TextBody;
 				}
 				else
 				{
 					var sb = new StringBuilder(msg.TextBody.Length + 100);
 					sb.Append("<html><body><pre>");
-					sb.Append(System.Net.WebUtility.HtmlEncode(DecryptAndVerifyHeaderMessage));
+//					sb.Append(System.Net.WebUtility.HtmlEncode(DecryptAndVerifyHeaderMessage));
 					sb.Append(System.Net.WebUtility.HtmlEncode(msg.TextBody));
 					sb.Append("</pre></body></html>");
 
@@ -962,6 +973,8 @@ namespace OutlookPrivacyPlugin
 
 				File.Delete(tempFile);
 			}
+
+			return Context;
 		}
 
 		/// <summary>
@@ -1584,7 +1597,7 @@ namespace OutlookPrivacyPlugin
 		#endregion
 
 		#region Receive Logic
-		internal void VerifyEmail(Outlook.MailItem mailItem)
+		internal CryptoContext VerifyEmail(Outlook.MailItem mailItem)
 		{
 			string mail = mailItem.Body;
 			Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
@@ -1597,7 +1610,7 @@ namespace OutlookPrivacyPlugin
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Exclamation);
 
-				return;
+				return null;
 			}
 
 			var Context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
@@ -1609,37 +1622,37 @@ namespace OutlookPrivacyPlugin
 				{
 					Context = Crypto.Context;
 
-					var message = "** " + string.Format(Localized.MsgValidSig,
-						Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
+					//var message = "** " + string.Format(Localized.MsgValidSig,
+					//	Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
 
-					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-					{
-						mailItem.Body = message + mailItem.Body;
-					}
+					//if (mailType == Outlook.OlBodyFormat.olFormatPlain)
+					//{
+					//	mailItem.Body = message + mailItem.Body;
+					//}
 				}
 				else
 				{
 					Context = Crypto.Context;
 
-					var message = "** " + string.Format(Localized.MsgInvalidSig,
-						Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
+					//var message = "** " + string.Format(Localized.MsgInvalidSig,
+					//	Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
 
-					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-					{
-						mailItem.Body = message + mailItem.Body;
-					}
+					//if (mailType == Outlook.OlBodyFormat.olFormatPlain)
+					//{
+					//	mailItem.Body = message + mailItem.Body;
+					//}
 				}
 			}
 			catch (PublicKeyNotFoundException)
 			{
 				Context = Crypto.Context;
 
-				string message = "** "+ Localized.MsgSigMissingPubKey+"\n\n";
+				//string message = "** "+ Localized.MsgSigMissingPubKey+"\n\n";
 
-				if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-				{
-					mailItem.Body = message + mailItem.Body;
-				}
+				//if (mailType == Outlook.OlBodyFormat.olFormatPlain)
+				//{
+				//	mailItem.Body = message + mailItem.Body;
+				//}
 			}
 			catch (Exception ex)
 			{
@@ -1650,6 +1663,8 @@ namespace OutlookPrivacyPlugin
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 			}
+
+			return Context;
 		}
 
 		void WriteErrorData(string msg, Exception ex)
@@ -1676,7 +1691,7 @@ namespace OutlookPrivacyPlugin
 			}
 		}
 
-		internal void DecryptEmail(Outlook.MailItem mailItem)
+		internal CryptoContext DecryptEmail(Outlook.MailItem mailItem)
 		{
 			if (Regex.IsMatch(mailItem.Body, _pgpEncryptedHeader) == false)
 			{
@@ -1685,7 +1700,7 @@ namespace OutlookPrivacyPlugin
 					"Mail is not encrypted",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Exclamation);
-				return;
+				return null;
 			}
 
 			// Sometimes messages could contain multiple message blocks.  In that case just use the 
@@ -1716,7 +1731,7 @@ namespace OutlookPrivacyPlugin
 			byte[] cleardata = DecryptAndVerify(mailItem.To, ASCIIEncoding.ASCII.GetBytes(firstPgpBlock), out Context);
 			if (cleardata != null)
 			{
-				mailItem.Body = DecryptAndVerifyHeaderMessage + encoding.GetString(cleardata);
+				mailItem.Body = encoding.GetString(cleardata);//DecryptAndVerifyHeaderMessage + encoding.GetString(cleardata);
 
 				if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatHTML)
 				{
@@ -1724,7 +1739,7 @@ namespace OutlookPrivacyPlugin
 					// Office has a safe html module they use to prevent security issues.
 					// Not encoding here should be no worse then reading a standard HTML
 					// email.
-					var html = DecryptAndVerifyHeaderMessage.Replace("<", "&lt;").Replace(">", "&gt;") + encoding.GetString(cleardata);
+					var html = encoding.GetString(cleardata);//DecryptAndVerifyHeaderMessage.Replace("<", "&lt;").Replace(">", "&gt;") + encoding.GetString(cleardata);
 					html = html.Replace("\n", "<br/>");
 					mailItem.HTMLBody = "<html><body>" + html + "</body></html>";
 				}
@@ -1810,6 +1825,8 @@ namespace OutlookPrivacyPlugin
 				foreach (var attachment in attachments)
 					mailItem.Attachments.Add(attachment.TempFile, attachment.AttachmentType, 1, attachment.FileName);
 			}
+
+			return Context;
 		}
 
 		#endregion
@@ -1842,11 +1859,11 @@ namespace OutlookPrivacyPlugin
 			while (true);
 		}
 
-		string DecryptAndVerifyHeaderMessage = "";
+		//string DecryptAndVerifyHeaderMessage = "";
 
 		byte[] DecryptAndVerify(string to, byte[] data, out CryptoContext outContext)
 		{
-			DecryptAndVerifyHeaderMessage = "";
+			//DecryptAndVerifyHeaderMessage = "";
 			outContext = null;
 
 			var Context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
@@ -1857,25 +1874,25 @@ namespace OutlookPrivacyPlugin
 				var cleartext = Crypto.DecryptAndVerify(data, _settings.IgnoreIntegrityCheck);
 				Context = Crypto.Context;
 
-				DecryptAndVerifyHeaderMessage = "** ";
+				//DecryptAndVerifyHeaderMessage = "** ";
 
-				if (Context.IsEncrypted)
-					DecryptAndVerifyHeaderMessage += Localized.MsgDecrypt + " ";
+				//if (Context.IsEncrypted)
+				//	DecryptAndVerifyHeaderMessage += Localized.MsgDecrypt + " ";
 
-				if (Context.IsSigned && Context.SignatureValidated)
-				{
-					DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgValidSig,
-						Context.SignedByUserId, Context.SignedByKeyId);
-				}
-				else if (Context.IsSigned)
-				{
-					DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgInvalidSig,
-						Context.SignedByUserId, Context.SignedByKeyId);
-				}
-				else
-					DecryptAndVerifyHeaderMessage += Localized.MsgUnsigned;
+				//if (Context.IsSigned && Context.SignatureValidated)
+				//{
+				//	DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgValidSig,
+				//		Context.SignedByUserId, Context.SignedByKeyId);
+				//}
+				//else if (Context.IsSigned)
+				//{
+				//	DecryptAndVerifyHeaderMessage += string.Format(Localized.MsgInvalidSig,
+				//		Context.SignedByUserId, Context.SignedByKeyId);
+				//}
+				//else
+				//	DecryptAndVerifyHeaderMessage += Localized.MsgUnsigned;
 
-				DecryptAndVerifyHeaderMessage += "\n\n";
+				//DecryptAndVerifyHeaderMessage += "\n\n";
 
 				outContext = Context;
 				return cleartext;
