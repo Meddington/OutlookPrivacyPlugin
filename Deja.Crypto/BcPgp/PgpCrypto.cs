@@ -895,7 +895,11 @@ namespace Deja.Crypto.BcPgp
 				{
 					var factory = new PgpObjectFactory(armoredIn);
 
-					DecryptHandlePgpObject(factory.NextPgpObject());
+					var pgpObject = factory.NextPgpObject();
+					if (pgpObject == null)
+						return false;
+
+					DecryptHandlePgpObject(pgpObject);
 					if (Context.FailedIntegrityCheck)
 						throw new VerifyException("Error, failed validation check.");
 
@@ -975,6 +979,9 @@ namespace Deja.Crypto.BcPgp
 
 					var factory = new PgpObjectFactory(armoredIn);
 					var signatureList = (PgpSignatureList)factory.NextPgpObject();
+					if (signatureList == null)
+						return false;
+
 					var signature = signatureList[0];
 
 					Context.IsEncrypted = false;
@@ -1019,6 +1026,9 @@ namespace Deja.Crypto.BcPgp
 						while (true)
 						{
 							var obj = factory.NextPgpObject();
+							if (obj == null)
+								return null;
+
 							if (obj is PgpMarker)
 								continue;
 
@@ -1043,6 +1053,9 @@ namespace Deja.Crypto.BcPgp
 					while (true)
 					{
 						var obj = factory.NextPgpObject();
+						if (obj == null)
+							return null;
+
 						if (obj is PgpMarker)
 							continue;
 
@@ -1116,6 +1129,8 @@ namespace Deja.Crypto.BcPgp
 						{
 							var clearFactory = new PgpObjectFactory(cleartextIn);
 							var nextObj = clearFactory.NextPgpObject();
+							if (nextObj == null)
+								return null;
 
 							var r = DecryptHandlePgpObject(nextObj);
 							if (r != null)
@@ -1170,7 +1185,6 @@ namespace Deja.Crypto.BcPgp
 					do
 					{
 						var nextObj = factory.NextPgpObject();
-
 						if (nextObj == null)
 							break;
 
