@@ -1251,7 +1251,7 @@ namespace OutlookPrivacyPlugin
 					// Popup UI to select the encryption targets 
 					List<string> mailRecipients = new List<string>();
 					foreach (Outlook.Recipient mailRecipient in mailItem.Recipients)
-						mailRecipients.Add(GetAddressCN(((Outlook.Recipient)mailRecipient).Address));
+						mailRecipients.Add(GetSmtpAddressForRecipient((Outlook.Recipient)mailRecipient));
 
 					var recipientDialog = new FormKeySelection(
 						mailRecipients,
@@ -2005,24 +2005,21 @@ namespace OutlookPrivacyPlugin
 			return keys;
 		}
 
-		string GetAddressCN(string AddressX400)
+		/// <summary>
+		/// Get the SMTP address for a recipient.
+		/// </summary>
+		/// <remarks>
+		/// Code from:
+		/// https://msdn.microsoft.com/en-us/library/office/ff868695.aspx
+		/// </remarks>
+		/// <param name="recipient"></param>
+		/// <returns></returns>
+		string GetSmtpAddressForRecipient(Outlook.Recipient recipient)
 		{
-			char[] delimiters = { '/' };
-			string[] splitAddress = AddressX400.Split(delimiters);
-			for (int k = 0; k < splitAddress.Length; k++)
-			{
-				if (splitAddress[k].StartsWith("cn=", true, null) && !Regex.IsMatch(splitAddress[k], "ecipient", RegexOptions.IgnoreCase))
-				{
-					string address = Regex.Replace(splitAddress[k], "cn=", string.Empty, RegexOptions.IgnoreCase);
-					if (!string.IsNullOrEmpty(_settings.DefaultDomain))
-					{
-						address += "@" + _settings.DefaultDomain;
-						address = address.Replace("@@", "@");
-					}
-					return address;
-				}
-			}
-			return AddressX400;
+			const string PR_SMTP_ADDRESS = "http://schemas.microsoft.com/mapi/proptag/0x39FE001E";
+
+			Outlook.PropertyAccessor pa = recipient.PropertyAccessor;
+			return pa.GetProperty(PR_SMTP_ADDRESS).ToString();
 		}
 
 		#endregion
