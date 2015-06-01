@@ -40,6 +40,7 @@ namespace OutlookPrivacyPlugin
 		System.Drawing.Color GoodColor = System.Drawing.Color.LightGreen;
 		System.Drawing.Color BadColor = System.Drawing.Color.LightSalmon;
 		System.Drawing.Color WarningColor = System.Drawing.Color.LightYellow;
+		bool hadCrypto = false;
 
 		// Occurs before the form region is displayed.
 		// Use this.OutlookItem to get a reference to the current Outlook item.
@@ -63,6 +64,8 @@ namespace OutlookPrivacyPlugin
 			}
 			else
 				this.Show();
+
+			hadCrypto = true;
 
 			var DecryptAndVerifyHeaderMessage = "** ";
 
@@ -102,6 +105,9 @@ namespace OutlookPrivacyPlugin
 		// Use this.OutlookFormRegion to get a reference to the form region.
 		private void FormRegionStatus_FormRegionClosed(object sender, System.EventArgs e)
 		{
+			if (!hadCrypto)
+				return;
+
 			var mailItem = this.OutlookItem as Outlook.MailItem;
 			if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
 				mailItem.Body = origionalBody;

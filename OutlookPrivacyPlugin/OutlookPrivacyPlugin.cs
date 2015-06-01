@@ -392,7 +392,7 @@ namespace OutlookPrivacyPlugin
 			else
 			// Read mail
 			{
-				HandleOpenRead(mailItem);
+				//HandleOpenRead(mailItem);
 			}
 
 			ribbon.InvalidateButtons();

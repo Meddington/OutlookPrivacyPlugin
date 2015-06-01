@@ -895,7 +895,11 @@ namespace Deja.Crypto.BcPgp
 				{
 					var factory = new PgpObjectFactory(armoredIn);
 
-					DecryptHandlePgpObject(factory.NextPgpObject());
+					var pgpObject = factory.NextPgpObject();
+					if (pgpObject == null)
+						return false;
+
+					DecryptHandlePgpObject(pgpObject);
 					if (Context.FailedIntegrityCheck)
 						throw new VerifyException("Error, failed validation check.");
 
