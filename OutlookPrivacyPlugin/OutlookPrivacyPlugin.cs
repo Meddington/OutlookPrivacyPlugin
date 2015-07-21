@@ -63,6 +63,7 @@ namespace OutlookPrivacyPlugin
 		const string _pgpSignedHeader = "BEGIN PGP SIGNED MESSAGE";
 		const string _pgpEncryptedHeader = "BEGIN PGP MESSAGE";
 		const string _pgpHeaderPattern = "BEGIN PGP( SIGNED)? MESSAGE";
+		const string _pgpNoReplyHeaderPattern = "$-----BEGIN PGP( SIGNED)? MESSAGE-----";
 
 		private void OutlookGnuPG_Startup(object sender, EventArgs e)
 		{
@@ -398,7 +399,7 @@ namespace OutlookPrivacyPlugin
 				// Look for PGP headers
 				Match match = null;
 				if (mailItem.Body != null)
-					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+					match = Regex.Match(mailItem.Body, _pgpNoReplyHeaderPattern);
 
 				if (match != null && (_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
 				{
@@ -429,7 +430,7 @@ namespace OutlookPrivacyPlugin
 					_autoDecrypt = false;
 					DecryptEmail(mailItem);
 					// Update match again, in case decryption failed/cancelled.
-					match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+					match = Regex.Match(mailItem.Body, _pgpNoReplyHeaderPattern);
 
 					SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
 				}
@@ -1335,16 +1336,8 @@ namespace OutlookPrivacyPlugin
 					// Sign the plaintext mail if needed
 
 					// 1. Verify text lines are not too long
-					bool longLines = false;
 					var mailLines = mail.Split('\n');
-					foreach (var line in mailLines)
-					{
-						if (line.Length > 70)
-						{
-							longLines = true;
-							break;
-						}
-					}
+					var longLines = mailLines.Any(line => line.Length > 70);
 
 					if(longLines)
 					{
@@ -1371,7 +1364,7 @@ namespace OutlookPrivacyPlugin
 
 							var sb = new StringBuilder(mail.Length+20);
 							foreach (var line in lines)
-								sb.AppendLine(line);
+								sb.AppendLine(line.TrimEnd('\r','\n'));
 
 							mail = sb.ToString();
 						}
