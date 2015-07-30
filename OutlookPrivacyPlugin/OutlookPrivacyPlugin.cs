@@ -63,7 +63,7 @@ namespace OutlookPrivacyPlugin
 		const string _pgpSignedHeader = "BEGIN PGP SIGNED MESSAGE";
 		const string _pgpEncryptedHeader = "BEGIN PGP MESSAGE";
 		const string _pgpHeaderPattern = "BEGIN PGP( SIGNED)? MESSAGE";
-		const string _pgpNoReplyHeaderPattern = "$-----BEGIN PGP( SIGNED)? MESSAGE-----";
+		const string _pgpNoReplyHeaderPattern = "^-----(BEGIN PGP( SIGNED)? MESSAGE)-----";
 
 		private void OutlookGnuPG_Startup(object sender, EventArgs e)
 		{
@@ -399,9 +399,9 @@ namespace OutlookPrivacyPlugin
 				// Look for PGP headers
 				Match match = null;
 				if (mailItem.Body != null)
-					match = Regex.Match(mailItem.Body, _pgpNoReplyHeaderPattern);
+					match = Regex.Match(mailItem.Body, _pgpNoReplyHeaderPattern, RegexOptions.Multiline);
 
-				if (match != null && (_autoDecrypt || _settings.AutoDecrypt) && match.Value == _pgpEncryptedHeader)
+				if (match != null && (_autoDecrypt || _settings.AutoDecrypt) && match.Groups[1].Value == _pgpEncryptedHeader)
 				{
 					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
@@ -430,11 +430,11 @@ namespace OutlookPrivacyPlugin
 					_autoDecrypt = false;
 					DecryptEmail(mailItem);
 					// Update match again, in case decryption failed/cancelled.
-					match = Regex.Match(mailItem.Body, _pgpNoReplyHeaderPattern);
+					match = Regex.Match(mailItem.Body, _pgpNoReplyHeaderPattern, RegexOptions.Multiline);
 
 					SetProperty(mailItem, "GnuPGSetting.Decrypted", true);
 				}
-				else if (match != null && _settings.AutoVerify && match.Value == _pgpSignedHeader)
+				else if (match != null && _settings.AutoVerify && match.Groups[1].Value == _pgpSignedHeader)
 				{
 					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
@@ -525,8 +525,8 @@ namespace OutlookPrivacyPlugin
 
 				if (match != null)
 				{
-					ribbon.VerifyButton.Enabled = (match.Value == _pgpSignedHeader);
-					ribbon.DecryptButton.Enabled = (match.Value == _pgpEncryptedHeader);
+					ribbon.VerifyButton.Enabled = (match.Groups[1].Value == _pgpSignedHeader);
+					ribbon.DecryptButton.Enabled = (match.Groups[1].Value == _pgpEncryptedHeader);
 				}
 
 				if(ribbon.VerifyButton.Enabled || ribbon.DecryptButton.Enabled)
@@ -799,7 +799,7 @@ namespace OutlookPrivacyPlugin
 			MimeMessage msg = null;
 			TextPart textPart = null;
 			MimeEntity htmlPart = null;
-			bool isHtml = false;
+			var isHtml = false;
 
 			using(var sin = new MemoryStream(clearbytes))
 			{
