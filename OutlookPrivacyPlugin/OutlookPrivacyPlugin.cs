@@ -246,18 +246,21 @@ namespace OutlookPrivacyPlugin
 			if (mailItem == null || mailItem.Body == null)
 				return;
 
-			if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
-			{
-				Match match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+			// NOTE: This will enable decrypt/verify from preview pane.
+			// definetly not what we currently want.
 
-				_gpgCommandBar.GetButton("Verify").Enabled = (match.Value == _pgpSignedHeader);
-				_gpgCommandBar.GetButton("Decrypt").Enabled = (match.Value == _pgpEncryptedHeader);
-			}
-			else
-			{
+			//if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
+			//{
+			//	Match match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
+
+			//	_gpgCommandBar.GetButton("Verify").Enabled = (match.Value == _pgpSignedHeader);
+			//	_gpgCommandBar.GetButton("Decrypt").Enabled = (match.Value == _pgpEncryptedHeader);
+			//}
+			//else
+			//{
 				_gpgCommandBar.GetButton("Verify").Enabled = false;
 				_gpgCommandBar.GetButton("Decrypt").Enabled = false;
-			}
+			//}
 		}
 		#endregion
 
@@ -1323,8 +1326,8 @@ namespace OutlookPrivacyPlugin
 						attachment.Delete();
 
 						// Encrypt file
-						byte[] cleartext = File.ReadAllBytes(a.TempFile);
-						string cyphertext = SignAndEncryptAttachment(cleartext, GetSMTPAddress(mailItem), recipients);
+						var cleartext = File.ReadAllBytes(a.TempFile);
+						var cyphertext = SignAndEncryptAttachment(cleartext, GetSMTPAddress(mailItem), recipients);
 						File.WriteAllText(a.TempFile, cyphertext);
 
 						a.Encrypted = true;
@@ -1406,8 +1409,8 @@ namespace OutlookPrivacyPlugin
 						attachment.Delete();
 
 						// Encrypt file
-						byte[] cleartext = File.ReadAllBytes(a.TempFile);
-						string cyphertext = EncryptEmail(cleartext, recipients);
+						var cleartext = File.ReadAllBytes(a.TempFile);
+						var cyphertext = EncryptEmail(cleartext, recipients);
 						File.WriteAllText(a.TempFile, cyphertext);
 
 						a.Encrypted = true;
@@ -1434,7 +1437,7 @@ namespace OutlookPrivacyPlugin
 
 				WriteErrorData("Application_ItemSend", ex);
 				MessageBox.Show(
-					ex.Message,
+					ex.Message + "\n"+ex.StackTrace,
 					"Outlook Privacy Error",
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
