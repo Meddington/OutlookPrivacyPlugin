@@ -1,6 +1,6 @@
 = Outlook Privacy Plugin
 
-A GnuPG/GPG/OpenPGP encryption plugin for Outlook 2010 and 2013.  Supports both 32 and 64bit versions of Outlook.
+A GnuPG/GPG/OpenPGP encryption plugin for Outlook 2010, 2013 and 2016.  Supports both 32 and 64bit versions of Outlook.
 
 == About
 
