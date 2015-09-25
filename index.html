@@ -40,30 +40,53 @@ It uses your existing GnuPG/GPG keyrings.</p>
 <a id="designer-templates" class="anchor" href="#designer-templates" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h3>
 
 <p>
-<ul>
-  <li>Download and install gpg4win. Create and import keys as needed. 
-  Verify you can see all expected keys from the gpg4win software.</li>
-  <li>Downlaod installer from top right of this page.</li>
-  <li>Close Outlook and run installer.</li>
-  <li>[OPTIONAL] If your Gnupg installation is in a custom location, or Outlook Privacy Plugin cannot find youre keys,
-  set the GNUPGHOME environmental variable and restart Outlook.</li>
-</ul>
+  <ol>
+    <li>Download and install gpg4win. Create and import keys as needed. 
+    Verify you can see all expected keys from the gpg4win software.</li>
+    <li>Downlaod installer from top right of this page.</li>
+    <li>Close Outlook and run installer.</li>
+    <li>[OPTIONAL] If your Gnupg installation is in a custom location, or Outlook Privacy Plugin cannot find youre keys,
+    set the GNUPGHOME environmental variable and restart Outlook.</li>
+  </ol>
 </p>
 
 <h3>
-<a id="creating-pages-manually" class="anchor" href="#creating-pages-manually" aria-hidden="true"><span class="octicon octicon-link"></span></a>Creating pages manually</h3>
+<a id="creating-pages-manually" class="anchor" href="#creating-pages-manually" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+Features</h3>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p>
+  <ul>
+    <li>Supports the following versions of Outlook
+    <ul>
+      <li>Microsoft Outlook 2010</li>
+      <li>Microsoft Outlook 2013</li>
+      <li>Microsoft Outlook 2016</li>
+    </ul>
+    </li>
+    <li>Support for both 32bit & 64bit versions of Office</li>
+    <li>Encrypt and decrypt email using OpenPGP standard</li>
+    <li>Supports encrypted attachments</li>
+    <li>Supports multiple recipients</li>
+    <li>Decrypts PGP/MIME</li>
+    <li>Decrypts OpenPGP blocks in HTML email</li>
+    <li>Decrypts HTML emails</li>
+    <li>Multiple email accounts (based on sender/receiver email)</li>
+    <li>Attach public key to emails</li>
+  </ul>
+</p>
 
 <h3>
-<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+Not Supported</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor’s GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>
+  <ul>
+    <li>Sending PGP/MIME emails</li>
+    <li>Sending HTML email</li>
+    <li>Decrypting in preview pain</li>
+  </ul>
+</p>
 
-<h3>
-<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out our <a href="https://help.github.com/pages">documentation</a> or <a href="https://github.com/contact">contact support</a> and we’ll help you sort it out.</p>
         </section>
 
         <aside id="sidebar">
