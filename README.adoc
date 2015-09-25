@@ -34,7 +34,10 @@ Outlook Privacy Plugin should automatically find your keyrings. However, if they
 
 == Features
 
- * Microsoft Outlook 2010 and 2013
+ * Supports the following versions of Outlook
+ ** Microsoft Outlook 2010
+ ** Microsoft Outlook 2013
+ ** Microsoft Outlook 2016
  * Support for both 32bit & 64bit versions of Office
  * Encrypt and decrypt email using OpenPGP standard
  * Supports encrypted attachments
