@@ -301,7 +301,6 @@
   <ItemGroup>
     <EmbeddedResource Include="GnuPGRibbonCompose.xml" />
     <EmbeddedResource Include="GnuPGRibbonRead.xml" />
-    <None Include="Resources\attach.bmp" />
     <None Include="Resources\attach.gif" />
     <Content Include="Resources\database_gear.png" />
     <Content Include="Resources\DejaVu_Logo_Final.png" />
