@@ -192,9 +192,16 @@ namespace Org.BouncyCastle.Bcpg.OpenPgp
             S2k							s2k,
             char[]						passPhrase)
         {
+			// Changed pBytes to get string via encoding
+			// this should use the OS encoding.
+			//
+			// vvv EDDINGTON
+			var encoding = System.Text.Encoding.UTF8;
+
 			int keySize = GetKeySize(algorithm);
-			byte[] pBytes = Strings.ToByteArray(new string(passPhrase));
+			byte[] pBytes = encoding.GetBytes(new string(passPhrase));
 			byte[] keyBytes = new byte[(keySize + 7) / 8];
+			// ^^^ EDDINGTON
 
 			int generatedBytes = 0;
             int loopCount = 0;
