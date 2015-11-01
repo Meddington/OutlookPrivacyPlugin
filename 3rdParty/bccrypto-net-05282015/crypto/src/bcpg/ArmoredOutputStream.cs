@@ -245,7 +245,8 @@ namespace Org.BouncyCastle.Bcpg
                 }
 
                 DoWrite(headerStart + type + headerTail + nl);
-                WriteHeaderEntry("Version", (string) headers["Version"]);
+				// Eddington - Disable Version
+                //WriteHeaderEntry("Version", (string) headers["Version"]);
 
                 foreach (DictionaryEntry de in headers)
                 {
