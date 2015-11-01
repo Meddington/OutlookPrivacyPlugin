@@ -157,6 +157,8 @@ namespace Deja.Crypto.BcPgp
 
 				if ((keyFlags & KeyFlags.EncryptStorage) > 0)
 					return true;
+
+				return false;
 			}
 
 			// NOTE: Some keys do not have flags set. Instead use
@@ -296,6 +298,35 @@ namespace Deja.Crypto.BcPgp
 				}
 
 				return keyUserIds.ToArray();
+			}
+		}
+
+		public PgpPublicKeyRing GetPublicKeyRing(string email)
+		{
+			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+			{
+				var pgpPub = new PgpPublicKeyRingBundle(decoderStream);
+				var emailSearch = "<" + email.ToLower().Trim() + ">";
+
+				// Each KeyRing is a single key set (master + subs)
+				foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+				{
+					var masterKey = kRing.GetPublicKey();
+					if (!masterKey.IsMasterKey)
+						masterKey = GetMasterPublicKey(masterKey.KeyId);
+
+					if (!IsKeyValid(masterKey))
+						continue;
+
+					// Skip key's that don't match
+					if (!masterKey.GetUserIds().Cast<string>().Any(id => id.ToLower().Contains(emailSearch)))
+						continue;
+
+					return kRing;
+				}
+
+				return null;
 			}
 		}
 
@@ -700,14 +731,13 @@ namespace Deja.Crypto.BcPgp
 		public string PublicKey(string email, Dictionary<string, string> headers)
 		{
 			Context = new CryptoContext(Context);
-
-			var publicKey = GetPublicKeyForEncryption(email);
+			var publicKeyRing = GetPublicKeyRing(email);
 
 			using (var sout = new MemoryStream())
 			{
 				using (var armoredOut = new ArmoredOutputStream(sout))
 				{
-					publicKey.Encode(armoredOut);
+					publicKeyRing.Encode(armoredOut);
 				}
 
 				return ASCIIEncoding.ASCII.GetString(sout.ToArray());
