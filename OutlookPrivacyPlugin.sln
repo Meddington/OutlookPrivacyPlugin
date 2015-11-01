@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MimeKitLite.Net40", "MimeKi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Org.BouncyCastle", "3rdParty\bccrypto-net-05282015\crypto\Org.BouncyCastle.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deja.Crypto.Test", "Deja.Crypto.Test\Deja.Crypto.Test.csproj", "{838ACA64-A0DC-4183-A932-581CB7FB3E90}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CD_ROM|Any CPU = CD_ROM|Any CPU
@@ -103,6 +105,16 @@ Global
 		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
 		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.SingleImage|Any CPU.Build.0 = Release|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.CD_ROM|Any CPU.ActiveCfg = Release|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.CD_ROM|Any CPU.Build.0 = Release|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.DVD-5|Any CPU.ActiveCfg = Debug|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.DVD-5|Any CPU.Build.0 = Debug|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
+		{838ACA64-A0DC-4183-A932-581CB7FB3E90}.SingleImage|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
