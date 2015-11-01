@@ -15,6 +15,7 @@ using Org.BouncyCastle.Utilities.Encoders;
 using Org.BouncyCastle.Bcpg;
 
 using NLog;
+using Org.BouncyCastle.Asn1.Tests;
 
 namespace Deja.Crypto.BcPgp
 {
@@ -107,6 +108,7 @@ namespace Deja.Crypto.BcPgp
 		/// Checks both key algorithm and also key flags.
 		/// </remarks>
 		/// <param name="key"></param>
+		/// <param name="strict"></param>
 		/// <returns></returns>
 		public bool IsSigningKey(PgpPublicKey key)
 		{
@@ -120,8 +122,11 @@ namespace Deja.Crypto.BcPgp
 
 				if ((keyFlags & KeyFlags.SignData) > 0)
 					return true;
+
+				return false;
 			}
 
+			// Only use alg if keyflags is missing
 			if (IsSigningAlg(key))
 				return true;
 
@@ -656,6 +661,7 @@ namespace Deja.Crypto.BcPgp
 					// Remove any extra trailing whitespace.
 					// this should not include \r or \n.
 					data = data.TrimEnd(null);
+					var lastLine = string.Empty;
 
 					using (var stringReader = new StringReader(data))
 					{
@@ -670,6 +676,7 @@ namespace Deja.Crypto.BcPgp
 							line = line.TrimEnd(new char[] { ' ', '\t', '\r', '\n' });
 
 							line += "\r\n";
+							lastLine = line;
 
 							signatureData.Update(encoding.GetBytes(line));
 							armoredOut.Write(encoding.GetBytes(line));
@@ -677,8 +684,12 @@ namespace Deja.Crypto.BcPgp
 						while (true);
 					}
 
-					// Write extra line before signature block.
-					armoredOut.Write(encoding.GetBytes("\r\n"));
+					if (!lastLine.EndsWith("\r\n"))
+					{
+						// Write extra line before signature block.
+						armoredOut.Write(encoding.GetBytes("\r\n"));
+					}
+
 					armoredOut.EndClearText();
 
 					using (var outputStream = new BcpgOutputStream(armoredOut))
