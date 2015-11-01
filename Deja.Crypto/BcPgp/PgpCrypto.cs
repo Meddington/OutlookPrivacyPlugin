@@ -661,7 +661,6 @@ namespace Deja.Crypto.BcPgp
 					// Remove any extra trailing whitespace.
 					// this should not include \r or \n.
 					data = data.TrimEnd(null);
-					var lastLine = string.Empty;
 
 					using (var stringReader = new StringReader(data))
 					{
@@ -676,7 +675,6 @@ namespace Deja.Crypto.BcPgp
 							line = line.TrimEnd(new char[] { ' ', '\t', '\r', '\n' });
 
 							line += "\r\n";
-							lastLine = line;
 
 							signatureData.Update(encoding.GetBytes(line));
 							armoredOut.Write(encoding.GetBytes(line));
@@ -684,12 +682,8 @@ namespace Deja.Crypto.BcPgp
 						while (true);
 					}
 
-					if (!lastLine.EndsWith("\r\n"))
-					{
-						// Write extra line before signature block.
-						armoredOut.Write(encoding.GetBytes("\r\n"));
-					}
-
+					// Write extra line before signature block.
+					armoredOut.Write(encoding.GetBytes("\r\n"));
 					armoredOut.EndClearText();
 
 					using (var outputStream = new BcpgOutputStream(armoredOut))
