@@ -1427,6 +1427,8 @@ namespace OutlookPrivacyPlugin
 			{
 				if (ex.Message.ToLower().StartsWith("checksum"))
 				{
+					ClearLastPassword();
+
 					MessageBox.Show(
 						Localized.ErrorBadPassphrase,
 						"Outlook Privacy Error",
@@ -1810,6 +1812,17 @@ namespace OutlookPrivacyPlugin
 
 		#endregion
 
+		long _lastPasswordLookupKey = -1;
+
+		/// <summary>
+		/// Clear cache for last returned password
+		/// </summary>
+		void ClearLastPassword()
+		{
+			if (_lastPasswordLookupKey >= 0)
+				PassphraseCache.Remove(_lastPasswordLookupKey);
+		}
+
 		char[] PasswordCallback(PgpSecretKey masterKey, PgpSecretKey key)
 		{
 			if (PassphraseCache.ContainsKey(key.PublicKey.KeyId))
@@ -1829,6 +1842,8 @@ namespace OutlookPrivacyPlugin
 				{
 					key.ExtractPrivateKey(pass);
 					PassphraseCache[key.PublicKey.KeyId] = pass;
+
+					_lastPasswordLookupKey = key.PublicKey.KeyId;
 					return pass;
 				}
 				catch (Exception)
@@ -1892,6 +1907,8 @@ namespace OutlookPrivacyPlugin
 
 				if (e.Message.ToLower().StartsWith("checksum"))
 				{
+					ClearLastPassword();
+
 					MessageBox.Show(
 						Localized.ErrorBadPassphrase,
 						"Outlook Privacy Error",
