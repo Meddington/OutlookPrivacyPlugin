@@ -583,6 +583,24 @@ namespace Deja.Crypto.BcPgp
 			}
 		}
 
+		public IEnumerable<PgpSecretKey> EnumerateAllEncryptionSecretKeys()
+		{
+			using (var inputStream = File.OpenRead(Context.PrivateKeyRingFile))
+			using (var decoderStream = PgpUtilities.GetDecoderStream(inputStream))
+			{
+				var pgpPub = new PgpSecretKeyRingBundle(decoderStream);
+
+				foreach (PgpSecretKeyRing kRing in pgpPub.GetKeyRings())
+				{
+					foreach (PgpSecretKey k in kRing.GetSecretKeys())
+					{
+						if (IsEncryptionKey(k.PublicKey))
+							yield return k;
+					}
+				}
+			}
+		}
+
 		#endregion
 
 		/// <summary>
@@ -1123,91 +1141,7 @@ namespace Deja.Crypto.BcPgp
 
 			if (obj is PgpEncryptedDataList)
 			{
-				logger.Trace("DecryptHandlePgpObject: IsEncrypted");
-				Context.IsEncrypted = true;
-				var dataList = obj as PgpEncryptedDataList;
-
-				// Set once we have matched a keyid.
-				bool secretKeyMatched = false;
-
-				foreach (PgpPublicKeyEncryptedData encryptedData in dataList.GetEncryptedDataObjects())
-				{
-					try
-					{
-						// If we have already found a key to use, skip others. It is possible
-						// to have all the keys in our ring.
-						if (Context.SecretKey != null)
-							continue;
-
-						// NOTE: When content is encrypted to multiple recipients, only one of these blocks
-						//       will match a known KeyId.  If a match is never made, then there is a problem :)
-
-						var masterSecretKey = GetMasterSecretKey(encryptedData.KeyId);
-						var secretKey = GetSecretKey(encryptedData.KeyId);
-
-						if (masterSecretKey == null || secretKey == null)
-							continue;
-
-						var passphrase = Context.PasswordCallback(masterSecretKey, secretKey);
-
-						// Incorrect passphrase or cancel
-						if (passphrase == null)
-							continue;
-
-						Context.SecretKey = masterSecretKey;
-
-						logger.Trace("DecryptHandlePgpObject: Found key: " + encryptedData.KeyId);
-						secretKeyMatched = true;
-
-						using (var cleartextIn = encryptedData.GetDataStream(
-							secretKey.ExtractPrivateKey(passphrase)))
-						{
-							var clearFactory = new PgpObjectFactory(cleartextIn);
-							var nextObj = clearFactory.NextPgpObject();
-							if (nextObj == null)
-								return null;
-
-							var r = DecryptHandlePgpObject(nextObj);
-							if (r != null)
-								ret = r;
-						}
-
-						// This can fail due to integrity protection missing.
-						// Legacy systems to not have this protection
-						// Should make an option to ignore.
-						try
-						{
-							if (!encryptedData.Verify())
-							{
-								logger.Debug("DecryptHandlePgpObject: encryptedData.Verify failed");
-								throw new VerifyException("Verify of encrypted data failed!");
-							}
-						}
-						catch (PgpException exx)
-						{
-							logger.Debug("DecryptHandlePgpObject: " + exx.Message);
-
-							// Legacy systems do not have this protection
-							// Exposed as a flag to allow library consumer to 
-							// decide on correct coarse of action
-							if (exx.Message == "data not integrity protected.")
-								Context.FailedIntegrityCheck = true;
-							else
-								throw;
-						}
-					}
-					catch (PgpException ex)
-					{
-						if (!(ex.InnerException is EndOfStreamException))
-							throw ex;
-					}
-				}
-
-				if (!secretKeyMatched)
-				{
-					logger.Debug("DecryptHandlePgpObject: Decryption key not found");
-					throw new SecretKeyNotFoundException("Error, unable to locate decryption key.");
-				}
+				ret = HandlePgpEncryptedDataList(obj);
 			}
 			else if (obj is PgpCompressedData)
 			{
@@ -1349,6 +1283,170 @@ namespace Deja.Crypto.BcPgp
 				(ret == null ? "null" : ret.Length.ToString()) + " bytes");
 
 			return ret;
+		}
+
+		private byte[] HandlePgpEncryptedDataList(PgpObject obj)
+		{
+			logger.Trace("DecryptHandlePgpObject: IsEncrypted");
+			Context.IsEncrypted = true;
+			var dataList = (PgpEncryptedDataList) obj;
+
+			byte[] ret = null;
+
+			PgpPublicKeyEncryptedData encryptedData = null;
+			PgpSecretKey masterSecretKey = null;
+			PgpSecretKey secretKey = null;
+			char[] passphrase = null;
+
+			var hiddenRecipientData =
+				dataList.GetEncryptedDataObjects().Cast<PgpPublicKeyEncryptedData>().FirstOrDefault(key => key.KeyId == 0);
+			var knownKeyData =
+				dataList.GetEncryptedDataObjects().Cast<PgpPublicKeyEncryptedData>().FirstOrDefault(key => GetSecretKey(key.KeyId) != null);
+
+			if (hiddenRecipientData == null && knownKeyData == null)
+			{
+				logger.Debug("DecryptHandlePgpObject: Decryption key not found");
+				throw new SecretKeyNotFoundException("Error, unable to locate decryption key.");
+			}
+
+			if (knownKeyData != null)
+			{
+				masterSecretKey = GetMasterSecretKey(knownKeyData.KeyId);
+				secretKey = GetSecretKey(knownKeyData.KeyId);
+
+				if (masterSecretKey == null || secretKey == null)
+					return null;
+
+				passphrase = Context.PasswordCallback(masterSecretKey, secretKey);
+
+				// Incorrect passphrase or cancel
+				if (passphrase == null)
+					return null;
+
+				encryptedData = knownKeyData;
+
+				try
+				{
+					Context.SecretKey = masterSecretKey;
+
+					logger.Trace("DecryptHandlePgpObject: Found key: {0:X}", secretKey.KeyId);
+
+					using (var cleartextIn = encryptedData.GetDataStream(
+						secretKey.ExtractPrivateKey(passphrase)))
+					{
+						var clearFactory = new PgpObjectFactory(cleartextIn);
+						var nextObj = clearFactory.NextPgpObject();
+						if (nextObj == null)
+							return null;
+
+						var r = DecryptHandlePgpObject(nextObj);
+						if (r != null)
+							ret = r;
+					}
+
+					// This can fail due to integrity protection missing.
+					// Legacy systems to not have this protection
+					// Should make an option to ignore.
+					try
+					{
+						if (!encryptedData.Verify())
+						{
+							logger.Debug("DecryptHandlePgpObject: encryptedData.Verify failed");
+							throw new VerifyException("Verify of encrypted data failed!");
+						}
+					}
+					catch (PgpException exx)
+					{
+						logger.Debug("DecryptHandlePgpObject: " + exx.Message);
+
+						// Legacy systems do not have this protection
+						// Exposed as a flag to allow library consumer to 
+						// decide on correct coarse of action
+						if (exx.Message == "data not integrity protected.")
+							Context.FailedIntegrityCheck = true;
+						else
+							throw;
+					}
+				}
+				catch (PgpException ex)
+				{
+					if (!(ex.InnerException is EndOfStreamException))
+						throw;
+				}
+
+				return ret;
+			}
+
+			// hidden recipient path
+
+			encryptedData = hiddenRecipientData;
+			var foundKey = false;
+
+			// Try all secret keys until we find a match
+			foreach (var key in EnumerateAllEncryptionSecretKeys())
+			{
+				masterSecretKey = GetMasterSecretKey(key.KeyId);
+				secretKey = key;
+
+				passphrase = Context.PasswordCallback(masterSecretKey, secretKey);
+
+				// Incorrect passphrase or cancel
+				if (passphrase == null)
+					continue;
+
+				try
+				{
+					using (var cleartextIn = encryptedData.GetDataStream(secretKey.ExtractPrivateKey(passphrase)))
+					{
+						var clearFactory = new PgpObjectFactory(cleartextIn);
+						var nextObj = clearFactory.NextPgpObject();
+
+						logger.Trace("DecryptHandlePgpObject: Found key: {0:X}", secretKey.KeyId);
+						foundKey = true;
+
+						if (nextObj == null)
+							return null;
+
+						var r = DecryptHandlePgpObject(nextObj);
+						if (r != null)
+							ret = r;
+					}
+
+					// This can fail due to integrity protection missing.
+					// Legacy systems to not have this protection
+					// Should make an option to ignore.
+					try
+					{
+						if (!encryptedData.Verify())
+						{
+							logger.Debug("DecryptHandlePgpObject: encryptedData.Verify failed");
+							throw new VerifyException("Verify of encrypted data failed!");
+						}
+					}
+					catch (PgpException exx)
+					{
+						logger.Debug("DecryptHandlePgpObject: " + exx.Message);
+
+						// Legacy systems do not have this protection
+						// Exposed as a flag to allow library consumer to 
+						// decide on correct coarse of action
+						if (exx.Message == "data not integrity protected.")
+							Context.FailedIntegrityCheck = true;
+						else
+							throw;
+					}
+
+					return ret;
+				}
+				catch (PgpException ex)
+				{
+					if (foundKey && !(ex.InnerException is EndOfStreamException))
+						throw;
+				}
+			}
+
+			logger.Debug("DecryptHandlePgpObject: Decryption key not found");
+			throw new SecretKeyNotFoundException("Error, unable to locate decryption key.");
 		}
 	}
 }
