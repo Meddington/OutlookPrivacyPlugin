@@ -54,4 +54,10 @@ Outlook Privacy Plugin should automatically find your keyrings. However, if they
  * Sending HTML email
  * Decrypting in preview pain
  
+== Troubleshooting & Install Issues
+
+For common install and usage issues see the following wiki pages:
+
+ * https://github.com/dejavusecurity/OutlookPrivacyPlugin/wiki/Installation-Issues[Installation Issues]
+ * https://github.com/dejavusecurity/OutlookPrivacyPlugin/wiki/Troubleshooting[Troubleshooting]
 
