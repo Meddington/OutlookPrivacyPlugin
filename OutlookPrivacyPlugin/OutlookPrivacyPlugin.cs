@@ -68,17 +68,26 @@ namespace OutlookPrivacyPlugin
 		private void OutlookGnuPG_Startup(object sender, EventArgs e)
 		{
 			// NLOG
+			{
+				var logFile = System.Environment.GetEnvironmentVariable("APPDATA");
+				logFile = Path.Combine(logFile, "OutlookPrivacyPlugin");
 
-			//var nconfig = new LoggingConfiguration();
-			//var consoleTarget = new FileTarget();
-			//consoleTarget.FileName = "c:\\temp\\opp.txt";
-			//nconfig.AddTarget("console", consoleTarget);
-			//consoleTarget.Layout = "${logger} ${message}";
+				if (!Directory.Exists(logFile))
+					Directory.CreateDirectory(logFile);
 
-			//var rule = new LoggingRule("*", LogLevel.Trace, consoleTarget);
-			//nconfig.LoggingRules.Add(rule);
+				logFile = Path.Combine(logFile, "trace.txt");
 
-			//LogManager.Configuration = nconfig;
+				var nconfig = new LoggingConfiguration();
+				var consoleTarget = new FileTarget();
+				consoleTarget.FileName = logFile;
+				nconfig.AddTarget("console", consoleTarget);
+				consoleTarget.Layout = "${logger} ${message}";
+
+				var rule = new LoggingRule("*", LogLevel.Warn, consoleTarget);
+				nconfig.LoggingRules.Add(rule);
+
+				LogManager.Configuration = nconfig;
+			}
 
 			// NLOG END
 
@@ -475,19 +484,19 @@ namespace OutlookPrivacyPlugin
 
 					var contentType = ReadContentType(mailItem);
 
-					logger.Trace("MIME: Message content-type: " + (string)contentType);
+					logger.Warn("MIME: Message content-type: " + (string)contentType);
 
 					if (((string)contentType).Contains("application/pgp-signature"))
 					{
 						// PGP MIM Signed message it looks like
 						//multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="Iq9CNK2GBN9g0PCsVJK4WdkEAR0887CbX"; charset="iso-8859-1"
 
-						logger.Trace("MIME: Found application/pgp-signature: " + contentType);
+						logger.Warn("MIME: Found application/pgp-signature: " + contentType);
 
 						var sigMatch = Regex.Match((string)contentType, @"micalg=pgp-([^; ]*)");
 						sigHash = sigMatch.Groups[1].Value;
 
-						logger.Trace("MIME: sigHash: " + sigHash);
+						logger.Warn("MIME: sigHash: " + sigHash);
 					}
 
 					// Look for PGP MIME
@@ -495,30 +504,30 @@ namespace OutlookPrivacyPlugin
 					{
 						var mimeEncoding = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001F");
 
-						logger.Trace("MIME: Attachment type: " + mimeEncoding);
+						logger.Warn("MIME: Attachment type: " + mimeEncoding);
 
 						if (mimeEncoding == "application/pgp-encrypted")
 						{
-							logger.Trace("MIME: Found application/pgp-encrypted.");
+							logger.Warn("MIME: Found application/pgp-encrypted.");
 							foundPgpMime = true;
 						}
 						else if (mimeEncoding == "application/pgp-signature")
 						{
-							logger.Trace("MIME: Found application/pgp-signature");
+							logger.Warn("MIME: Found application/pgp-signature");
 							sigMime = attachment;
 						}
 						else if (foundPgpMime && encryptedMime == null && mimeEncoding == "application/octet-stream")
 						{
 							// Should be first attachment *after* PGP_MIME version identification
 
-							logger.Trace("MIME: Found octet-stream following pgp-encrypted.");
+							logger.Warn("MIME: Found octet-stream following pgp-encrypted.");
 							encryptedMime = attachment;
 						}
 					}
 
 					if (encryptedMime != null || sigMime != null)
 					{
-						logger.Trace("MIME: Calling HandlePgpMime");
+						logger.Warn("MIME: Calling HandlePgpMime");
 						HandlePgpMime(mailItem, encryptedMime, sigMime, sigHash);
 
 						if(encryptedMime != null)
@@ -1186,38 +1195,90 @@ namespace OutlookPrivacyPlugin
 		}
 		#endregion
 
+		/// <summary>
+		/// Get sender SMTP address
+		/// </summary>
+		/// <remarks>
+		/// Origional plugin code. Will also call a seconadry function to retreive 
+		/// the SMTP address if this code fails.
+		/// </remarks>
+		/// <param name="mailItem"></param>
+		/// <returns></returns>
 		public string GetSMTPAddress(Outlook.MailItem mailItem)
 		{
-			if (mailItem.SendUsingAccount != null &&
-				!string.IsNullOrWhiteSpace(mailItem.SendUsingAccount.SmtpAddress))
-				return mailItem.SendUsingAccount.SmtpAddress;
-
-			if (!string.IsNullOrWhiteSpace(mailItem.SenderEmailAddress) &&
-				!mailItem.SenderEmailType.ToUpper().Equals("EX"))
-				return mailItem.SenderEmailAddress;
-
-			// This can be x509 for exchange accounts
-			if (mailItem.SendUsingAccount != null &&
-				mailItem.SendUsingAccount.AccountType != 0 && /* Verify not exchange account */
-				mailItem.SendUsingAccount.CurrentUser != null &&
-				mailItem.SendUsingAccount.CurrentUser.Address != null)
-				return mailItem.SendUsingAccount.CurrentUser.Address;
-
-			Microsoft.Office.Interop.Outlook.Recipient recip;
-			Outlook.ExchangeUser exUser;
-			Microsoft.Office.Interop.Outlook.Application oOutlook =
-				   new Microsoft.Office.Interop.Outlook.Application();
-			Outlook.NameSpace oNS = oOutlook.GetNamespace("MAPI");
-
-			if (mailItem.SenderEmailType.ToUpper().Equals("EX"))
+			try
 			{
-				recip = oNS.CreateRecipient(mailItem.SenderName);
-				exUser = recip.AddressEntry.GetExchangeUser();
-				return exUser.PrimarySmtpAddress;
+				if (mailItem.SendUsingAccount != null &&
+					!string.IsNullOrWhiteSpace(mailItem.SendUsingAccount.SmtpAddress))
+					return mailItem.SendUsingAccount.SmtpAddress;
+
+				if (!string.IsNullOrWhiteSpace(mailItem.SenderEmailAddress) &&
+					!mailItem.SenderEmailType.ToUpper().Equals("EX"))
+					return mailItem.SenderEmailAddress;
+
+				// This can be x509 for exchange accounts
+				if (mailItem.SendUsingAccount != null &&
+					mailItem.SendUsingAccount.AccountType != 0 && /* Verify not exchange account */
+					mailItem.SendUsingAccount.CurrentUser != null &&
+					mailItem.SendUsingAccount.CurrentUser.Address != null)
+					return mailItem.SendUsingAccount.CurrentUser.Address;
+
+				Microsoft.Office.Interop.Outlook.Recipient recip;
+				Outlook.ExchangeUser exUser;
+				Microsoft.Office.Interop.Outlook.Application oOutlook =
+					   new Microsoft.Office.Interop.Outlook.Application();
+				Outlook.NameSpace oNS = oOutlook.GetNamespace("MAPI");
+
+				if (mailItem.SenderEmailType.ToUpper().Equals("EX"))
+				{
+					recip = oNS.CreateRecipient(mailItem.SenderName);
+					exUser = recip.AddressEntry.GetExchangeUser();
+					return exUser.PrimarySmtpAddress;
+				}
+			}
+			catch
+			{
+				var email = GetSMTPAddress2(mailItem);
+				if (email != null)
+					return email;
 			}
 
 			throw new Exception(Localized.ErrorUnableToDetermineSenderAddress);
 		}
+
+		/// <summary>
+		/// Get sender SMTP address, secondary method from MSDN.
+		/// </summary>
+		/// <remarks>
+		/// https://msdn.microsoft.com/en-us/library/office/ff184624.aspx
+		/// </remarks>
+		/// <param name="mailItem"></param>
+		/// <returns></returns>
+	    string GetSMTPAddress2(Outlook.MailItem mailItem)
+	    {
+			var PR_SMTP_ADDRESS = @"http://schemas.microsoft.com/mapi/proptag/0x39FE001E";
+
+			if (mailItem.SenderEmailType == "EX")
+			{
+				Outlook.AddressEntry sender = mailItem.Sender;
+				if (sender == null) return null;
+				
+				//Now we have an AddressEntry representing the Sender
+				if (sender.AddressEntryUserType == Outlook.OlAddressEntryUserType.olExchangeUserAddressEntry
+				    || sender.AddressEntryUserType == Outlook.OlAddressEntryUserType.olExchangeRemoteUserAddressEntry)
+				{
+					//Use the ExchangeUser object PrimarySMTPAddress
+					Outlook.ExchangeUser exchUser = sender.GetExchangeUser();
+					if (exchUser == null) return null;
+					
+					return exchUser.PrimarySmtpAddress;
+				}
+
+				return (string)sender.PropertyAccessor.GetProperty(PR_SMTP_ADDRESS);
+			}
+
+			return mailItem.SenderEmailAddress;
+	    }
 
 		#region Send Logic
 		private void Application_ItemSend(object Item, ref bool Cancel)
