@@ -1334,14 +1334,17 @@ namespace Deja.Crypto.BcPgp
 					using (var cleartextIn = encryptedData.GetDataStream(
 						secretKey.ExtractPrivateKey(passphrase)))
 					{
-						var clearFactory = new PgpObjectFactory(cleartextIn);
-						var nextObj = clearFactory.NextPgpObject();
-						if (nextObj == null)
-							return null;
+						while (ret == null)
+						{
+							var clearFactory = new PgpObjectFactory(cleartextIn);
+							var nextObj = clearFactory.NextPgpObject();
+							if (nextObj == null)
+								return null;
 
-						var r = DecryptHandlePgpObject(nextObj);
-						if (r != null)
-							ret = r;
+							var r = DecryptHandlePgpObject(nextObj);
+							if (r != null)
+								ret = r;
+						}
 					}
 
 					// This can fail due to integrity protection missing.

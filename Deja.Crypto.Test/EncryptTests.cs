@@ -24,6 +24,32 @@ namespace Deja.Crypto.Test
 		}
 
 		[Test]
+		public void DecryptAndVerifyCryptix()
+		{
+			var asc = @"-----BEGIN PGP MESSAGE-----
+Version: Cryptix OpenPGP 0.20050418
+
+hIwDblSySC/BGaQBBACXq8hOXnGCsCrBt3YU3XgxR+KBrwNh5U/hseMODMY+Gg+w
+jHARa7h9r7ekw+UEw3e2CJzoI0TL1LYM7o3N79mBqUJMIRjyV+dFaE8/it+Xphv3
++B+DyyrlO7Y013MM9v8o7UF5wJyxyIMedeodfboVYOuEYZGMOCZNeP9WgbZIa6Tv
+qC+dKk++UQH1nAq7PWl2hrXHl3wWK/kZ+O/bGMFDEpbDL2PenLEy47kvQT4fGRZT
+iB+O4gP38rpoPF/s1agFtwfNkWHBGlwHOqBpjuT1ya56aPfkDsNGTW0/Jp+dnTIH
+YYGwwCEOQLJemt5ELK8+BZEMRi/5zCmxF/4z9yRUP6IqrotQMWuxjm2d8Z4QhecK
+j/nOOPQyDT/WQLFFOI4whGy9D8QHkXNrqsGHY1YORN3s8Di0+ARkSFtRMhjEgzA0
++U+RVtsnaH4pw8pzbHEpZS9Znt75ep+Vune/cyiPfJuvw5uQlns9bLAtHKtt9NY=
+=uF5e
+-----END PGP MESSAGE-----
+";
+			var context = new CryptoContext(GetPasswordCallback, Pubring, Secring, "rsa", "sha-1");
+			var crypto = new PgpCrypto(context);
+
+			var clear = crypto.DecryptAndVerify(Encoding.UTF8.GetBytes(asc), true);
+
+			Assert.NotNull(clear);
+			Assert.AreEqual("This is a test message.\r\nThis is another line.\r\n",
+				Encoding.UTF8.GetString(clear));
+		}
+		[Test]
 		public void DecryptHiddenRecipient()
 		{
 			var asc = @"-----BEGIN PGP MESSAGE-----
