@@ -342,6 +342,7 @@
 		<row><td>Deja.Crypto.Primary_output</td><td>{3C560D00-26A9-485E-AEBE-58FAE014CD5F}</td><td>INSTALLDIR</td><td>2</td><td/><td>deja.crypto.primary_output</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISX_DEFAULTCOMPONENT</td><td>{4D024094-ED7C-4E6B-9352-939628581190}</td><td>INSTALLDIR</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>MimeKitLite.Net40.Primary_output</td><td>{369E8431-88C3-40EA-AD4B-D3465AC6BF39}</td><td>INSTALLDIR</td><td>2</td><td/><td>mimekitlite.net40.primary_ou</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Newtonsoft.Json.Net40.Primary_output</td><td>{FF186B90-88F3-4D91-8AD4-4043523E8315}</td><td>INSTALLDIR</td><td>2</td><td/><td>newtonsoft.json.net40.primar</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>Org.BouncyCastle.Primary_output</td><td>{68FB6256-8773-4EB0-A7D1-92A1E20FF780}</td><td>INSTALLDIR</td><td>2</td><td/><td>org.bouncycastle.primary_out</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>Org.BouncyCastle.Primary_output1</td><td>{F67E8C30-4D9C-45C5-9000-E2EE5B2F8C69}</td><td>INSTALLDIR</td><td>2</td><td/><td>org.bouncycastle.primary_out</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>OutlookPrivacyPlugin.Primary_output</td><td>{BA78DFF6-3375-4A15-9311-A0AF3E43D950}</td><td>INSTALLDIR</td><td>2</td><td/><td>outlookprivacyplugin.primary</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
@@ -1868,6 +1869,7 @@
 		<row><td>AlwaysInstall</td><td>Deja.Crypto.Primary_output</td></row>
 		<row><td>AlwaysInstall</td><td>ISX_DEFAULTCOMPONENT</td></row>
 		<row><td>AlwaysInstall</td><td>MimeKitLite.Net40.Primary_output</td></row>
+		<row><td>AlwaysInstall</td><td>Newtonsoft.Json.Net40.Primary_output</td></row>
 		<row><td>AlwaysInstall</td><td>Org.BouncyCastle.Primary_output</td></row>
 		<row><td>AlwaysInstall</td><td>Org.BouncyCastle.Primary_output1</td></row>
 		<row><td>AlwaysInstall</td><td>OutlookPrivacyPlugin.Primary_output</td></row>
@@ -1888,6 +1890,7 @@
 		<col def="S72">ISComponentSubFolder_</col>
 		<row><td>deja.crypto.primary_output</td><td>Deja.Crypto.Primary_output</td><td>Deja.Crypto.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;Deja.Crypto&gt;|Built</td><td>3</td><td/></row>
 		<row><td>mimekitlite.net40.primary_ou</td><td>MimeKitLite.Net40.Primary_output</td><td>MimeKitLite.Net40.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;MimeKitLite.Net40&gt;|Built</td><td>3</td><td/></row>
+		<row><td>newtonsoft.json.net40.primar</td><td>Newtonsoft.Json.Net40.Primary_output</td><td>Newtonsoft.Json.Net40.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;Newtonsoft.Json.Net40&gt;|Built</td><td>3</td><td/></row>
 		<row><td>org.bouncycastle.primary_out</td><td>Org.BouncyCastle.Primary_output1</td><td>Org.BouncyCastle.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;Org.BouncyCastle1&gt;|Built</td><td>3</td><td/></row>
 		<row><td>outlookprivacyplugin.dll.man</td><td>ISX_DEFAULTCOMPONENT</td><td>OUTLOO~1.MAN|OutlookPrivacyPlugin.dll.manifest</td><td>0</td><td/><td/><td/><td>1</td><td>C:\projects\OutlookPrivacyPlugin\OutlookPrivacyPlugin\bin\Release\OutlookPrivacyPlugin.dll.manifest</td><td>1</td><td/></row>
 		<row><td>outlookprivacyplugin.primary</td><td>OutlookPrivacyPlugin.Primary_output</td><td>OutlookPrivacyPlugin.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;OutlookPrivacyPlugin&gt;|Built</td><td>3</td><td/></row>
@@ -2040,6 +2043,7 @@
 		<row><td>Deja.Crypto.Primary_output</td><td/><td/><td>_45DC7D0F_820E_4080_92D0_5ACF3ACB8ABC_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISX_DEFAULTCOMPONENT</td><td/><td/><td>_A36C7220_813A_4612_B226_63C1AE978FAB_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>MimeKitLite.Net40.Primary_output</td><td/><td/><td>_9A3C0975_FA70_4716_B245_662868B5A858_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>Newtonsoft.Json.Net40.Primary_output</td><td/><td/><td>_6F20118C_8D08_4882_A0FD_CA26BD56FD25_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>Org.BouncyCastle.Primary_output</td><td/><td/><td>_9D3A8CBC_5957_47CA_9FF5_B3026C5A68E9_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>Org.BouncyCastle.Primary_output1</td><td/><td/><td>_1719DBB9_47B3_44DB_96F7_373F86147188_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>OutlookPrivacyPlugin.Primary_output</td><td/><td/><td>_D013CA63_6681_443F_A39F_FC100FAE0F9F_FILTER</td><td/><td/><td/><td/></row>
@@ -2351,6 +2355,7 @@
 		<row><td>ISProjectDataFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectFolder</td><td/><td/><td>1</td></row>
 		<row><td>MimeKitLite.Net40</td><td>MimeKit\MimeKitLite.Net40.csproj</td><td/><td>2</td></row>
+		<row><td>Newtonsoft.Json.Net40</td><td>3rdParty\Newtonsoft.Json-7.0.1\Src\Newtonsoft.Json\Newtonsoft.Json.Net40.csproj</td><td/><td>2</td></row>
 		<row><td>Org.BouncyCastle</td><td>3rdParty\bccrypto-net-1.7\crypto\Org.BouncyCastle.csproj</td><td/><td>2</td></row>
 		<row><td>Org.BouncyCastle1</td><td>3rdParty\bccrypto-net-05282015\crypto\Org.BouncyCastle.csproj</td><td/><td>2</td></row>
 		<row><td>OutlookPrivacyPlugin</td><td>OutlookPrivacyPlugin\OutlookPrivacyPlugin.csproj</td><td/><td>2</td></row>
