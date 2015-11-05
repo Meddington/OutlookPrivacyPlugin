@@ -7,13 +7,17 @@ using Office = Microsoft.Office.Core;
 using Org.BouncyCastle.Bcpg.OpenPgp;
 
 using System.IO;
+using System.Net;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.Threading.Tasks;
 using Exception = System.Exception;
 using MimeKit;
 
 using Deja.Crypto.BcPgp;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
@@ -115,6 +119,41 @@ namespace OutlookPrivacyPlugin
 			// Initialize the outlook inspectors
 			_inspectors = this.Application.Inspectors;
 			_inspectors.NewInspector += new Outlook.InspectorsEvents_NewInspectorEventHandler(OutlookGnuPG_NewInspector);
+
+			// Check for new version
+			if (_settings.CheckVersion)
+			{
+				Task.Factory.StartNew(() =>
+				{
+					var client = new WebClient();
+					var json =
+						Encoding.UTF8.GetString(client.DownloadData(@"http://dejavusecurity.github.io/OutlookPrivacyPlugin/latest.json"));
+					dynamic latest = JsonConvert.DeserializeObject(json);
+					var latestVersion = latest.version.Value;
+
+					var currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+					if (latestVersion == currentVersion)
+						return;
+
+					// Check if we have already notified about this version
+					var lastVersionCheck = string.Empty;
+					var key = Registry.CurrentUser.OpenSubKey(@"Software\OutlookPrivacyPlugin",
+						RegistryKeyPermissionCheck.ReadWriteSubTree);
+					if (key != null)
+						lastVersionCheck = (string) key.GetValue("LastVersionCheck");
+					else
+						key = Registry.CurrentUser.CreateSubKey(@"Software\OutlookPrivacyPlugin",
+							RegistryKeyPermissionCheck.ReadWriteSubTree);
+
+					if (lastVersionCheck == latestVersion)
+						return;
+
+					key.SetValue("LastVersionCheck", latestVersion);
+
+					MessageBox.Show(Localized.NewVersionAvailable, "Outlook Privacy Plugin",
+						MessageBoxButtons.OK, MessageBoxIcon.Information);
+				});
+			}
 		}
 
 		/// <summary>
@@ -2025,6 +2064,7 @@ namespace OutlookPrivacyPlugin
 			_settings.Cipher = settingsBox.Cipher;
 			_settings.Digest = settingsBox.Digest;
 			_settings.SaveDecrypted = settingsBox.SaveDecrypted;
+			_settings.CheckVersion = settingsBox.CheckVersion;
 			_settings.Save();
 		}
 

@@ -176,5 +176,14 @@ namespace OutlookPrivacyPlugin.Language {
                 return ResourceManager.GetString("MsgValidSig", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A new version of Outlook Privacy Plugin is available..
+        /// </summary>
+        public static string NewVersionAvailable {
+            get {
+                return ResourceManager.GetString("NewVersionAvailable", resourceCulture);
+            }
+        }
     }
 }

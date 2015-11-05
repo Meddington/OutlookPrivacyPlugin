@@ -156,4 +156,7 @@
   <data name="MsgValidSig" xml:space="preserve">
     <value>Valid signature from "{0}" with KeyId {1}.</value>
   </data>
+	<data name="NewVersionAvailable" xml:space="preserve">
+    <value>A new version of Outlook Privacy Plugin is available.</value>
+  </data>
 </root>
