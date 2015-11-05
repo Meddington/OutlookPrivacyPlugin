@@ -16,6 +16,7 @@ using Org.BouncyCastle.Bcpg;
 
 using NLog;
 using Org.BouncyCastle.Asn1.Tests;
+using Org.BouncyCastle.Crypto;
 
 namespace Deja.Crypto.BcPgp
 {
@@ -1334,9 +1335,10 @@ namespace Deja.Crypto.BcPgp
 					using (var cleartextIn = encryptedData.GetDataStream(
 						secretKey.ExtractPrivateKey(passphrase)))
 					{
+						var clearFactory = new PgpObjectFactory(cleartextIn);
+
 						while (ret == null)
 						{
-							var clearFactory = new PgpObjectFactory(cleartextIn);
 							var nextObj = clearFactory.NextPgpObject();
 							if (nextObj == null)
 								return null;
@@ -1402,17 +1404,21 @@ namespace Deja.Crypto.BcPgp
 					using (var cleartextIn = encryptedData.GetDataStream(secretKey.ExtractPrivateKey(passphrase)))
 					{
 						var clearFactory = new PgpObjectFactory(cleartextIn);
-						var nextObj = clearFactory.NextPgpObject();
 
-						logger.Trace("DecryptHandlePgpObject: Found key: {0:X}", secretKey.KeyId);
-						foundKey = true;
+						while (ret == null)
+						{
+							var nextObj = clearFactory.NextPgpObject();
 
-						if (nextObj == null)
-							return null;
+							logger.Trace("DecryptHandlePgpObject: Found key: {0:X}", secretKey.KeyId);
+							foundKey = true;
 
-						var r = DecryptHandlePgpObject(nextObj);
-						if (r != null)
-							ret = r;
+							if (nextObj == null)
+								return null;
+
+							var r = DecryptHandlePgpObject(nextObj);
+							if (r != null)
+								ret = r;
+						}
 					}
 
 					// This can fail due to integrity protection missing.
@@ -1440,6 +1446,10 @@ namespace Deja.Crypto.BcPgp
 					}
 
 					return ret;
+				}
+				catch (DataLengthException)
+				{
+					// ignore, key didn't match out data length
 				}
 				catch (PgpException ex)
 				{

@@ -49,6 +49,7 @@ j/nOOPQyDT/WQLFFOI4whGy9D8QHkXNrqsGHY1YORN3s8Di0+ARkSFtRMhjEgzA0
 			Assert.AreEqual("This is a test message.\r\nThis is another line.\r\n",
 				Encoding.UTF8.GetString(clear));
 		}
+
 		[Test]
 		public void DecryptHiddenRecipient()
 		{
