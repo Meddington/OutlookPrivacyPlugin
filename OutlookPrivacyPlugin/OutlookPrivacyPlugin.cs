@@ -707,6 +707,20 @@ namespace OutlookPrivacyPlugin
 					//       this is definetly hacky :/
 
 					var encoding = GetEncodingFromMail(mailItem);
+					var body = string.Empty;
+
+					// Try two different methods to get the mime body
+					try
+					{
+						body = encoding.GetString(
+							(byte[])mailItem.PropertyAccessor.GetProperty(
+								"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102"));
+					}
+					catch (Exception)
+					{
+						body = (string)mailItem.PropertyAccessor.GetProperty(
+								"http://schemas.microsoft.com/mapi/proptag/0x1000001F"); // PR_BODY
+					}
 
 					var clearsigUpper = new StringBuilder();
 
@@ -715,10 +729,7 @@ namespace OutlookPrivacyPlugin
 					clearsigUpper.Append(encoding.BodyName.ToUpper());
 					clearsigUpper.Append("\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
 
-					clearsigUpper.Append(PgpClearDashEscapeAndQuoteEncode(
-						encoding.GetString(
-						(byte[])mailItem.PropertyAccessor.GetProperty(
-							"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102"))));
+					clearsigUpper.Append(PgpClearDashEscapeAndQuoteEncode(body));
 
 					clearsigUpper.Append("\r\n");
 					clearsigUpper.Append(detachedsig);
@@ -730,10 +741,7 @@ namespace OutlookPrivacyPlugin
 					clearsigLower.Append(encoding.BodyName.ToLower());
 					clearsigLower.Append("\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
 
-					clearsigLower.Append(PgpClearDashEscapeAndQuoteEncode(
-						encoding.GetString(
-						(byte[])mailItem.PropertyAccessor.GetProperty(
-							"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102"))));
+					clearsigLower.Append(PgpClearDashEscapeAndQuoteEncode(body));
 
 					clearsigLower.Append("\r\n");
 					clearsigLower.Append(detachedsig);
