@@ -190,7 +190,7 @@ namespace OutlookPrivacyPlugin
 			
 			var smtp = Globals.OutlookPrivacyPlugin.GetSMTPAddress(mailItem);
 			
-			var crypto = new Deja.Crypto.BcPgp.PgpCrypto(new Deja.Crypto.BcPgp.CryptoContext());
+			var crypto = new PgpCrypto(new CryptoContext());
 			
 			var headers = new Dictionary<string, string>();
 			headers["Version"] = "Outlook Privacy Plugin";
@@ -204,7 +204,10 @@ namespace OutlookPrivacyPlugin
 				return;
 			}
 
-			var tempFile = Path.Combine(Path.GetTempPath(), "public_key.asc");
+			var attachName = smtp.Replace("@", "_at_") + ".asc";
+			attachName = Regex.Replace(attachName, @"[:\\/=+!@#$%^&*(){}[\]|<>,'"";~`]", "_");
+
+			var tempFile = Path.Combine(Path.GetTempPath(), attachName);
 			File.WriteAllText(tempFile, publicKey);
 
 			try
