@@ -66,14 +66,18 @@ namespace OutlookPrivacyPlugin
 		public string GetCustomUI(string ribbonID)
 		{
 			String ui = null;
+			if (ribbonID == "Microsoft.Outlook.Explorer")
+			{
+				ui = GetResourceText("OutlookPrivacyPlugin.GnuPGRibbonMain.xml");
+			}
 			// Examine the ribbonID to see if the current item
 			// is a Mail inspector.
-			if (ribbonID == "Microsoft.Outlook.Mail.Read")
+			else if (ribbonID == "Microsoft.Outlook.Mail.Read")
 			{
 				// Retrieve the customized Ribbon XML.
 				ui = GetResourceText("OutlookPrivacyPlugin.GnuPGRibbonRead.xml");
 			}
-			if (ribbonID == "Microsoft.Outlook.Mail.Compose")
+			else if (ribbonID == "Microsoft.Outlook.Mail.Compose")
 			{
 				// Retrieve the customized Ribbon XML.
 				ui = GetResourceText("OutlookPrivacyPlugin.GnuPGRibbonCompose.xml");

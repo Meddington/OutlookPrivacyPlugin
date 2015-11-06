@@ -61,11 +61,29 @@ namespace OutlookPrivacyPlugin.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Outlook Privacy Plugin.
+        /// </summary>
+        public static string DialogTitle {
+            get {
+                return ResourceManager.GetString("DialogTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Incorrect passphrase possibly entered..
         /// </summary>
         public static string ErrorBadPassphrase {
             get {
                 return ResourceManager.GetString("ErrorBadPassphrase", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Outlook Privacy Plugin Error.
+        /// </summary>
+        public static string ErrorDialogTitle {
+            get {
+                return ResourceManager.GetString("ErrorDialogTitle", resourceCulture);
             }
         }
         

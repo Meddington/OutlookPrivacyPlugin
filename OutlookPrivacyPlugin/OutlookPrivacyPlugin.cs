@@ -41,17 +41,15 @@ namespace OutlookPrivacyPlugin
 
 		#endregion
 
-		static NLog.Logger logger = LogManager.GetCurrentClassLogger();
+		static readonly NLog.Logger logger = LogManager.GetCurrentClassLogger();
 
 
 		private Properties.Settings _settings;
-		private GnuPGCommandBar _gpgCommandBar = null;
 		private bool _autoDecrypt = false;
-		private Outlook.Explorers _explorers;
 		private Outlook.Inspectors _inspectors;        // Outlook inspectors collection
-		private System.Text.Encoding _encoding = UTF8Encoding.UTF8;
+		private Encoding _encoding = Encoding.UTF8;
 		// This dictionary holds our Wrapped Inspectors, Explorers, MailItems
-		private Dictionary<Guid, object> _WrappedObjects;
+		private Dictionary<Guid, object> _wrappedObjects;
 
         private static Dictionary<string, Dictionary<string, object>> _conversationState =
             new Dictionary<string, Dictionary<string, object>>(); 
@@ -60,21 +58,24 @@ namespace OutlookPrivacyPlugin
 		/// <summary>
 		/// Cache of passphrases. Key is keyid.
 		/// </summary>
-		Dictionary<long, char[]> PassphraseCache = new Dictionary<long, char[]>();
+		readonly Dictionary<long, char[]> PassphraseCache = new Dictionary<long, char[]>();
 
 		// PGP Headers
 		// http://www.ietf.org/rfc/rfc4880.txt page 54
 		const string _pgpSignedHeader = "BEGIN PGP SIGNED MESSAGE";
 		const string _pgpEncryptedHeader = "BEGIN PGP MESSAGE";
-		const string _pgpHeaderPattern = "BEGIN PGP( SIGNED)? MESSAGE";
+		//const string _pgpHeaderPattern = "BEGIN PGP( SIGNED)? MESSAGE";
 		const string _pgpNoReplyHeaderPattern = "^-----(BEGIN PGP( SIGNED)? MESSAGE)-----";
 
 		private void OutlookGnuPG_Startup(object sender, EventArgs e)
 		{
-			// NLOG
+			_settings = new Properties.Settings();
+			_wrappedObjects = new Dictionary<Guid, object>();
+
+			// Log all debug/trace messages to a file for debugging purposes
+			if(_settings.DebugTrace)
 			{
-				var logFile = System.Environment.GetEnvironmentVariable("APPDATA");
-				logFile = Path.Combine(logFile, "OutlookPrivacyPlugin");
+				var logFile = Path.Combine(Environment.GetEnvironmentVariable("APPDATA"), "OutlookPrivacyPlugin");
 
 				if (!Directory.Exists(logFile))
 					Directory.CreateDirectory(logFile);
@@ -82,43 +83,24 @@ namespace OutlookPrivacyPlugin
 				logFile = Path.Combine(logFile, "trace.txt");
 
 				var nconfig = new LoggingConfiguration();
-				var consoleTarget = new FileTarget();
-				consoleTarget.FileName = logFile;
+				var consoleTarget = new FileTarget() { FileName = logFile, Layout = "${logger} ${message}" };
 				nconfig.AddTarget("console", consoleTarget);
-				consoleTarget.Layout = "${logger} ${message}";
-
-				var rule = new LoggingRule("*", LogLevel.Warn, consoleTarget);
-				nconfig.LoggingRules.Add(rule);
+				nconfig.LoggingRules.Add(new LoggingRule("*", LogLevel.Trace, consoleTarget));
 
 				LogManager.Configuration = nconfig;
 			}
 
-			// NLOG END
-
-
-			_settings = new Properties.Settings();
-
-			_WrappedObjects = new Dictionary<Guid, object>();
-
 			// Initialize command bar.
 			// Must be saved/closed in Explorer MyClose event.
 			// See http://social.msdn.microsoft.com/Forums/en-US/vsto/thread/df53276b-6b44-448f-be86-7dd46c3786c7/
-			AddGnuPGCommandBar(this.Application.ActiveExplorer());
+			//AddGnuPGCommandBar(this.Application.ActiveExplorer());
 
 			// Register an event for ItemSend
 			Application.ItemSend += Application_ItemSend;
 
-			// Initialize the outlook explorers
-			_explorers = this.Application.Explorers;
-			_explorers.NewExplorer += new Outlook.ExplorersEvents_NewExplorerEventHandler(OutlookGnuPG_NewExplorer);
-			for (int i = _explorers.Count; i >= 1; i--)
-			{
-				WrapExplorer(_explorers[i]);
-			}
-
 			// Initialize the outlook inspectors
-			_inspectors = this.Application.Inspectors;
-			_inspectors.NewInspector += new Outlook.InspectorsEvents_NewInspectorEventHandler(OutlookGnuPG_NewInspector);
+			_inspectors = Application.Inspectors;
+			_inspectors.NewInspector += OutlookGnuPG_NewInspector;
 
 			// Check for new version
 			if (_settings.CheckVersion)
@@ -150,7 +132,7 @@ namespace OutlookPrivacyPlugin
 
 					key.SetValue("LastVersionCheck", latestVersion);
 
-					MessageBox.Show(Localized.NewVersionAvailable, "Outlook Privacy Plugin",
+					MessageBox.Show(Localized.NewVersionAvailable, Localized.DialogTitle,
 						MessageBoxButtons.OK, MessageBoxIcon.Information);
 				});
 			}
@@ -165,163 +147,35 @@ namespace OutlookPrivacyPlugin
 		private void OutlookGnuPG_Shutdown(object sender, EventArgs e)
 		{
 			// Unhook event handler
-			_inspectors.NewInspector -= new Outlook.InspectorsEvents_NewInspectorEventHandler(OutlookGnuPG_NewInspector);
-			_explorers.NewExplorer -= new Outlook.ExplorersEvents_NewExplorerEventHandler(OutlookGnuPG_NewExplorer);
+			_inspectors.NewInspector -= OutlookGnuPG_NewInspector;
 
-			_WrappedObjects.Clear();
-			_WrappedObjects = null;
+			_wrappedObjects.Clear();
+			_wrappedObjects = null;
 			_inspectors = null;
-			_explorers = null;
 		}
 
-		string GetResourceText(string key)
-		{
-			try
-			{
-				var a = Assembly.GetExecutingAssembly();
-				var s = a.GetManifestResourceStream(key);
-
-				byte[] buff = new byte[s.Length];
-				var cnt = s.Read(buff, 0, buff.Length);
-
-				return UTF8Encoding.UTF8.GetString(buff, 0, cnt);
-			}
-			catch
-			{
-				MessageBox.Show("Error, unable to get resource text for key '{0}'.", key);
-				return string.Format("Error, unable to get resource text for key '{0}'.", key);
-			}
-		}
-
-		private GnuPGRibbon ribbon;
+		private GnuPGRibbon _ribbon;
 
 		protected override object RequestService(Guid serviceGuid)
 		{
 			if (serviceGuid == typeof(Office.IRibbonExtensibility).GUID)
 			{
-				if (ribbon == null)
-					ribbon = new GnuPGRibbon();
-				return ribbon;
+				return _ribbon ?? (_ribbon = new GnuPGRibbon());
 			}
 
 			return base.RequestService(serviceGuid);
 		}
 
-		#region Explorer Logic
-		/// <summary>
-		/// The NewExplorer event fires whenever a new explorer is created. We use
-		/// this event to toggle the visibility of the commandbar.
-		/// </summary>
-		/// <param name="explorer">the new created Explorer</param>
-		void OutlookGnuPG_NewExplorer(Outlook.Explorer explorer)
-		{
-			WrapExplorer(explorer);
-		}
-
-		/// <summary>
-		/// Wrap Explorer object to managed Explorer events.
-		/// </summary>
-		/// <param name="explorer">the outlook explorer to manage</param>
-		private void WrapExplorer(Outlook.Explorer explorer)
-		{
-			if (_WrappedObjects.ContainsValue(explorer) == true)
-				return;
-
-			ExplorerWrapper wrappedExplorer = new ExplorerWrapper(explorer);
-			wrappedExplorer.Dispose += new OutlookWrapperDisposeDelegate(ExplorerWrapper_Dispose);
-			wrappedExplorer.ViewSwitch += new ExplorerViewSwitchDelegate(wrappedExplorer_ViewSwitch);
-			wrappedExplorer.SelectionChange += new ExplorerSelectionChangeDelegate(wrappedExplorer_SelectionChange);
-			wrappedExplorer.Close += new ExplorerCloseDelegate(wrappedExplorer_Close);
-			_WrappedObjects[wrappedExplorer.Id] = explorer;
-
-			AddGnuPGCommandBar(explorer);
-		}
-
-		/// <summary>
-		/// WrapEvent to dispose the wrappedExplorer
-		/// </summary>
-		/// <param name="id">the UID of the wrappedExplorer</param>
-		/// <param name="o">the wrapped Explorer object</param>
-		private void ExplorerWrapper_Dispose(Guid id, object o)
-		{
-			ExplorerWrapper wrappedExplorer = o as ExplorerWrapper;
-			wrappedExplorer.Dispose -= new OutlookWrapperDisposeDelegate(ExplorerWrapper_Dispose);
-			wrappedExplorer.ViewSwitch -= new ExplorerViewSwitchDelegate(wrappedExplorer_ViewSwitch);
-			wrappedExplorer.SelectionChange -= new ExplorerSelectionChangeDelegate(wrappedExplorer_SelectionChange);
-			wrappedExplorer.Close -= new ExplorerCloseDelegate(wrappedExplorer_Close);
-			_WrappedObjects.Remove(id);
-		}
-
-		/// <summary>
-		/// WrapEvent fired for MyClose event.
-		/// </summary>
-		/// <param name="explorer">the explorer for which a close event fired.</param>
-		void wrappedExplorer_Close(Outlook.Explorer explorer)
-		{
-			if (_gpgCommandBar != null && explorer == _gpgCommandBar.Explorer)
-				_gpgCommandBar.SavePosition(_settings);
-		}
-
-		/// <summary>
-		/// WrapEvent fired for ViewSwitch event.
-		/// </summary>
-		/// <param name="explorer">the explorer for which a switchview event fired.</param>
-		void wrappedExplorer_ViewSwitch(Outlook.Explorer explorer)
-		{
-			if (_gpgCommandBar == null)
-				return;
-			if (explorer.CurrentFolder.DefaultMessageClass == "IPM.Note")
-			{
-				_gpgCommandBar.CommandBar.Visible = true;
-			}
-			else
-			{
-				_gpgCommandBar.CommandBar.Visible = false;
-			}
-		}
-
-		/// <summary>
-		/// WrapEvent fired for SelectionChange event.
-		/// </summary>
-		/// <param name="explorer">the explorer for which a selectionchange event fired.</param>
-		void wrappedExplorer_SelectionChange(Outlook.Explorer explorer)
-		{
-			Outlook.Selection Selection = explorer.Selection;
-			if (Selection.Count != 1)
-				return;
-
-			Outlook.MailItem mailItem = Selection[1] as Outlook.MailItem;
-			if (mailItem == null || mailItem.Body == null)
-				return;
-
-			// NOTE: This will enable decrypt/verify from preview pane.
-			// definetly not what we currently want.
-
-			//if (mailItem.BodyFormat == Outlook.OlBodyFormat.olFormatPlain)
-			//{
-			//	Match match = Regex.Match(mailItem.Body, _pgpHeaderPattern);
-
-			//	_gpgCommandBar.GetButton("Verify").Enabled = (match.Value == _pgpSignedHeader);
-			//	_gpgCommandBar.GetButton("Decrypt").Enabled = (match.Value == _pgpEncryptedHeader);
-			//}
-			//else
-			//{
-				_gpgCommandBar.GetButton("Verify").Enabled = false;
-				_gpgCommandBar.GetButton("Decrypt").Enabled = false;
-			//}
-		}
-		#endregion
-
 		#region Inspector Logic
-		/// <summary>
-		/// The NewInspector event fires whenever a new inspector is displayed. We use
-		/// this event to initialize button to mail item inspectors.
-		/// The inspector logic handles the registration and execution of mailItem
-		/// events (Open, MyClose and Write) to initialize, maintain and save the
-		/// ribbon button states per mailItem.
-		/// </summary>
-		/// <param name="Inspector">the new created Inspector</param>
-		private void OutlookGnuPG_NewInspector(Outlook.Inspector inspector)
+
+	    /// <summary>
+	    /// The NewInspector event fires whenever a new inspector is displayed. We use
+	    /// this event to initialize button to mail item inspectors.
+	    /// The inspector logic handles the registration and execution of mailItem
+	    /// events (Open, MyClose and Write) to initialize, maintain and save the
+	    /// ribbon button states per mailItem.
+	    /// </summary>
+	    private void OutlookGnuPG_NewInspector(Outlook.Inspector inspector)
 		{
 			var mailItem = inspector.CurrentItem as Outlook.MailItem;
 			if (mailItem != null)
@@ -330,27 +184,21 @@ namespace OutlookPrivacyPlugin
 			}
 		}
 
-		/// <summary>
-		/// Wrap mailItem object to managed mailItem events.
-		/// </summary>
-		/// <param name="explorer">the outlook explorer to manage</param>
-		private void WrapMailItem(Outlook.Inspector inspector)
+	    /// <summary>
+	    /// Wrap mailItem object to managed mailItem events.
+	    /// </summary>
+	    /// <param name="inspector"></param>
+	    private void WrapMailItem(Outlook.Inspector inspector)
 		{
-			if (_WrappedObjects.ContainsValue(inspector) == true)
+			if (_wrappedObjects.ContainsValue(inspector) == true)
 				return;
 
 			var wrappedMailItem = new MailItemInspector(inspector);
-			wrappedMailItem.Dispose += new OutlookWrapperDisposeDelegate(MailItemInspector_Dispose);
-			wrappedMailItem.MyClose += new MailItemInspectorCloseDelegate(mailItem_Close);
-			wrappedMailItem.Open += new MailItemInspectorOpenDelegate(mailItem_Open);
-			wrappedMailItem.Save += new MailItemInspectorSaveDelegate(mailItem_Save);
-			wrappedMailItem.Close += new InspectorCloseDelegate(wrappedMailItem_Close);
-			_WrappedObjects[wrappedMailItem.Id] = inspector;
-		}
-
-		void wrappedMailItem_Close(Outlook.Inspector inspector)
-		{
-			//string a = "A";
+			wrappedMailItem.Dispose += MailItemInspector_Dispose;
+			wrappedMailItem.MyClose += mailItem_Close;
+			wrappedMailItem.Open += mailItem_Open;
+			wrappedMailItem.Save += mailItem_Save;
+			_wrappedObjects[wrappedMailItem.Id] = inspector;
 		}
 
 		/// <summary>
@@ -361,11 +209,11 @@ namespace OutlookPrivacyPlugin
 		private void MailItemInspector_Dispose(Guid id, object o)
 		{
 			var wrappedMailItem = o as MailItemInspector;
-			wrappedMailItem.Dispose -= new OutlookWrapperDisposeDelegate(MailItemInspector_Dispose);
-			wrappedMailItem.MyClose -= new MailItemInspectorCloseDelegate(mailItem_Close);
-			wrappedMailItem.Open -= new MailItemInspectorOpenDelegate(mailItem_Open);
-			wrappedMailItem.Save -= new MailItemInspectorSaveDelegate(mailItem_Save);
-			_WrappedObjects.Remove(id);
+			wrappedMailItem.Dispose -= MailItemInspector_Dispose;
+			wrappedMailItem.MyClose -= mailItem_Close;
+			wrappedMailItem.Open -= mailItem_Open;
+			wrappedMailItem.Save -= mailItem_Save;
+			_wrappedObjects.Remove(id);
 		}
 
         /// <summary>
@@ -417,25 +265,25 @@ namespace OutlookPrivacyPlugin
 			// New mail (Compose)
 			if (mailItem.Sent == false)
 			{
-				ribbon.SignButton.Checked = _settings.AutoSign || (bool) GetProperty(mailItem, "GnuPGSetting.Sign", false);
-                ribbon.EncryptButton.Checked = _settings.AutoEncrypt || (bool)GetProperty(mailItem, "GnuPGSetting.Encrypt", false);
+				_ribbon.SignButton.Checked = _settings.AutoSign || (bool) GetProperty(mailItem, "GnuPGSetting.Sign", false);
+                _ribbon.EncryptButton.Checked = _settings.AutoEncrypt || (bool)GetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 
 				if (mailItem.Body.IndexOf("\n** " + Localized.MsgDecryptValidSig) > -1)
 				{
-					ribbon.SignButton.Checked = true;
-					ribbon.EncryptButton.Checked = true;
+					_ribbon.SignButton.Checked = true;
+					_ribbon.EncryptButton.Checked = true;
 				}
 				else if (mailItem.Body.IndexOf("\n** " + Localized.MsgDecrypt) > -1)
 				{
-					ribbon.EncryptButton.Checked = true;
+					_ribbon.EncryptButton.Checked = true;
 				}
 
-				SetProperty(mailItem, "GnuPGSetting.Sign", ribbon.SignButton.Checked);
-				SetProperty(mailItem, "GnuPGSetting.Encrypt", ribbon.EncryptButton.Checked);
+				SetProperty(mailItem, "GnuPGSetting.Sign", _ribbon.SignButton.Checked);
+				SetProperty(mailItem, "GnuPGSetting.Encrypt", _ribbon.EncryptButton.Checked);
 
-				ribbon.InvalidateButtons();
+				_ribbon.InvalidateButtons();
 
-				if (ribbon.EncryptButton.Checked || ribbon.SignButton.Checked)
+				if (_ribbon.EncryptButton.Checked || _ribbon.SignButton.Checked)
 					mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
 			}
 			else
@@ -445,7 +293,7 @@ namespace OutlookPrivacyPlugin
                 SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 
                 // Default: disable read-buttons
-				ribbon.DecryptButton.Enabled = ribbon.VerifyButton.Enabled = false;
+				_ribbon.DecryptButton.Enabled = _ribbon.VerifyButton.Enabled = false;
 
 				// Look for PGP headers
 				Match match = null;
@@ -456,10 +304,10 @@ namespace OutlookPrivacyPlugin
 				{
 					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
-						StringBuilder body = new StringBuilder(mailItem.Body);
+						var body = new StringBuilder(mailItem.Body);
 
-						Stack<int> indexes = new Stack<int>();
-						for (int cnt = 0; cnt < body.Length; cnt++)
+						var indexes = new Stack<int>();
+						for (var cnt = 0; cnt < body.Length; cnt++)
 						{
 							if (body[cnt] > 127)
 								indexes.Push(cnt);
@@ -489,11 +337,11 @@ namespace OutlookPrivacyPlugin
 				{
 					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
 					{
-						StringBuilder body = new StringBuilder(mailItem.Body);
+						var body = new StringBuilder(mailItem.Body);
 						mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
 
-						Stack<int> indexes = new Stack<int>();
-						for (int cnt = 0; cnt < body.Length; cnt++)
+						var indexes = new Stack<int>();
+						for (var cnt = 0; cnt < body.Length; cnt++)
 						{
 							if (body[cnt] > 127)
 								indexes.Push(cnt);
@@ -504,7 +352,7 @@ namespace OutlookPrivacyPlugin
 							if (indexes.Count == 0)
 								break;
 
-							int index = indexes.Pop();
+							var index = indexes.Pop();
 							body.Remove(index, 1);
 						}
 
@@ -516,57 +364,57 @@ namespace OutlookPrivacyPlugin
 				}
 				else
 				{
-					bool foundPgpMime = false;
-					string sigHash = "sha1";
-					Microsoft.Office.Interop.Outlook.Attachment encryptedMime = null;
-					Microsoft.Office.Interop.Outlook.Attachment sigMime = null;
+					var foundPgpMime = false;
+					var sigHash = "sha1";
+					Outlook.Attachment encryptedMime = null;
+					Outlook.Attachment sigMime = null;
 
 					var contentType = ReadContentType(mailItem);
 
-					logger.Warn("MIME: Message content-type: " + (string)contentType);
+					logger.Trace("MIME: Message content-type: " + (string)contentType);
 
-					if (((string)contentType).Contains("application/pgp-signature"))
+					if (contentType.Contains("application/pgp-signature"))
 					{
 						// PGP MIM Signed message it looks like
 						//multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="Iq9CNK2GBN9g0PCsVJK4WdkEAR0887CbX"; charset="iso-8859-1"
 
-						logger.Warn("MIME: Found application/pgp-signature: " + contentType);
+						logger.Trace("MIME: Found application/pgp-signature: " + contentType);
 
 						var sigMatch = Regex.Match((string)contentType, @"micalg=pgp-([^; ]*)");
 						sigHash = sigMatch.Groups[1].Value;
 
-						logger.Warn("MIME: sigHash: " + sigHash);
+						logger.Trace("MIME: sigHash: " + sigHash);
 					}
 
 					// Look for PGP MIME
-					foreach (Microsoft.Office.Interop.Outlook.Attachment attachment in mailItem.Attachments)
+					foreach (Outlook.Attachment attachment in mailItem.Attachments)
 					{
 						var mimeEncoding = attachment.PropertyAccessor.GetProperty("http://schemas.microsoft.com/mapi/proptag/0x370E001F");
 
-						logger.Warn("MIME: Attachment type: " + mimeEncoding);
+						logger.Trace("MIME: Attachment type: " + mimeEncoding);
 
 						if (mimeEncoding == "application/pgp-encrypted")
 						{
-							logger.Warn("MIME: Found application/pgp-encrypted.");
+							logger.Trace("MIME: Found application/pgp-encrypted.");
 							foundPgpMime = true;
 						}
 						else if (mimeEncoding == "application/pgp-signature")
 						{
-							logger.Warn("MIME: Found application/pgp-signature");
+							logger.Trace("MIME: Found application/pgp-signature");
 							sigMime = attachment;
 						}
 						else if (foundPgpMime && encryptedMime == null && mimeEncoding == "application/octet-stream")
 						{
 							// Should be first attachment *after* PGP_MIME version identification
 
-							logger.Warn("MIME: Found octet-stream following pgp-encrypted.");
+							logger.Trace("MIME: Found octet-stream following pgp-encrypted.");
 							encryptedMime = attachment;
 						}
 					}
 
 					if (encryptedMime != null || sigMime != null)
 					{
-						logger.Warn("MIME: Calling HandlePgpMime");
+						logger.Trace("MIME: Calling HandlePgpMime");
 						HandlePgpMime(mailItem, encryptedMime, sigMime, sigHash);
 
 						if(encryptedMime != null)
@@ -576,18 +424,18 @@ namespace OutlookPrivacyPlugin
 
 				if (match != null)
 				{
-					ribbon.VerifyButton.Enabled = (match.Groups[1].Value == _pgpSignedHeader);
-					ribbon.DecryptButton.Enabled = (match.Groups[1].Value == _pgpEncryptedHeader);
+					_ribbon.VerifyButton.Enabled = (match.Groups[1].Value == _pgpSignedHeader);
+					_ribbon.DecryptButton.Enabled = (match.Groups[1].Value == _pgpEncryptedHeader);
 				}
 
-				if(ribbon.VerifyButton.Enabled || ribbon.DecryptButton.Enabled)
+				if(_ribbon.VerifyButton.Enabled || _ribbon.DecryptButton.Enabled)
 				{
 					if (_settings.SaveDecrypted)
 						mailItem.Save();
 				}
 			}
 
-			ribbon.InvalidateButtons();
+			_ribbon.InvalidateButtons();
 		}
 
 		public static void SetProperty(Outlook.MailItem mailItem, string name, object value)
@@ -702,15 +550,15 @@ namespace OutlookPrivacyPlugin
 			return sb.ToString();
 		}
 
-		void HandlePgpMime(Outlook.MailItem mailItem, Microsoft.Office.Interop.Outlook.Attachment encryptedMime,
-			Microsoft.Office.Interop.Outlook.Attachment sigMime, string sigHash = "sha1")
+		void HandlePgpMime(Outlook.MailItem mailItem, Outlook.Attachment encryptedMime,
+			Outlook.Attachment sigMime, string sigHash = "sha1")
 		{
 			logger.Trace("> HandlePgpMime");
 			CryptoContext Context = null;
 
 			byte[] cyphertext = null;
 			byte[] clearbytes = null;
-			string cleartext = mailItem.Body;
+			var cleartext = mailItem.Body;
 
 			// 1. Decrypt attachement
 
@@ -736,7 +584,7 @@ namespace OutlookPrivacyPlugin
 			{
 				Context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var Crypto = new PgpCrypto(Context);
-				Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
+				var mailType = mailItem.BodyFormat;
 
 				try
 				{
@@ -841,7 +689,7 @@ namespace OutlookPrivacyPlugin
 					WriteErrorData("VerifyEmail", ex);
 					MessageBox.Show(
 						ex.Message,
-						"Outlook Privacy Error",
+						Localized.ErrorDialogTitle,
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
 				}
@@ -997,8 +845,8 @@ namespace OutlookPrivacyPlugin
 				{
 					var sb = new StringBuilder(msg.TextBody.Length + 100);
 					sb.Append("<html><body><pre>");
-					sb.Append(System.Net.WebUtility.HtmlEncode(DecryptAndVerifyHeaderMessage));
-					sb.Append(System.Net.WebUtility.HtmlEncode(msg.TextBody));
+					sb.Append(WebUtility.HtmlEncode(DecryptAndVerifyHeaderMessage));
+					sb.Append(WebUtility.HtmlEncode(msg.TextBody));
 					sb.Append("</pre></body></html>");
 
 					mailItem.HTMLBody = sb.ToString();
@@ -1013,7 +861,7 @@ namespace OutlookPrivacyPlugin
 				var fileName = mimeAttachment.FileName;
 				var tempFile = Path.Combine(Path.GetTempPath(), fileName);
 
-				using (FileStream fout = File.OpenWrite(tempFile))
+				using (var fout = File.OpenWrite(tempFile))
 				{
 					mimeAttachment.ContentObject.DecodeTo(fout);
 				}
@@ -1040,15 +888,15 @@ namespace OutlookPrivacyPlugin
 				// New mail (Compose)
 				if (mailItem.Sent == false)
 				{
-					bool toSave = false;
+					var toSave = false;
 					var signProperpty = GetProperty(mailItem, "GnuPGSetting.Sign", false);
-					if (signProperpty == null || (bool)signProperpty != ribbon.SignButton.Checked)
+					if (signProperpty == null || (bool)signProperpty != _ribbon.SignButton.Checked)
 					{
 						toSave = true;
 					}
 
 					var encryptProperpty = GetProperty(mailItem, "GnuPGSetting.Decrypted", false);
-					if (encryptProperpty == null || (bool)encryptProperpty != ribbon.EncryptButton.Checked)
+					if (encryptProperpty == null || (bool)encryptProperpty != _ribbon.EncryptButton.Checked)
 					{
 						toSave = true;
 					}
@@ -1100,13 +948,12 @@ namespace OutlookPrivacyPlugin
                         //       return. There is a small race condition, but 250
                         //       milliseconds should be enough even on slow machines.
 
-                        var timer = new System.Windows.Forms.Timer { Interval = 250 };
+                        var timer = new Timer { Interval = 250 };
                         timer.Tick += new EventHandler((o, e) =>
 						{
                             timer.Stop();
-                            ((Outlook._MailItem)mailItem).Close(
-								_settings.SaveDecrypted ? Microsoft.Office.Interop.Outlook.OlInspectorClose.olSave :
-                                Microsoft.Office.Interop.Outlook.OlInspectorClose.olDiscard);
+                            mailItem.Close(
+								_settings.SaveDecrypted ? Outlook.OlInspectorClose.olSave : Outlook.OlInspectorClose.olDiscard);
                         });
 
 					    timer.Start();
@@ -1138,99 +985,14 @@ namespace OutlookPrivacyPlugin
 			if (mailItem.Sent == false)
 			{
 				// Record compose button states.
-				SetProperty(mailItem, "GnuPGSetting.Sign", ribbon.SignButton.Checked);
-				SetProperty(mailItem, "GnuPGSetting.Encrypt", ribbon.EncryptButton.Checked);
+				SetProperty(mailItem, "GnuPGSetting.Sign", _ribbon.SignButton.Checked);
+				SetProperty(mailItem, "GnuPGSetting.Encrypt", _ribbon.EncryptButton.Checked);
 			}
 			else
 			{
                 SetProperty(mailItem, "GnuPGSetting.Sign", false);
                 SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 			}
-		}
-		#endregion
-
-		#region CommandBar Logic
-		private void AddGnuPGCommandBar(Outlook.Explorer activeExplorer)
-		{
-			if (_gpgCommandBar != null)
-				return;
-			try
-			{
-				_gpgCommandBar = new GnuPGCommandBar(activeExplorer);
-				_gpgCommandBar.Remove();
-				_gpgCommandBar.Add();
-				_gpgCommandBar.GetButton("Verify").Click += VerifyButton_Click;
-				_gpgCommandBar.GetButton("Decrypt").Click += DecryptButton_Click;
-				_gpgCommandBar.GetButton("Settings").Click += SettingsButton_Click;
-				_gpgCommandBar.GetButton("About").Click += AboutButton_Click;
-				_gpgCommandBar.RestorePosition(_settings);
-			}
-			catch (Exception ex)
-			{
-				WriteErrorData("AddGnuPGCommandBar", ex);
-				MessageBox.Show(ex.Message);
-			}
-		}
-
-		private void VerifyButton_Click(Office.CommandBarButton Ctrl, ref bool CancelDefault)
-		{
-			// Get the selected item in Outlook and determine its type.
-			Outlook.Selection outlookSelection = Application.ActiveExplorer().Selection;
-			if (outlookSelection.Count <= 0)
-				return;
-
-			object selectedItem = outlookSelection[1];
-			Outlook.MailItem mailItem = selectedItem as Outlook.MailItem;
-
-			if (mailItem == null)
-			{
-				MessageBox.Show(
-					"OutlookGnuPG can only verify mails.",
-					"Invalid Item Type",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
-				return;
-			}
-
-			VerifyEmail(mailItem);
-		}
-
-		private void DecryptButton_Click(Office.CommandBarButton Ctrl, ref bool CancelDefault)
-		{
-			// Get the selected item in Outlook and determine its type.
-			Outlook.Selection outlookSelection = Application.ActiveExplorer().Selection;
-			if (outlookSelection.Count <= 0)
-				return;
-
-			object selectedItem = outlookSelection[1];
-			Outlook.MailItem mailItem = selectedItem as Outlook.MailItem;
-
-			if (mailItem == null)
-			{
-				MessageBox.Show(
-					"OutlookGnuPG can only decrypt mails.",
-					"Invalid Item Type",
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Error);
-
-				return;
-			}
-
-			// Force open of mailItem with auto decrypt.
-			_autoDecrypt = true;
-			mailItem.Display(true);
-			//      DecryptEmail(mailItem);
-		}
-
-		private void AboutButton_Click(Office.CommandBarButton Ctrl, ref bool CancelDefault)
-		{
-			Globals.OutlookPrivacyPlugin.About();
-		}
-
-		private void SettingsButton_Click(Office.CommandBarButton Ctrl, ref bool CancelDefault)
-		{
-			Globals.OutlookPrivacyPlugin.Settings();
 		}
 		#endregion
 
@@ -1262,10 +1024,9 @@ namespace OutlookPrivacyPlugin
 					mailItem.SendUsingAccount.CurrentUser.Address != null)
 					return mailItem.SendUsingAccount.CurrentUser.Address;
 
-				Microsoft.Office.Interop.Outlook.Recipient recip;
+				Outlook.Recipient recip;
 				Outlook.ExchangeUser exUser;
-				Microsoft.Office.Interop.Outlook.Application oOutlook =
-					   new Microsoft.Office.Interop.Outlook.Application();
+				Outlook.Application oOutlook = new Outlook.Application();
 				Outlook.NameSpace oNS = oOutlook.GetNamespace("MAPI");
 
 				if (mailItem.SenderEmailType.ToUpper().Equals("EX"))
@@ -1326,14 +1087,14 @@ namespace OutlookPrivacyPlugin
 			if (mailItem == null)
 				return;
 
-			GnuPGRibbon currentRibbon = ribbon;
+			GnuPGRibbon currentRibbon = _ribbon;
 			if (currentRibbon == null)
 				return;
 
-			string mail = mailItem.Body;
-			Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
-			bool needToEncrypt = currentRibbon.EncryptButton.Checked;
-			bool needToSign = currentRibbon.SignButton.Checked;
+			var mail = mailItem.Body;
+			var mailType = mailItem.BodyFormat;
+			var needToEncrypt = currentRibbon.EncryptButton.Checked;
+			var needToSign = currentRibbon.SignButton.Checked;
 
 			// Early out when we don't need to sign/encrypt
 			if (!needToEncrypt && !needToSign)
@@ -1361,9 +1122,8 @@ namespace OutlookPrivacyPlugin
 				if (needToEncrypt)
 				{
 					// Popup UI to select the encryption targets 
-					List<string> mailRecipients = new List<string>();
-					foreach (Outlook.Recipient mailRecipient in mailItem.Recipients)
-						mailRecipients.Add(GetSmtpAddressForRecipient((Outlook.Recipient)mailRecipient));
+					var mailRecipients = (from Outlook.Recipient mailRecipient in mailItem.Recipients 
+										  select GetSmtpAddressForRecipient(mailRecipient)).ToList();
 
 					var recipientDialog = new FormKeySelection(
 						mailRecipients,
@@ -1373,7 +1133,7 @@ namespace OutlookPrivacyPlugin
 
 					recipientDialog.TopMost = true;
 
-					DialogResult recipientResult = recipientDialog.DialogResult;
+					var recipientResult = recipientDialog.DialogResult;
 
 					if(recipientDialog.DialogResult == DialogResult.Ignore)
 						recipientResult = recipientDialog.ShowDialog();
@@ -1415,21 +1175,18 @@ namespace OutlookPrivacyPlugin
 					if (mail == null)
 						return;
 
-					var mailAttachments = new List<Outlook.Attachment>();
-					foreach (Outlook.Attachment attachment in mailItem.Attachments)
-						mailAttachments.Add(attachment);
+					var mailAttachments = mailItem.Attachments.Cast<Outlook.Attachment>().ToList();
 
 					foreach (var attachment in mailAttachments)
 					{
-						var a = new Attachment();
+						var a = new Attachment()
+						{
+							TempFile = Path.Combine(Path.GetTempPath(), attachment.FileName) + ".pgp",
+							FileName = attachment.FileName,
+							DisplayName = attachment.DisplayName,
+							AttachmentType = attachment.Type,
+						};
 
-						a.TempFile = Path.GetTempPath();
-						a.FileName = attachment.FileName;
-						a.DisplayName = attachment.DisplayName;
-						a.AttachmentType = attachment.Type;
-
-						a.TempFile = Path.Combine(a.TempFile, a.FileName);
-						a.TempFile = a.TempFile + ".pgp";
 						attachment.SaveAsFile(a.TempFile);
 						attachment.Delete();
 
@@ -1498,21 +1255,18 @@ namespace OutlookPrivacyPlugin
 					if (mail == null)
 						return;
 
-					var mailAttachments = new List<Outlook.Attachment>();
-					foreach (Outlook.Attachment attachment in mailItem.Attachments)
-						mailAttachments.Add(attachment);
+					var mailAttachments = mailItem.Attachments.Cast<Outlook.Attachment>().ToList();
 
 					foreach (var attachment in mailAttachments)
 					{
-						var a = new Attachment();
+						var a = new Attachment()
+						{
+							TempFile = Path.Combine(Path.GetTempPath(), attachment.FileName)+ ".pgp",
+							FileName = attachment.FileName,
+							DisplayName = attachment.DisplayName,
+							AttachmentType = attachment.Type
+						};
 
-						a.TempFile = Path.GetTempPath();
-						a.FileName = attachment.FileName;
-						a.DisplayName = attachment.DisplayName;
-						a.AttachmentType = attachment.Type;
-
-						a.TempFile = Path.Combine(a.TempFile, a.FileName);
-						a.TempFile = a.TempFile + ".pgp";
 						attachment.SaveAsFile(a.TempFile);
 						attachment.Delete();
 
@@ -1539,7 +1293,7 @@ namespace OutlookPrivacyPlugin
 
 					MessageBox.Show(
 						Localized.ErrorBadPassphrase,
-						"Outlook Privacy Error",
+						Localized.ErrorDialogTitle,
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
 					return;
@@ -1548,7 +1302,7 @@ namespace OutlookPrivacyPlugin
 				WriteErrorData("Application_ItemSend", ex);
 				MessageBox.Show(
 					ex.Message + "\n"+ex.StackTrace,
-					"Outlook Privacy Error",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
@@ -1576,7 +1330,7 @@ namespace OutlookPrivacyPlugin
 				var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
-				headers["Version"] = "Outlook Privacy Plugin";
+				headers["Version"] = Localized.DialogTitle;
 
 				return crypto.SignClear(data, key, this._encoding, headers);
 			}
@@ -1585,7 +1339,7 @@ namespace OutlookPrivacyPlugin
 				WriteErrorData("SignEmail", ex);
 				MessageBox.Show(
 					ex.Message,
-					"Outlook Privacy Error",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
@@ -1605,7 +1359,7 @@ namespace OutlookPrivacyPlugin
 				var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
-				headers["Version"] = "Outlook Privacy Plugin";
+				headers["Version"] = Localized.DialogTitle;
 				headers["Charset"] = _encoding.WebName;
 
 				return crypto.Encrypt(data, recipients, headers);
@@ -1615,7 +1369,7 @@ namespace OutlookPrivacyPlugin
 				WriteErrorData("EncryptEmail", ex);
 				MessageBox.Show(
 					ex.Message,
-					"Outlook Privacy Error",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
@@ -1626,7 +1380,7 @@ namespace OutlookPrivacyPlugin
 				WriteErrorData("EncryptEmail", e);
 				MessageBox.Show(
 					e.Message,
-					"Outlook Privacy Error",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
@@ -1641,7 +1395,7 @@ namespace OutlookPrivacyPlugin
 				var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
-				headers["Version"] = "Outlook Privacy Plugin";
+				headers["Version"] = Localized.DialogTitle;
 				headers["Charset"] = _encoding.WebName;
 
 				return crypto.SignAndEncryptBinary(data, key, recipients, headers);
@@ -1650,7 +1404,7 @@ namespace OutlookPrivacyPlugin
 			{
 				MessageBox.Show(
 					ex.Message,
-					"Outlook Privacy Error",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
@@ -1670,7 +1424,7 @@ namespace OutlookPrivacyPlugin
 				var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
 				var crypto = new PgpCrypto(context);
 				var headers = new Dictionary<string, string>();
-				headers["Version"] = "Outlook Privacy Plugin";
+				headers["Version"] = Localized.DialogTitle;
 				headers["Charset"] = _encoding.WebName;
 
 				return crypto.SignAndEncryptText(data, key, recipients, headers);
@@ -1680,7 +1434,7 @@ namespace OutlookPrivacyPlugin
 				WriteErrorData("SignAndEncryptEmail", ex);
 				MessageBox.Show(
 					ex.Message,
-					"Outlook Privacy Error",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
@@ -1752,7 +1506,7 @@ namespace OutlookPrivacyPlugin
 				WriteErrorData("VerifyEmail", ex);
 				MessageBox.Show(
 					ex.Message,
-					"Outlook Privacy Error",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 			}
@@ -2004,7 +1758,7 @@ namespace OutlookPrivacyPlugin
 				WriteErrorData("DecryptAndVerify", ex);
 				MessageBox.Show(
 					ex.Message,
-					"Outlook Privacy Error",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Error);
 
@@ -2019,7 +1773,7 @@ namespace OutlookPrivacyPlugin
 
 					MessageBox.Show(
 						Localized.ErrorBadPassphrase,
-						"Outlook Privacy Error",
+						Localized.ErrorDialogTitle,
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
 				}
@@ -2027,7 +1781,7 @@ namespace OutlookPrivacyPlugin
 				{
 					MessageBox.Show(
 						e.Message,
-						"Outlook Privacy Error",
+						Localized.ErrorDialogTitle,
 						MessageBoxButtons.OK,
 						MessageBoxIcon.Error);
 				}
@@ -2065,6 +1819,7 @@ namespace OutlookPrivacyPlugin
 			_settings.Digest = settingsBox.Digest;
 			_settings.SaveDecrypted = settingsBox.SaveDecrypted;
 			_settings.CheckVersion = settingsBox.CheckVersion;
+			_settings.DebugTrace = settingsBox.DebugTrace;
 			_settings.Save();
 		}
 

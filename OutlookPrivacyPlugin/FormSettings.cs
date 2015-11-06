@@ -30,6 +30,7 @@ namespace OutlookPrivacyPlugin
 			Digest = settings.Digest;
 
 			CheckVersion = settings.CheckVersion;
+			DebugTrace = settings.DebugTrace;
 
 			// Temporary disable all settings regarding auto-verify/decrypt
 			// MainTabControl.TabPages.RemoveByKey(ReadTab.Name);
@@ -38,6 +39,11 @@ namespace OutlookPrivacyPlugin
 		private string m_DefaultKey;
 		internal string DefaultKey { get { return m_DefaultKey; } set { m_DefaultKey = value; } }
 
+		internal bool DebugTrace
+		{
+			get { return checkBoxTrace.Checked; }
+			set { checkBoxTrace.Checked = value; }
+		}
 		internal bool CheckVersion
 		{
 			get { return checkBoxCheckVersion.Checked; }

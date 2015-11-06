@@ -294,6 +294,39 @@
   <data name="&gt;&gt;checkBoxCheckVersion.ZOrder" xml:space="preserve">
     <value>4</value>
   </data>
+  <data name="checkBoxTrace.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="checkBoxTrace.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="checkBoxTrace.Location" type="System.Drawing.Point, System.Drawing">
+    <value>26, 149</value>
+  </data>
+  <data name="checkBoxTrace.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="checkBoxTrace.Size" type="System.Drawing.Size, System.Drawing">
+    <value>214, 21</value>
+  </data>
+  <data name="checkBoxTrace.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="checkBoxTrace.Text" xml:space="preserve">
+    <value>Generate DEBUG trace file</value>
+  </data>
+  <data name="&gt;&gt;checkBoxTrace.Name" xml:space="preserve">
+    <value>checkBoxTrace</value>
+  </data>
+  <data name="&gt;&gt;checkBoxTrace.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;checkBoxTrace.Parent" xml:space="preserve">
+    <value>ComposeTableLayout</value>
+  </data>
+  <data name="&gt;&gt;checkBoxTrace.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
   <data name="ComposeTableLayout.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
   </data>
@@ -304,10 +337,10 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="ComposeTableLayout.RowCount" type="System.Int32, mscorlib">
-    <value>6</value>
+    <value>7</value>
   </data>
   <data name="ComposeTableLayout.Size" type="System.Drawing.Size, System.Drawing">
-    <value>425, 173</value>
+    <value>425, 185</value>
   </data>
   <data name="ComposeTableLayout.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -325,7 +358,7 @@
     <value>0</value>
   </data>
   <data name="ComposeTableLayout.LayoutSettings" type="System.Windows.Forms.TableLayoutSettings, System.Windows.Forms">
-    <value>&lt;?xml version="1.0" encoding="utf-16"?&gt;&lt;TableLayoutSettings&gt;&lt;Controls&gt;&lt;Control Name="SignCheckBox" Row="0" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="EncryptCheckBox" Row="1" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="Encrypt2SelfCheckBox" Row="2" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="Default2PlainTextCheckBox" Row="3" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="checkBoxCheckVersion" Row="5" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;/Controls&gt;&lt;Columns Styles="Absolute,22,AutoSize,0" /&gt;&lt;Rows Styles="AutoSize,0,AutoSize,0,AutoSize,0,AutoSize,0,AutoSize,0,AutoSize,0,Absolute,25" /&gt;&lt;/TableLayoutSettings&gt;</value>
+    <value>&lt;?xml version="1.0" encoding="utf-16"?&gt;&lt;TableLayoutSettings&gt;&lt;Controls&gt;&lt;Control Name="SignCheckBox" Row="0" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="EncryptCheckBox" Row="1" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="Encrypt2SelfCheckBox" Row="2" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="Default2PlainTextCheckBox" Row="3" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="checkBoxCheckVersion" Row="5" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;Control Name="checkBoxTrace" Row="6" RowSpan="1" Column="1" ColumnSpan="1" /&gt;&lt;/Controls&gt;&lt;Columns Styles="Absolute,22,AutoSize,0" /&gt;&lt;Rows Styles="AutoSize,0,AutoSize,0,AutoSize,0,AutoSize,0,AutoSize,0,AutoSize,0,Absolute,20,Absolute,25" /&gt;&lt;/TableLayoutSettings&gt;</value>
   </data>
   <data name="ComposeTab.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 25</value>
@@ -337,7 +370,7 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="ComposeTab.Size" type="System.Drawing.Size, System.Drawing">
-    <value>433, 181</value>
+    <value>433, 193</value>
   </data>
   <data name="ComposeTab.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -496,7 +529,7 @@
     <value>5</value>
   </data>
   <data name="ReadTableLayout.Size" type="System.Drawing.Size, System.Drawing">
-    <value>425, 134</value>
+    <value>425, 172</value>
   </data>
   <data name="ReadTableLayout.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -526,7 +559,7 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="ReadTab.Size" type="System.Drawing.Size, System.Drawing">
-    <value>433, 142</value>
+    <value>433, 180</value>
   </data>
   <data name="ReadTab.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -616,7 +649,7 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="OkButton.Size" type="System.Drawing.Size, System.Drawing">
-    <value>228, 41</value>
+    <value>228, 46</value>
   </data>
   <data name="OkButton.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -643,7 +676,7 @@
     <value>True</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>441, 256</value>
+    <value>441, 273</value>
   </data>
   <data name="$this.Font" type="System.Drawing.Font, System.Drawing">
     <value>Verdana, 8.25pt</value>
@@ -655,7 +688,7 @@
     <value>CenterScreen</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
-    <value>Settings</value>
+    <value>Outlook Privacy Plugin Settings</value>
   </data>
   <data name="&gt;&gt;Errors.Name" xml:space="preserve">
     <value>Errors</value>
@@ -718,7 +751,7 @@
     <value>3</value>
   </data>
   <data name="ExchangeServerTableLayout.Size" type="System.Drawing.Size, System.Drawing">
-    <value>425, 134</value>
+    <value>425, 172</value>
   </data>
   <data name="ExchangeServerTableLayout.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -748,7 +781,7 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="ExchangeServerTab.Size" type="System.Drawing.Size, System.Drawing">
-    <value>433, 142</value>
+    <value>433, 180</value>
   </data>
   <data name="ExchangeServerTab.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
@@ -927,7 +960,7 @@ signing operations.
     <value>4, 25</value>
   </data>
   <data name="tabPageCrypto.Size" type="System.Drawing.Size, System.Drawing">
-    <value>433, 142</value>
+    <value>433, 180</value>
   </data>
   <data name="tabPageCrypto.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
@@ -960,7 +993,7 @@ signing operations.
     <value>4, 4, 4, 4</value>
   </data>
   <data name="MainTabControl.Size" type="System.Drawing.Size, System.Drawing">
-    <value>441, 210</value>
+    <value>441, 222</value>
   </data>
   <data name="MainTabControl.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1023,7 +1056,7 @@ signing operations.
     <value>1</value>
   </data>
   <data name="ButtonsContainer.Size" type="System.Drawing.Size, System.Drawing">
-    <value>441, 41</value>
+    <value>441, 46</value>
   </data>
   <data name="ButtonsContainer.SplitterDistance" type="System.Int32, mscorlib">
     <value>207</value>
@@ -1059,10 +1092,10 @@ signing operations.
     <value>1</value>
   </data>
   <data name="MainContainer.Size" type="System.Drawing.Size, System.Drawing">
-    <value>441, 256</value>
+    <value>441, 273</value>
   </data>
   <data name="MainContainer.SplitterDistance" type="System.Int32, mscorlib">
-    <value>210</value>
+    <value>222</value>
   </data>
   <data name="MainContainer.SplitterWidth" type="System.Int32, mscorlib">
     <value>5</value>

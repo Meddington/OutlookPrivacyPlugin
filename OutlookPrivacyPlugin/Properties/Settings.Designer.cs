@@ -262,5 +262,17 @@ namespace OutlookPrivacyPlugin.Properties {
                 this["CheckVersion"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DebugTrace {
+            get {
+                return ((bool)(this["DebugTrace"]));
+            }
+            set {
+                this["DebugTrace"] = value;
+            }
+        }
     }
 }

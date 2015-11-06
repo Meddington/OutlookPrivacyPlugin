@@ -156,7 +156,13 @@
   <data name="MsgValidSig" xml:space="preserve">
     <value>Valid signature from "{0}" with KeyId {1}.</value>
   </data>
-	<data name="NewVersionAvailable" xml:space="preserve">
+  <data name="NewVersionAvailable" xml:space="preserve">
     <value>A new version of Outlook Privacy Plugin is available.</value>
+  </data>
+  <data name="DialogTitle" xml:space="preserve">
+    <value>Outlook Privacy Plugin</value>
+  </data>
+  <data name="ErrorDialogTitle" xml:space="preserve">
+    <value>Outlook Privacy Plugin Error</value>
   </data>
 </root>

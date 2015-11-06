@@ -198,7 +198,6 @@
       <DependentUpon>FormKeySelection.cs</DependentUpon>
     </Compile>
     <Compile Include="GnuKey.cs" />
-    <Compile Include="GnuPGCommandBar.cs" />
     <Compile Include="GnuPGRibbon.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -242,6 +241,7 @@
     <EmbeddedResource Include="Language\Localized.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Localized.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -306,6 +306,7 @@
     <EmbeddedResource Include="GnuPGRibbonCompose.xml" />
     <EmbeddedResource Include="GnuPGRibbonRead.xml" />
     <None Include="Resources\attach.gif" />
+    <EmbeddedResource Include="GnuPGRibbonMain.xml" />
     <Content Include="Resources\database_gear.png" />
     <Content Include="Resources\DejaVu_Logo_Final.png" />
     <Content Include="Resources\GpgLogo.png" />
