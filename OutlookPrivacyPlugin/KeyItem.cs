@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace OutlookPrivacyPlugin
 {
-	public class GnuKey
+	public class KeyItem
 	{
 		public string KeyDisplay { get; set; }
 		public string Key { get; set; }
@@ -12,9 +12,9 @@ namespace OutlookPrivacyPlugin
 		public string KeyId { get; set; }
 	}
 
-	internal class GnuKeySorter : IComparer<GnuKey>
+	internal class KeyItemSorter : IComparer<KeyItem>
 	{
-		public int Compare(GnuKey x, GnuKey y)
+		public int Compare(KeyItem x, KeyItem y)
 		{
 			return x.KeyDisplay.CompareTo(y.KeyDisplay);
 		}

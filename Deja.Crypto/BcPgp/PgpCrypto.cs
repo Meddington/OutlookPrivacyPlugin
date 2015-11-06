@@ -667,8 +667,11 @@ namespace Deja.Crypto.BcPgp
 		/// </summary>
 		/// <param name="data">Data to sign</param>
 		/// <param name="key">Email address of key</param>
+		/// <param name="headers">Headers to add to signed message</param>
+		/// <param name="wrapLines">Automatically wrap lines that are too long</param>
+		/// <param name="encoding">s</param>
 		/// <returns>Returns ascii armored signature</returns>
-		public string SignClear(string data, string key, Encoding encoding, Dictionary<string, string> headers)
+		public string SignClear(string data, string key, Encoding encoding, Dictionary<string, string> headers, bool wrapLines = true)
 		{
 			Context = new CryptoContext(Context);
 
@@ -692,7 +695,33 @@ namespace Deja.Crypto.BcPgp
 				break;
 			}
 
-			// //
+			// Split any long lines if we are asked to do so.
+
+			var mailLines = data.Split('\n');
+
+			if (wrapLines && mailLines.Any(line => line.Length > 70))
+			{
+				var lines = new List<string>(mailLines);
+				for (var i = 0; i < lines.Count; i++)
+				{
+					var line = lines[i];
+					if (line.Length <= 70) continue;
+					
+					var newLine = line.Substring(70);
+					line = line.Substring(0, 70);
+
+					lines[i] = line;
+					lines.Insert(i + 1, newLine);
+				}
+
+				var sb = new StringBuilder(data.Length + 20);
+				foreach (var line in lines)
+					sb.AppendLine(line.TrimEnd('\r', '\n'));
+
+				data = sb.ToString();
+			}
+
+			// Now lets do our signing stuff
 
 			using (var sout = new MemoryStream())
 			{
@@ -717,7 +746,7 @@ namespace Deja.Crypto.BcPgp
 
 							// Lines must have all white space removed
 							line = line.TrimEnd(null);
-							line = line.TrimEnd(new char[] { ' ', '\t', '\r', '\n' });
+							line = line.TrimEnd(' ', '\t', '\r', '\n');
 
 							line += "\r\n";
 
@@ -732,10 +761,7 @@ namespace Deja.Crypto.BcPgp
 					armoredOut.EndClearText();
 
 					using (var outputStream = new BcpgOutputStream(armoredOut))
-					{
-
 						signatureData.Generate().Encode(outputStream);
-					}
 				}
 
 				return encoding.GetString(sout.ToArray());
@@ -972,7 +998,7 @@ namespace Deja.Crypto.BcPgp
 			Context = new CryptoContext(Context);
 
 			var crlf = new byte[] { (byte)'\r', (byte)'\n' };
-			var encoding = ASCIIEncoding.UTF8;
+			var encoding = Encoding.UTF8;
 
 			using (var dataIn = new MemoryStream(data))
 			using (var armoredIn = new ArmoredInputStream(dataIn))
@@ -1035,7 +1061,7 @@ namespace Deja.Crypto.BcPgp
 
 					Context.IsEncrypted = false;
 					Context.IsSigned = true;
-					Context.SignedBy = GetPublicKey(signature.KeyId);
+					Context.SignedBy = GetMasterPublicKey(signature.KeyId);
 
 					if (Context.SignedBy == null)
 						throw new PublicKeyNotFoundException("Public key not found for key id \"" + signature.KeyId + "\".");

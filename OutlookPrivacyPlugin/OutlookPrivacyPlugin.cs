@@ -56,7 +56,7 @@ namespace OutlookPrivacyPlugin
 
 		//char[] Passphrase { get; set; }
 		/// <summary>
-		/// Cache of passphrases. Key is keyid.
+		/// Cache of passphrases. KeyItem is keyid.
 		/// </summary>
 		readonly Dictionary<long, char[]> PassphraseCache = new Dictionary<long, char[]>();
 
@@ -154,13 +154,13 @@ namespace OutlookPrivacyPlugin
 			_inspectors = null;
 		}
 
-		private GnuPGRibbon _ribbon;
+		private OppRibbon _ribbon;
 
 		protected override object RequestService(Guid serviceGuid)
 		{
 			if (serviceGuid == typeof(Office.IRibbonExtensibility).GUID)
 			{
-				return _ribbon ?? (_ribbon = new GnuPGRibbon());
+				return _ribbon ?? (_ribbon = new OppRibbon());
 			}
 
 			return base.RequestService(serviceGuid);
@@ -335,31 +335,6 @@ namespace OutlookPrivacyPlugin
 				}
 				else if (match != null && _settings.AutoVerify && match.Groups[1].Value == _pgpSignedHeader)
 				{
-					if (mailItem.BodyFormat != Outlook.OlBodyFormat.olFormatPlain)
-					{
-						var body = new StringBuilder(mailItem.Body);
-						mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
-
-						var indexes = new Stack<int>();
-						for (var cnt = 0; cnt < body.Length; cnt++)
-						{
-							if (body[cnt] > 127)
-								indexes.Push(cnt);
-						}
-
-						while (true)
-						{
-							if (indexes.Count == 0)
-								break;
-
-							var index = indexes.Pop();
-							body.Remove(index, 1);
-						}
-
-						mailItem.Body = body.ToString();
-						//mailItem.Save();
-					}
-
 					VerifyEmail(mailItem);
 				}
 				else
@@ -1087,7 +1062,7 @@ namespace OutlookPrivacyPlugin
 			if (mailItem == null)
 				return;
 
-			GnuPGRibbon currentRibbon = _ribbon;
+			OppRibbon currentRibbon = _ribbon;
 			if (currentRibbon == null)
 				return;
 
@@ -1155,7 +1130,7 @@ namespace OutlookPrivacyPlugin
 					{
 						MessageBox.Show(
 							Localized.ErrorInvalidRecipientKey,
-							"Invalid Recipient Key",
+							"Invalid Recipient KeyItem",
 							MessageBoxButtons.OK,
 							MessageBoxIcon.Error);
 
@@ -1206,6 +1181,7 @@ namespace OutlookPrivacyPlugin
 					// 1. Verify text lines are not too long
 					var mailLines = mail.Split('\n');
 					var longLines = mailLines.Any(line => line.Length > 70);
+					var wrapLines = false;
 
 					if(longLines)
 					{
@@ -1214,37 +1190,18 @@ namespace OutlookPrivacyPlugin
 						if (result == DialogResult.Cancel)
 							return;
 
-						if (dialog.radioButtonWrap.Checked)
-						{
-							var lines = new List<string>(mailLines);
-							for(int i = 0; i<lines.Count; i++)
-							{
-								var line = lines[i];
-								if(line.Length>70)
-								{
-									var newLine = line.Substring(70);
-									line = line.Substring(0, 70);
+						wrapLines = dialog.radioButtonWrap.Checked;
 
-									lines[i] = line;
-									lines.Insert(i + 1, newLine);
-								}
-							}
-
-							var sb = new StringBuilder(mail.Length+20);
-							foreach (var line in lines)
-								sb.AppendLine(line.TrimEnd('\r','\n'));
-
-							mail = sb.ToString();
-						}
 						if (dialog.radioButtonMime.Checked)
 						{
 							// todo
 						}
+						
 						if (dialog.radioButtonEdit.Checked)
 							return;
 					}
 
-					mail = SignEmail(mail, GetSMTPAddress(mailItem));
+					mail = SignEmail(mail, GetSMTPAddress(mailItem), wrapLines);
 					if (mail == null)
 						return;
 				}
@@ -1323,7 +1280,7 @@ namespace OutlookPrivacyPlugin
 			SetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 		}
 
-		private string SignEmail(string data, string key)
+		private string SignEmail(string data, string key, bool wrapLines = true)
 		{
 			try
 			{
@@ -1332,7 +1289,7 @@ namespace OutlookPrivacyPlugin
 				var headers = new Dictionary<string, string>();
 				headers["Version"] = Localized.DialogTitle;
 
-				return crypto.SignClear(data, key, this._encoding, headers);
+				return crypto.SignClear(data, key, this._encoding, headers, wrapLines);
 			}
 			catch (CryptoException ex)
 			{
@@ -1446,60 +1403,63 @@ namespace OutlookPrivacyPlugin
 		#region Receive Logic
 		internal void VerifyEmail(Outlook.MailItem mailItem)
 		{
-			string mail = mailItem.Body;
-			Outlook.OlBodyFormat mailType = mailItem.BodyFormat;
+			var encoding = GetEncodingFromMail(mailItem);
+			var mail = string.Empty;
 
-			if (Regex.IsMatch(mailItem.Body, _pgpSignedHeader) == false)
+			// Try two different methods to get the message body
+			try
+			{
+				mail = encoding.GetString(
+					(byte[])mailItem.PropertyAccessor.GetProperty(
+						"http://schemas.microsoft.com/mapi/string/{4E3A7680-B77A-11D0-9DA5-00C04FD65685}/Internet Charset Body/0x00000102"));
+			}
+			catch (Exception)
+			{
+				try
+				{
+					mail = (string)mailItem.PropertyAccessor.GetProperty(
+							"http://schemas.microsoft.com/mapi/proptag/0x1000001F"); // PR_BODY
+				}
+				catch (Exception)
+				{
+					mail = mailItem.Body;
+				}
+			}
+
+			if (Regex.IsMatch(mail, _pgpSignedHeader) == false)
 			{
 				MessageBox.Show(
 					Localized.ErrorMsgNotSigned,
-					"Mail is not signed",
+					Localized.ErrorDialogTitle,
 					MessageBoxButtons.OK,
 					MessageBoxIcon.Exclamation);
 
 				return;
 			}
 
-			var Context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
-			var Crypto = new PgpCrypto(Context);
+			var context = new CryptoContext(PasswordCallback, _settings.Cipher, _settings.Digest);
+			var crypto = new PgpCrypto(context);
+			mailItem.BodyFormat = Outlook.OlBodyFormat.olFormatPlain;
 
 			try
 			{
-				if (Crypto.Verify(_encoding.GetBytes(mail)))
-				{
-					Context = Crypto.Context;
+				var message = string.Empty;
 
-					var message = "** " + string.Format(Localized.MsgValidSig,
-						Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
+				if (crypto.Verify(_encoding.GetBytes(mail)))
+					message = "** " + string.Format(Localized.MsgValidSig,
+						crypto.Context.SignedByUserId, crypto.Context.SignedByKeyId) + "\n\n";
 
-					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-					{
-						mailItem.Body = message + mailItem.Body;
-					}
-				}
 				else
-				{
-					Context = Crypto.Context;
+					message = "** " + string.Format(Localized.MsgInvalidSig,
+						crypto.Context.SignedByUserId, crypto.Context.SignedByKeyId) + "\n\n";
 
-					var message = "** " + string.Format(Localized.MsgInvalidSig,
-						Context.SignedByUserId, Context.SignedByKeyId) + "\n\n";
-
-					if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-					{
-						mailItem.Body = message + mailItem.Body;
-					}
-				}
+				mailItem.Body = message + mailItem.Body;
 			}
 			catch (PublicKeyNotFoundException)
 			{
-				Context = Crypto.Context;
+				var message = "** "+ Localized.MsgSigMissingPubKey+"\n\n";
 
-				string message = "** "+ Localized.MsgSigMissingPubKey+"\n\n";
-
-				if (mailType == Outlook.OlBodyFormat.olFormatPlain)
-				{
-					mailItem.Body = message + mailItem.Body;
-				}
+				mailItem.Body = message + mailItem.Body;
 			}
 			catch (Exception ex)
 			{
@@ -1825,12 +1785,12 @@ namespace OutlookPrivacyPlugin
 
 		#endregion
 
-		#region Key Management
+		#region KeyItem Management
 
-		public IList<GnuKey> GetKeysForEncryption()
+		public IList<KeyItem> GetKeysForEncryption()
 		{
 			var crypto = new PgpCrypto(new CryptoContext());
-			var keys = new List<GnuKey>();
+			var keys = new List<KeyItem>();
 
 			foreach (PgpPublicKey key in crypto.GetPublicKeyUserIdsForEncryption())
 			{
@@ -1840,7 +1800,7 @@ namespace OutlookPrivacyPlugin
 					if (!match.Success)
 						continue;
 
-					var k = new GnuKey();
+					var k = new KeyItem();
 					k.Key = match.Groups[1].Value;
 					k.KeyDisplay = user;
 
@@ -1861,10 +1821,10 @@ namespace OutlookPrivacyPlugin
 			return keys;
 		}
 
-		public IList<GnuKey> GetKeysForSigning()
+		public IList<KeyItem> GetKeysForSigning()
 		{
 			var crypto = new PgpCrypto(new CryptoContext());
-			var keys = new List<GnuKey>();
+			var keys = new List<KeyItem>();
 
 			foreach (var key in crypto.GetPublicKeyUserIdsForSign())
 			{
@@ -1872,7 +1832,7 @@ namespace OutlookPrivacyPlugin
 				if (!match.Success)
 					continue;
 
-				var k = new GnuKey();
+				var k = new KeyItem();
 				k.Key = match.Groups[1].Value;
 				k.KeyDisplay = key;
 

@@ -29,7 +29,7 @@ namespace OutlookPrivacyPlugin
 				fingerPrint[fingerPrintLength - 2].ToString("X2") +
 				fingerPrint[fingerPrintLength - 1].ToString("X2");
  
-			labelKeyInfo.Text = string.Format("\"{0}\"\n{1}-{2} key, ID {3}\n{4}",
+			labelKeyInfo.Text = string.Format("\"{0}\"\n{1}-{2} KeyItem, ID {3}\n{4}",
 				userId, strength, alg, keyId, createDate);
 		}
 	}

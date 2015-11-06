@@ -124,7 +124,7 @@
     <value>Can only sign/encrypt plain text mails. Please change the format, or disable signing/encrypting for this mail.</value>
   </data>
   <data name="ErrorInvalidRecipientKey" xml:space="preserve">
-    <value>Need a recipient when encrypting. No keys were detected/selected.</value>
+    <value>Need a recipient when encrypting. No KeyItems were detected/selected.</value>
   </data>
   <data name="ErrorMsgNotEncrypted" xml:space="preserve">
     <value>Outlook Privacy Plugin cannot help here, message is not encrypted.</value>
@@ -145,16 +145,16 @@
     <value>Failed integrity check!</value>
   </data>
   <data name="MsgInvalidSig" xml:space="preserve">
-    <value>Invalid signature from "{0}" with KeyId {1}.</value>
+    <value>Invalid signature from "{0}" with KeyItemId {1}.</value>
   </data>
   <data name="MsgSigMissingPubKey" xml:space="preserve">
-    <value>Unable to verify signature, missing public key.</value>
+    <value>Unable to verify signature, missing public KeyItem.</value>
   </data>
   <data name="MsgUnsigned" xml:space="preserve">
     <value>Message was unsigned.</value>
   </data>
   <data name="MsgValidSig" xml:space="preserve">
-    <value>Valid signature from "{0}" with KeyId {1}.</value>
+    <value>Valid signature from "{0}" with KeyItemId {1}.</value>
   </data>
   <data name="NewVersionAvailable" xml:space="preserve">
     <value>A new version of Outlook Privacy Plugin is available.</value>

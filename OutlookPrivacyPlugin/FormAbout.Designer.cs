@@ -29,8 +29,6 @@
     {
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormAbout));
 			this.AboutLabel = new System.Windows.Forms.Label();
-			this.IconLabel = new System.Windows.Forms.LinkLabel();
-			this.ClipboardLink = new System.Windows.Forms.LinkLabel();
 			this.InitialByLabel = new System.Windows.Forms.Label();
 			this.ForkLabel = new System.Windows.Forms.LinkLabel();
 			this.BuildLabel = new System.Windows.Forms.Label();
@@ -44,45 +42,12 @@
 			this.AboutLabel.BackColor = System.Drawing.Color.White;
 			this.AboutLabel.Font = new System.Drawing.Font("Verdana", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.AboutLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.AboutLabel.Location = new System.Drawing.Point(10, 23);
+			this.AboutLabel.Location = new System.Drawing.Point(13, 28);
+			this.AboutLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this.AboutLabel.Name = "AboutLabel";
-			this.AboutLabel.Size = new System.Drawing.Size(278, 29);
+			this.AboutLabel.Size = new System.Drawing.Size(357, 36);
 			this.AboutLabel.TabIndex = 0;
 			this.AboutLabel.Text = "Outlook Privacy Plugin";
-			// 
-			// IconLabel
-			// 
-			this.IconLabel.ActiveLinkColor = System.Drawing.Color.Black;
-			this.IconLabel.AutoSize = true;
-			this.IconLabel.BackColor = System.Drawing.Color.White;
-			this.IconLabel.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.IconLabel.LinkBehavior = System.Windows.Forms.LinkBehavior.HoverUnderline;
-			this.IconLabel.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.IconLabel.Location = new System.Drawing.Point(12, 242);
-			this.IconLabel.Name = "IconLabel";
-			this.IconLabel.Size = new System.Drawing.Size(190, 13);
-			this.IconLabel.TabIndex = 3;
-			this.IconLabel.TabStop = true;
-			this.IconLabel.Text = "Silk Icon Set by Mark James";
-			this.IconLabel.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.IconLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.ClickLink);
-			// 
-			// ClipboardLink
-			// 
-			this.ClipboardLink.ActiveLinkColor = System.Drawing.Color.Black;
-			this.ClipboardLink.AutoSize = true;
-			this.ClipboardLink.BackColor = System.Drawing.Color.White;
-			this.ClipboardLink.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.ClipboardLink.LinkBehavior = System.Windows.Forms.LinkBehavior.HoverUnderline;
-			this.ClipboardLink.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.ClipboardLink.Location = new System.Drawing.Point(12, 265);
-			this.ClipboardLink.Name = "ClipboardLink";
-			this.ClipboardLink.Size = new System.Drawing.Size(249, 13);
-			this.ClipboardLink.TabIndex = 5;
-			this.ClipboardLink.TabStop = true;
-			this.ClipboardLink.Text = "Clipboard Wrapper by Alessio Deiana";
-			this.ClipboardLink.VisitedLinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.ClipboardLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.ClickLink);
 			// 
 			// InitialByLabel
 			// 
@@ -90,9 +55,10 @@
 			this.InitialByLabel.BackColor = System.Drawing.Color.White;
 			this.InitialByLabel.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.InitialByLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.InitialByLabel.Location = new System.Drawing.Point(12, 217);
+			this.InitialByLabel.Location = new System.Drawing.Point(16, 267);
+			this.InitialByLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this.InitialByLabel.Name = "InitialByLabel";
-			this.InitialByLabel.Size = new System.Drawing.Size(207, 13);
+			this.InitialByLabel.Size = new System.Drawing.Size(245, 17);
 			this.InitialByLabel.TabIndex = 7;
 			this.InitialByLabel.Text = "Initial version by David Cumps";
 			// 
@@ -104,9 +70,10 @@
 			this.ForkLabel.Font = new System.Drawing.Font("Verdana", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.ForkLabel.LinkBehavior = System.Windows.Forms.LinkBehavior.HoverUnderline;
 			this.ForkLabel.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.ForkLabel.Location = new System.Drawing.Point(12, 70);
+			this.ForkLabel.Location = new System.Drawing.Point(16, 86);
+			this.ForkLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this.ForkLabel.Name = "ForkLabel";
-			this.ForkLabel.Size = new System.Drawing.Size(222, 13);
+			this.ForkLabel.Size = new System.Drawing.Size(261, 17);
 			this.ForkLabel.TabIndex = 8;
 			this.ForkLabel.TabStop = true;
 			this.ForkLabel.Text = "Fork version by Deja vu Security";
@@ -119,9 +86,10 @@
 			this.BuildLabel.BackColor = System.Drawing.Color.White;
 			this.BuildLabel.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.BuildLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(147)))), ((int)(((byte)(149)))), ((int)(((byte)(152)))));
-			this.BuildLabel.Location = new System.Drawing.Point(15, 52);
+			this.BuildLabel.Location = new System.Drawing.Point(20, 64);
+			this.BuildLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 			this.BuildLabel.Name = "BuildLabel";
-			this.BuildLabel.Size = new System.Drawing.Size(278, 18);
+			this.BuildLabel.Size = new System.Drawing.Size(371, 22);
 			this.BuildLabel.TabIndex = 9;
 			this.BuildLabel.Text = "-29-Sept-2010-";
 			this.BuildLabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
@@ -130,31 +98,31 @@
 			// 
 			this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
 			this.pictureBox1.InitialImage = null;
-			this.pictureBox1.Location = new System.Drawing.Point(15, 86);
+			this.pictureBox1.Location = new System.Drawing.Point(20, 106);
+			this.pictureBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this.pictureBox1.Name = "pictureBox1";
-			this.pictureBox1.Size = new System.Drawing.Size(294, 128);
+			this.pictureBox1.Size = new System.Drawing.Size(392, 158);
 			this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
 			this.pictureBox1.TabIndex = 10;
 			this.pictureBox1.TabStop = false;
 			// 
-			// About
+			// FormAbout
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.White;
-			this.ClientSize = new System.Drawing.Size(321, 292);
+			this.ClientSize = new System.Drawing.Size(428, 308);
 			this.Controls.Add(this.pictureBox1);
 			this.Controls.Add(this.BuildLabel);
 			this.Controls.Add(this.ForkLabel);
 			this.Controls.Add(this.InitialByLabel);
-			this.Controls.Add(this.ClipboardLink);
-			this.Controls.Add(this.IconLabel);
 			this.Controls.Add(this.AboutLabel);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+			this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
-			this.Name = "About";
-			this.Padding = new System.Windows.Forms.Padding(9);
+			this.Name = "FormAbout";
+			this.Padding = new System.Windows.Forms.Padding(12, 11, 12, 11);
 			this.ShowIcon = false;
 			this.ShowInTaskbar = false;
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -168,8 +136,6 @@
     #endregion
 
 	private System.Windows.Forms.Label AboutLabel;
-	private System.Windows.Forms.LinkLabel IconLabel;
-	private System.Windows.Forms.LinkLabel ClipboardLink;
     private System.Windows.Forms.Label InitialByLabel;
     private System.Windows.Forms.LinkLabel ForkLabel;
     private System.Windows.Forms.Label BuildLabel;

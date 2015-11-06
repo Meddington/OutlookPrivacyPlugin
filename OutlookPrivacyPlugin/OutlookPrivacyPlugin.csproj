@@ -197,8 +197,8 @@
     <Compile Include="FormKeySelection.Designer.cs">
       <DependentUpon>FormKeySelection.cs</DependentUpon>
     </Compile>
-    <Compile Include="GnuKey.cs" />
-    <Compile Include="GnuPGRibbon.cs">
+    <Compile Include="KeyItem.cs" />
+    <Compile Include="OppRibbon.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Language\Localized.Designer.cs">
@@ -303,10 +303,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="GnuPGRibbonCompose.xml" />
-    <EmbeddedResource Include="GnuPGRibbonRead.xml" />
+    <EmbeddedResource Include="RibbonCompose.xml" />
+    <EmbeddedResource Include="RibbonRead.xml" />
     <None Include="Resources\attach.gif" />
-    <EmbeddedResource Include="GnuPGRibbonMain.xml" />
+    <EmbeddedResource Include="RibbonMain.xml" />
     <Content Include="Resources\database_gear.png" />
     <Content Include="Resources\DejaVu_Logo_Final.png" />
     <Content Include="Resources\GpgLogo.png" />

@@ -13,24 +13,24 @@ namespace OutlookPrivacyPlugin
 	/// Called to retreive list of keys to display.
 	/// </summary>
 	/// <returns></returns>
-	public delegate IList<GnuKey> KeySelectionCallback();
+	public delegate IList<KeyItem> KeySelectionCallback();
 
 	public partial class FormKeySelection : Form
 	{
-		IList<GnuKey> _keys;
+		IList<KeyItem> _keys;
 		KeySelectionCallback _keysCallback;
 		List<string> _mailRecipients;
 
-		public List<GnuKey> SelectedKeys 
+		public List<KeyItem> SelectedKeys 
 		{
 			get
 			{
-				var selectedKeys = new List<GnuKey>();
+				var selectedKeys = new List<KeyItem>();
 
 				foreach(KeyListViewItem item in listViewKeys.Items)
 				{
 					if (item.Checked)
-						selectedKeys.Add(item.Key);
+						selectedKeys.Add(item.KeyItem);
 				}
 
 				return selectedKeys;
@@ -93,14 +93,14 @@ namespace OutlookPrivacyPlugin
 
 	internal class KeyListViewItem : ListViewItem
 	{
-		public GnuKey Key { get; set; }
+		public KeyItem KeyItem { get; set; }
 
-		internal KeyListViewItem(string txt, GnuKey key): base(txt)
+		internal KeyListViewItem(string txt, KeyItem keyItem): base(txt)
 		{
-			Key = key;
+			KeyItem = keyItem;
 
-			SubItems.Add(new ListViewItem.ListViewSubItem(this, key.Expiry));
-			SubItems.Add(new ListViewItem.ListViewSubItem(this, key.KeyId));
+			SubItems.Add(new ListViewItem.ListViewSubItem(this, keyItem.Expiry));
+			SubItems.Add(new ListViewItem.ListViewSubItem(this, keyItem.KeyId));
 		}
 	}
 }

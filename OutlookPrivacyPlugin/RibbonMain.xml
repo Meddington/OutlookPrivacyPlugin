@@ -1,0 +1,23 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="OnLoad">
+  <ribbon>
+    <tabs>
+      <tab idMso="TabAddIns">
+        <group id="GnuPGGroupNew"
+               label="OpenPGP">
+			<button id="settingsButtonNew" 
+                  size="normal"
+                  label="Settings"
+                  screentip="OpenPGP Settings"
+                  onAction="OnSettingsButtonNew" 
+                  getImage="GetCustomImage" />
+          <separator id="separatorNew"/>
+          <button id="aboutButtonNew"
+                  size="large"
+                  label="About"
+                  onAction="onAboutButton"
+                  getImage="GetCustomImage"/>
+        </group>
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>

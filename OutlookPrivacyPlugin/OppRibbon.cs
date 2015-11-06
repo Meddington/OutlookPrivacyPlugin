@@ -30,29 +30,29 @@ namespace OutlookPrivacyPlugin
 	}
 
 	[ComVisible(true)]
-	public class GnuPGRibbon : Office.IRibbonExtensibility
+	public class OppRibbon : Office.IRibbonExtensibility
 	{
 		static NLog.Logger logger = LogManager.GetCurrentClassLogger();
 
 		private Office.IRibbonUI ribbon;
 
-		public GnuPGToggleButton SignButton;
-		public GnuPGToggleButton EncryptButton;
-		public GnuPGToggleButton VerifyButton;
-		public GnuPGToggleButton DecryptButton;
-		public GnuPGToggleButton AttachPublicKeyButton;
+		public ToggleButton SignButton;
+		public ToggleButton EncryptButton;
+		public ToggleButton VerifyButton;
+		public ToggleButton DecryptButton;
+		public ToggleButton AttachPublicKeyButton;
 
 		public Dictionary<string, ButtonStateData> ButtonState = new Dictionary<string, ButtonStateData>();
 
-		private Dictionary<string, GnuPGToggleButton> Buttons = new Dictionary<string, GnuPGToggleButton>();
+		private Dictionary<string, ToggleButton> Buttons = new Dictionary<string, ToggleButton>();
 
-		public GnuPGRibbon()
+		public OppRibbon()
 		{
-			SignButton = new GnuPGToggleButton("signButton");
-			EncryptButton = new GnuPGToggleButton("encryptButton");
-			VerifyButton = new GnuPGToggleButton("verifyButton");
-			DecryptButton = new GnuPGToggleButton("decryptButton");
-			AttachPublicKeyButton = new GnuPGToggleButton("attachPublicKeyButton");
+			SignButton = new ToggleButton("signButton");
+			EncryptButton = new ToggleButton("encryptButton");
+			VerifyButton = new ToggleButton("verifyButton");
+			DecryptButton = new ToggleButton("decryptButton");
+			AttachPublicKeyButton = new ToggleButton("attachPublicKeyButton");
 
 			Buttons.Add(SignButton.Id, SignButton);
 			Buttons.Add(EncryptButton.Id, EncryptButton);
@@ -68,19 +68,19 @@ namespace OutlookPrivacyPlugin
 			String ui = null;
 			if (ribbonID == "Microsoft.Outlook.Explorer")
 			{
-				ui = GetResourceText("OutlookPrivacyPlugin.GnuPGRibbonMain.xml");
+				ui = GetResourceText("OutlookPrivacyPlugin.RibbonMain.xml");
 			}
 			// Examine the ribbonID to see if the current item
 			// is a Mail inspector.
 			else if (ribbonID == "Microsoft.Outlook.Mail.Read")
 			{
 				// Retrieve the customized Ribbon XML.
-				ui = GetResourceText("OutlookPrivacyPlugin.GnuPGRibbonRead.xml");
+				ui = GetResourceText("OutlookPrivacyPlugin.RibbonRead.xml");
 			}
 			else if (ribbonID == "Microsoft.Outlook.Mail.Compose")
 			{
 				// Retrieve the customized Ribbon XML.
-				ui = GetResourceText("OutlookPrivacyPlugin.GnuPGRibbonCompose.xml");
+				ui = GetResourceText("OutlookPrivacyPlugin.RibbonCompose.xml");
 			}
 			return ui;
 		}
@@ -122,7 +122,7 @@ namespace OutlookPrivacyPlugin
 		{
 			logger.Trace("OnEncryptButton("+control.Id+", "+isPressed+")");
 
-			Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+			var mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 			if (mailItem == null)
 				logger.Trace("OnEncryptButton: mailItem == null");
 
@@ -147,14 +147,14 @@ namespace OutlookPrivacyPlugin
 
 		public void OnDecryptButton(Office.IRibbonControl control)
 		{
-			Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+			var mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 			if (mailItem != null)
 				Globals.OutlookPrivacyPlugin.DecryptEmail(mailItem);
 		}
 
 		public void OnSignButton(Office.IRibbonControl control, bool isPressed)
 		{
-			Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+			var mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 
 			if (isPressed == true)
 			{
@@ -177,14 +177,14 @@ namespace OutlookPrivacyPlugin
 
 		public void OnVerifyButton(Office.IRibbonControl control)
 		{
-			Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+			var mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 			if (mailItem != null)
 				Globals.OutlookPrivacyPlugin.VerifyEmail(mailItem);
 		}
 
 		public void OnAttachPublicKeyButton(Office.IRibbonControl control)
 		{
-			Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+			var mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 			if (mailItem == null)
 			{
 				// TODO - Generate a log message
@@ -204,7 +204,7 @@ namespace OutlookPrivacyPlugin
 			if(publicKey == null)
 			{
 				// TODO - Generate log message
-				MessageBox.Show("Error, unable to find public key to attach.");
+				MessageBox.Show("Error, unable to find public KeyItem to attach.");
 				return;
 			}
 
@@ -257,20 +257,20 @@ namespace OutlookPrivacyPlugin
 			{
 				case "settingsButtonNew":
 				case "settingsButtonRead":
-					pictureDisp = ImageConverter.Convert(global::OutlookPrivacyPlugin.Properties.Resources.database_gear);
+					pictureDisp = ImageConverter.Convert(Properties.Resources.database_gear);
 					break;
 				case "aboutButtonNew":
 				case "aboutButtonRead":
-					pictureDisp = ImageConverter.Convert(global::OutlookPrivacyPlugin.Properties.Resources.Logo);
+					pictureDisp = ImageConverter.Convert(Properties.Resources.Logo);
 					break;
 				case "attachPublicKeyButton":
-					pictureDisp = ImageConverter.Convert(global::OutlookPrivacyPlugin.Properties.Resources.attach);
+					pictureDisp = ImageConverter.Convert(Properties.Resources.attach);
 					break;
 				default:
 					if ((control.Id == EncryptButton.Id) || (control.Id == DecryptButton.Id))
-						pictureDisp = ImageConverter.Convert(global::OutlookPrivacyPlugin.Properties.Resources.lock_edit);
+						pictureDisp = ImageConverter.Convert(Properties.Resources.lock_edit);
 					if ((control.Id == SignButton.Id) || (control.Id == VerifyButton.Id))
-						pictureDisp = ImageConverter.Convert(global::OutlookPrivacyPlugin.Properties.Resources.link_edit);
+						pictureDisp = ImageConverter.Convert(Properties.Resources.link_edit);
 					break;
 			}
 			return pictureDisp;
@@ -282,16 +282,16 @@ namespace OutlookPrivacyPlugin
 
 			if (control.Id == SignButton.Id)
 			{
-				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+				var mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Sign", false);
 			}
-			else if (control.Id == EncryptButton.Id)
+			if (control.Id == EncryptButton.Id)
 			{
-				Outlook.MailItem mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
+				var mailItem = ((Outlook.Inspector)control.Context).CurrentItem as Outlook.MailItem;
 				return (bool)OutlookPrivacyPlugin.GetProperty(mailItem, "GnuPGSetting.Encrypt", false);
 			}
-			else
-				logger.Trace("GetPressed: Button did not match encrypt or sign!");
+
+			logger.Trace("GetPressed: Button did not match encrypt or sign!");
 
 			if (Buttons.ContainsKey(control.Id))
 				return Buttons[control.Id].Checked;
@@ -312,28 +312,25 @@ namespace OutlookPrivacyPlugin
 
 		private static string GetResourceText(string resourceName)
 		{
-			Assembly asm = Assembly.GetExecutingAssembly();
-			string[] resourceNames = asm.GetManifestResourceNames();
-			for (int i = 0; i < resourceNames.Length; ++i)
+			var asm = Assembly.GetExecutingAssembly();
+			var resourceNames = asm.GetManifestResourceNames();
+			foreach (var resource in resourceNames)
 			{
-				if (string.Compare(resourceName, resourceNames[i], StringComparison.OrdinalIgnoreCase) == 0)
+				if (string.Compare(resourceName, resource, StringComparison.OrdinalIgnoreCase) != 0) continue;
+				
+				using (var resourceReader = new StreamReader(asm.GetManifestResourceStream(resource)))
 				{
-					using (StreamReader resourceReader = new StreamReader(asm.GetManifestResourceStream(resourceNames[i])))
-					{
-						if (resourceReader != null)
-						{
-							return resourceReader.ReadToEnd();
-						}
-					}
+					return resourceReader.ReadToEnd();
 				}
 			}
+
 			return null;
 		}
 
 		#endregion
 	}
 
-	internal class ImageConverter : System.Windows.Forms.AxHost
+	internal class ImageConverter : AxHost
 	{
 		private ImageConverter()
 			: base(null)
@@ -345,32 +342,16 @@ namespace OutlookPrivacyPlugin
 		}
 	}
 
-	public class GnuPGToggleButton
+	public class ToggleButton
 	{
-		private bool m_Checked = false;
-		public bool Checked
+		public ToggleButton(string controlId)
 		{
-			get { return m_Checked; }
-			set { m_Checked = value; }
-		}
-
-		private bool m_Enabled = true;
-		public bool Enabled
-		{
-			get { return m_Enabled; }
-			set { m_Enabled = value; }
-		}
-
-		private string m_ControlId = "unknown";
-		public string Id
-		{
-			get { return m_ControlId; }
-			set { m_ControlId = value; }
-		}
-
-		public GnuPGToggleButton(string controlId)
-		{
+			Checked = false;
 			Id = controlId;
 		}
+
+		public bool Checked { get; set; }
+		public bool Enabled { get; set; }
+		public string Id { get; set; }	
 	}
 }

@@ -169,7 +169,7 @@ namespace OutlookPrivacyPlugin.Language {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to verify signature, missing public key..
+        ///   Looks up a localized string similar to Unable to verify signature, missing public KeyItem..
         /// </summary>
         public static string MsgSigMissingPubKey {
             get {
