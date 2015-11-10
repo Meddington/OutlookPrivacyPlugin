@@ -20,12 +20,12 @@
                         onAction="OnEncryptButton" 
                         getPressed="GetPressed" 
                         getImage="GetCustomImage" />
-          <button id="attachPublicKeyItemButton"
+          <button id="attachPublicKeyButton"
 						  size="normal"
-						  label="Attach KeyItem"
-						  screentip="Attach Public KeyItem"
-						  supertip="Attach public KeyItem associated with this account to email."
-						  onAction="OnAttachPublicKeyItemButton"
+						  label="Attach Public Key"
+						  screentip="Attach Public Key"
+						  supertip="Attach public Key associated with this account to email."
+						  onAction="OnAttachPublicKeyButton"
 						  getImage="GetCustomImage" />
 			<button id="settingsButtonNew" 
                   size="normal"
