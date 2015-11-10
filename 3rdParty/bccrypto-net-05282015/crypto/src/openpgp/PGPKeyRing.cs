@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.IO;
+using NLog;
 
 using Org.BouncyCastle.Utilities;
 
@@ -8,6 +10,8 @@ namespace Org.BouncyCastle.Bcpg.OpenPgp
 	public abstract class PgpKeyRing
 		: PgpObject
 	{
+		static readonly NLog.Logger logger = LogManager.GetCurrentClassLogger();
+
 		internal PgpKeyRing()
 		{
 		}
@@ -53,26 +57,39 @@ namespace Org.BouncyCastle.Bcpg.OpenPgp
             idTrusts = Platform.CreateArrayList();
             idSigs = Platform.CreateArrayList();
 
-			while (bcpgInput.NextPacketTag() == PacketTag.UserId
-				|| bcpgInput.NextPacketTag() == PacketTag.UserAttribute)
+			// EDDINGTON
+			try
 			{
-				Packet obj = bcpgInput.ReadPacket();
-				if (obj is UserIdPacket)
+				while (bcpgInput.NextPacketTag() == PacketTag.UserId
+					|| bcpgInput.NextPacketTag() == PacketTag.UserAttribute)
 				{
-					UserIdPacket id = (UserIdPacket)obj;
-					ids.Add(id.GetId());
-				}
-				else
-				{
-					UserAttributePacket user = (UserAttributePacket) obj;
-					ids.Add(new PgpUserAttributeSubpacketVector(user.GetSubpackets()));
-				}
+					Packet obj = bcpgInput.ReadPacket();
+					if (obj is UserIdPacket)
+					{
+						UserIdPacket id = (UserIdPacket)obj;
+						ids.Add(id.GetId());
+					}
+					else
+					{
+						UserAttributePacket user = (UserAttributePacket) obj;
+						ids.Add(new PgpUserAttributeSubpacketVector(user.GetSubpackets()));
+					}
 
-				idTrusts.Add(
-					ReadOptionalTrustPacket(bcpgInput));
+					idTrusts.Add(
+						ReadOptionalTrustPacket(bcpgInput));
 
-				idSigs.Add(
-					ReadSignaturesAndTrust(bcpgInput));
+					idSigs.Add(
+						ReadSignaturesAndTrust(bcpgInput));
+				}
+			}
+			catch (Exception ex)
+			{
+				// EDDINGTON
+				logger.Debug("ReadUserIDs: Exception occured: {0}", ex.Message);
+				foreach (UserIdPacket id in ids)
+					logger.Debug("ReadUserIDs: ID: {0}", id.GetId());
+
+				throw;
 			}
 		}
 	}
