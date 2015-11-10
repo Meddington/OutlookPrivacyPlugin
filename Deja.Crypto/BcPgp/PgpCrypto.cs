@@ -384,7 +384,7 @@ namespace Deja.Crypto.BcPgp
 
 		public PgpPublicKey GetPublicKey(long keyId)
 		{
-			logger.Debug("GetPublicKey: {0}", keyId);
+			logger.Debug("GetPublicKey: {0:X}", keyId);
 
 			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
 			using (var decodeStream = PgpUtilities.GetDecoderStream(inputStream))
@@ -406,7 +406,7 @@ namespace Deja.Crypto.BcPgp
 
 		public PgpPublicKey GetMasterPublicKey(long keyId)
 		{
-			logger.Debug("GetMasterPublicKey: {0}", keyId);
+			logger.Debug("GetMasterPublicKey: {0:X}", keyId);
 
 			using (var inputStream = File.OpenRead(Context.PublicKeyRingFile))
 			using (var decodeStream = PgpUtilities.GetDecoderStream(inputStream))
