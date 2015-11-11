@@ -219,8 +219,8 @@ namespace OutlookPrivacyPlugin
 				mailItem.Attachments.Add(
 					tempFile, 
 					Outlook.OlAttachmentType.olByValue, 
-					1, 
-					"public_key.asc");
+					1,
+					attachName);
 				
 				mailItem.Save();
 			}
