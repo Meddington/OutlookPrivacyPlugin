@@ -119,8 +119,7 @@ namespace Deja.Crypto.BcPgp
 				if ((keyFlags & KeyFlags.SignData) > 0)
 					return true;
 
-				// sometimes some keyflags are equal to 0 and cannot be compared
-                continue;
+				return false;
 			}
 
 			// Only use alg if keyflags is missing
@@ -155,8 +154,7 @@ namespace Deja.Crypto.BcPgp
 				if ((keyFlags & KeyFlags.EncryptStorage) > 0)
 					return true;
 
-				// sometimes some keyflags are equal to 0 and cannot be compared
-                continue;
+				return false;
 			}
 
 			// NOTE: Some keys do not have flags set. Instead use
