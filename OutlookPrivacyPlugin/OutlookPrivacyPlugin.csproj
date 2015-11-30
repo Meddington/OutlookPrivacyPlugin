@@ -227,16 +227,33 @@
     <Compile Include="FormSelectLineWrap.Designer.cs">
       <DependentUpon>FormSelectLineWrap.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="FormAbout.fr.resx">
+      <DependentUpon>FormAbout.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormAbout.resx">
       <DependentUpon>FormAbout.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormKeySelection.fr.resx">
+      <DependentUpon>FormKeySelection.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormKeySelection.resx">
       <DependentUpon>FormKeySelection.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormPassphrase.fr.resx">
+      <DependentUpon>FormPassphrase.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormPassphrase.resx">
       <DependentUpon>FormPassphrase.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormSelectLineWrap.fr.resx">
+      <DependentUpon>FormSelectLineWrap.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormSettings.fr.resx">
+      <DependentUpon>FormSettings.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Language\Localized.de.resx" />
+    <EmbeddedResource Include="Language\Localized.fr.resx" />
     <EmbeddedResource Include="Language\Localized.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Localized.Designer.cs</LastGenOutput>
@@ -263,9 +280,8 @@
       <DependentUpon>FormSelectLineWrap.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="App.config" />
-    <None Include="oop.snk" />
+    <None Include="opp.snk" />
     <None Include="OutlookPrivacyPlugin_TemporaryKey.pfx" />
-    <None Include="OutlookPrivacyPlugin_TemporaryKey.snk" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -288,7 +304,7 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\MimeKit-1.0.15\MimeKit\MimeKitLite.Net40.csproj">
+    <ProjectReference Include="..\MimeKit\MimeKitLite.Net40.csproj">
       <Project>{87b25b2b-10e4-4a09-b682-7267cd3123ba}</Project>
       <Name>MimeKitLite.Net40</Name>
     </ProjectReference>
@@ -329,13 +345,13 @@
     <ManifestKeyFile>OutlookPrivacyPlugin_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>C59300CE714F8A15418DA6E37CECE19CB5A50786</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>AE989CAC8D909E44D83CFCD7B5AB59FFC1854AE4</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>oop.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>opp.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
