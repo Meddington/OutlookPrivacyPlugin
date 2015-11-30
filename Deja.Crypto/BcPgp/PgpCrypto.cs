@@ -114,8 +114,10 @@ namespace Deja.Crypto.BcPgp
 				if (hashedSubPackets == null)
 					continue;
 
-				var keyFlags = hashedSubPackets.GetKeyFlags();
+			    if (!hashedSubPackets.HasSubpacket(SignatureSubpacketTag.KeyFlags))
+			        continue;
 
+				var keyFlags = hashedSubPackets.GetKeyFlags();
 				if ((keyFlags & KeyFlags.SignData) > 0)
 					return true;
 
@@ -145,6 +147,9 @@ namespace Deja.Crypto.BcPgp
 				var hashedSubPackets = sig.GetHashedSubPackets();
 				if (hashedSubPackets == null)
 					continue;
+
+                if (!hashedSubPackets.HasSubpacket(SignatureSubpacketTag.KeyFlags))
+                    continue;
 
 				var keyFlags = hashedSubPackets.GetKeyFlags();
 
