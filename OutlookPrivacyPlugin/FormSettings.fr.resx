@@ -208,7 +208,7 @@
     <value>1</value>
   </data>
   <data name="Encrypt2SelfCheckBox.Text" xml:space="preserve">
-    <value>Chiffrer les mails pour moi-même</value>
+    <value>Crypter les messages Ã  moi-mÃªme</value>
   </data>
   <data name="&gt;&gt;Encrypt2SelfCheckBox.Name" xml:space="preserve">
     <value>Encrypt2SelfCheckBox</value>
@@ -388,7 +388,7 @@
     <value>0</value>
   </data>
   <data name="VerifyCheckBox.Text" xml:space="preserve">
-    <value>Vérifier automatiquement les mails ouverts.</value>
+    <value>Vï¿½rifier automatiquement les mails ouverts.</value>
   </data>
   <data name="&gt;&gt;VerifyCheckBox.Name" xml:space="preserve">
     <value>VerifyCheckBox</value>
@@ -415,7 +415,7 @@
     <value>1</value>
   </data>
   <data name="DecryptCheckBox.Text" xml:space="preserve">
-    <value>Déchiffrer automatiquement les mails ouverts</value>
+    <value>Dï¿½chiffrer automatiquement les mails ouverts</value>
   </data>
   <data name="&gt;&gt;DecryptCheckBox.Name" xml:space="preserve">
     <value>DecryptCheckBox</value>
@@ -442,7 +442,7 @@
     <value>2</value>
   </data>
   <data name="IgnoreIntegrityCheckBox.Text" xml:space="preserve">
-    <value>Ignore les vérifications d'intégrité de signature</value>
+    <value>Ignore les vï¿½rifications d'intï¿½gritï¿½ de signature</value>
   </data>
   <data name="&gt;&gt;IgnoreIntegrityCheckBox.Name" xml:space="preserve">
     <value>IgnoreIntegrityCheckBox</value>
@@ -472,7 +472,7 @@
     <value>3</value>
   </data>
   <data name="checkBoxSaveDecrypted.Text" xml:space="preserve">
-    <value>Sauvegarder les mails déchiffrés</value>
+    <value>Sauvegarder les mails dï¿½chiffrï¿½s</value>
   </data>
   <data name="&gt;&gt;checkBoxSaveDecrypted.Name" xml:space="preserve">
     <value>checkBoxSaveDecrypted</value>
@@ -643,7 +643,7 @@
     <value>CenterScreen</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
-    <value>Réglage Outlook Privacy Plugin</value>
+    <value>Rï¿½glage Outlook Privacy Plugin</value>
   </data>
   <data name="&gt;&gt;Errors.Name" xml:space="preserve">
     <value>Errors</value>
@@ -763,8 +763,8 @@
     <value>4</value>
   </data>
   <data name="label3.Text" xml:space="preserve">
-    <value>Algorithme par défaut pour le chiffrement et
-les opérations de signature.
+    <value>Algorithme par dï¿½faut pour le chiffrement et
+les opï¿½rations de signature.
 </value>
   </data>
   <data name="&gt;&gt;label3.Name" xml:space="preserve">
