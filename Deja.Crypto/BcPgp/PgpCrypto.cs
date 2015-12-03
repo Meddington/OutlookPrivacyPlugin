@@ -154,6 +154,11 @@ namespace Deja.Crypto.BcPgp
 				if ((keyFlags & KeyFlags.EncryptStorage) > 0)
 					return true;
 
+                // NOTE: Some keys do not have flags set. Instead use
+                //       the alg type. But only those specific to encryption.
+                if ((keyFlags == 0) && IsEncryptionAlg(key))
+                    return true;
+
 				return false;
 			}
 
