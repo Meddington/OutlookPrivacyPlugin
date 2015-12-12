@@ -208,8 +208,7 @@
     <value>1</value>
   </data>
   <data name="Encrypt2SelfCheckBox.Text" xml:space="preserve">
-    <value>Crypter les messages à moi-même</value>
-  </data>
+    <value>Chiffrer les mails pour moi-même</value>  </data>
   <data name="&gt;&gt;Encrypt2SelfCheckBox.Name" xml:space="preserve">
     <value>Encrypt2SelfCheckBox</value>
   </data>
@@ -265,7 +264,7 @@
     <value>5</value>
   </data>
   <data name="checkBoxCheckVersion.Text" xml:space="preserve">
-    <value>Check for new version on startup</value>
+    <value>Vérifier de nouvelle version au démarrage</value>
   </data>
   <data name="&gt;&gt;checkBoxCheckVersion.Name" xml:space="preserve">
     <value>checkBoxCheckVersion</value>
@@ -295,7 +294,7 @@
     <value>6</value>
   </data>
   <data name="checkBoxTrace.Text" xml:space="preserve">
-    <value>Generate DEBUG trace file</value>
+    <value>Générer les fichiers de trace DEBUG</value>
   </data>
   <data name="&gt;&gt;checkBoxTrace.Name" xml:space="preserve">
     <value>checkBoxTrace</value>
@@ -352,7 +351,7 @@
     <value>0</value>
   </data>
   <data name="ComposeTab.Text" xml:space="preserve">
-    <value>Compose</value>
+    <value>Rédiger</value>
   </data>
   <data name="&gt;&gt;ComposeTab.Name" xml:space="preserve">
     <value>ComposeTab</value>
@@ -529,7 +528,7 @@
     <value>1</value>
   </data>
   <data name="ReadTab.Text" xml:space="preserve">
-    <value>Read</value>
+    <value>Lecture</value>
   </data>
   <data name="&gt;&gt;ReadTab.Name" xml:space="preserve">
     <value>ReadTab</value>
@@ -571,7 +570,7 @@
     <value>0</value>
   </data>
   <data name="DefaultDomainLabel.Text" xml:space="preserve">
-    <value>Default Domain Name</value>
+    <value>Nom de Domaine par défaut</value>
   </data>
   <data name="&gt;&gt;DefaultDomainLabel.Name" xml:space="preserve">
     <value>DefaultDomainLabel</value>
@@ -643,8 +642,7 @@
     <value>CenterScreen</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
-    <value>R�glage Outlook Privacy Plugin</value>
-  </data>
+    <value>Réglage Outlook Privacy Plugin</value>  </data>
   <data name="&gt;&gt;Errors.Name" xml:space="preserve">
     <value>Errors</value>
   </data>
@@ -733,7 +731,7 @@
     <value>3</value>
   </data>
   <data name="ExchangeServerTab.Text" xml:space="preserve">
-    <value>Exchange Server</value>
+    <value>Serveur Exchange</value>
   </data>
   <data name="&gt;&gt;ExchangeServerTab.Name" xml:space="preserve">
     <value>ExchangeServerTab</value>
@@ -930,7 +928,7 @@ les op�rations de signature.
     <value>4</value>
   </data>
   <data name="tabPageCrypto.Text" xml:space="preserve">
-    <value>Algorithms</value>
+    <value>Algorithmes</value>
   </data>
   <data name="&gt;&gt;tabPageCrypto.Name" xml:space="preserve">
     <value>tabPageCrypto</value>
