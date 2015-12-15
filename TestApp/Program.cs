@@ -15,17 +15,40 @@ namespace TestApp
 
 		static void Main(string[] args)
 		{
-			password = args[0].ToCharArray();
+			//password = args[0].ToCharArray();
 
-			var context = new CryptoContext(PasswordCallback, "AES-128", "SHA-1");
-			var crypto = new PgpCrypto(context);
+			//var context = new CryptoContext(PasswordCallback, "AES-128", "SHA-1");
+			//var crypto = new PgpCrypto(context);
+			try
+			{
+				using (var inputStream = File.OpenRead(@"C:\projects\OutlookPrivacyPlugin\Deja.Crypto.Test\private\andrew-pubring.gpg"))
+				using (var decodeStream = PgpUtilities.GetDecoderStream(inputStream))
+				{
+					var pgpPub = new PgpPublicKeyRingBundle(decodeStream);
 
-			Console.WriteLine(ASCIIEncoding.ASCII.GetString(crypto.DecryptAndVerify(File.ReadAllBytes(args[1]), true)));
+					foreach (PgpPublicKeyRing kRing in pgpPub.GetKeyRings())
+					{
+						// The master key is normally the first key returned.
+						var masterKey = kRing.GetPublicKey();
+						if (!masterKey.IsMasterKey)
+						{
+							foreach (PgpPublicKey k in kRing.GetPublicKeys())
+								if (k.IsMasterKey)
+									Console.WriteLine("{0:X}", k.KeyId);
+						}
 
-			if (context.FailedIntegrityCheck)
-				Console.WriteLine("Failed integrity check");
+						foreach (PgpPublicKey k in kRing.GetPublicKeys())
+						{
+							Console.WriteLine("{0:X}", k.KeyId);
+						}
+					}
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
 
-			Console.WriteLine("Done");
 		}
 
 		static char[] PasswordCallback(PgpSecretKey masterKey, PgpSecretKey key)
