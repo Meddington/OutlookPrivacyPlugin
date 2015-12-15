@@ -22,7 +22,7 @@
                         getImage="GetCustomImage" />
           <button id="attachPublicKeyButton"
 						  size="normal"
-						  label="Attach Public Key"
+						  label="Attach Key"
 						  screentip="Attach Public Key"
 						  supertip="Attach public Key associated with this account to email."
 						  onAction="OnAttachPublicKeyButton"
