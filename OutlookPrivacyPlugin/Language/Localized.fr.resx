@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ErrorBadPassphrase" xml:space="preserve">
-    <value>Passphrase potentiellement incorrect tapée.</value>
+    <value>Passphrase tapée incorrecte.</value>
   </data>
   <data name="ErrorInvalidFormat" xml:space="preserve">
     <value>Peut signer/chiffrer seulement les textes au format plain. S'il vous plaît changez le format, ou désactivez la signature/chiffrement pour ce mail.</value>
@@ -130,7 +130,7 @@
     <value>Outlook Privacy Plugin ne peut pas aider ici, le message n'est pas chiffré.</value>
   </data>
   <data name="ErrorMsgNotSigned" xml:space="preserve">
-    <value>>Outlook Privacy Plugin ne peut pas aider ici, le message n'est pas signé.</value>
+    <value>Outlook Privacy Plugin ne peut pas aider ici, le message n'est pas signé.</value>
   </data>
   <data name="ErrorUnableToDetermineSenderAddress" xml:space="preserve">
     <value>Erreur, impossible de déterminier l'adresse de l'expéditeur.</value>
@@ -163,6 +163,6 @@
     <value>Outlook Privacy Plugin</value>
   </data>
   <data name="ErrorDialogTitle" xml:space="preserve">
-    <value>Outlook Privacy Plugin Error</value>
+    <value>Erreur Outlook Privacy Plugin</value>
   </data>
 </root>
