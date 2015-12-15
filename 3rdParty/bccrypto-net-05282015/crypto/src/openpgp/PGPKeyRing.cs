@@ -86,8 +86,14 @@ namespace Org.BouncyCastle.Bcpg.OpenPgp
 			{
 				// EDDINGTON
 				logger.Debug("ReadUserIDs: Exception occured: {0}", ex.Message);
-				foreach (UserIdPacket id in ids)
-					logger.Debug("ReadUserIDs: ID: {0}", id.GetId());
+				foreach (var id in ids)
+				{
+					var sid = id.ToString();
+					if (id is UserIdPacket)
+						sid = ((UserIdPacket)id).GetId();
+
+					logger.Debug("ReadUserIDs: ID: {0}", sid);
+				}
 
 				throw;
 			}
