@@ -208,7 +208,7 @@
     <value>1</value>
   </data>
   <data name="Encrypt2SelfCheckBox.Text" xml:space="preserve">
-    <value>Crypter les messages à moi-même</value>
+    <value>Chiffrer les messages pour soi-même</value>
   </data>
   <data name="&gt;&gt;Encrypt2SelfCheckBox.Name" xml:space="preserve">
     <value>Encrypt2SelfCheckBox</value>
@@ -265,7 +265,7 @@
     <value>5</value>
   </data>
   <data name="checkBoxCheckVersion.Text" xml:space="preserve">
-    <value>Check for new version on startup</value>
+    <value>Vérifier de nouvelle version au démarrage</value>
   </data>
   <data name="&gt;&gt;checkBoxCheckVersion.Name" xml:space="preserve">
     <value>checkBoxCheckVersion</value>
@@ -295,7 +295,7 @@
     <value>6</value>
   </data>
   <data name="checkBoxTrace.Text" xml:space="preserve">
-    <value>Generate DEBUG trace file</value>
+    <value>Générer les fichiers de trace DEBUG</value>
   </data>
   <data name="&gt;&gt;checkBoxTrace.Name" xml:space="preserve">
     <value>checkBoxTrace</value>
@@ -352,7 +352,7 @@
     <value>0</value>
   </data>
   <data name="ComposeTab.Text" xml:space="preserve">
-    <value>Compose</value>
+    <value>Rédiger</value>
   </data>
   <data name="&gt;&gt;ComposeTab.Name" xml:space="preserve">
     <value>ComposeTab</value>
@@ -388,7 +388,7 @@
     <value>0</value>
   </data>
   <data name="VerifyCheckBox.Text" xml:space="preserve">
-    <value>V�rifier automatiquement les mails ouverts.</value>
+    <value>Vérifier automatiquement les mails ouverts.</value>
   </data>
   <data name="&gt;&gt;VerifyCheckBox.Name" xml:space="preserve">
     <value>VerifyCheckBox</value>
@@ -415,7 +415,7 @@
     <value>1</value>
   </data>
   <data name="DecryptCheckBox.Text" xml:space="preserve">
-    <value>D�chiffrer automatiquement les mails ouverts</value>
+    <value>Déchiffrer automatiquement les mails ouverts</value>
   </data>
   <data name="&gt;&gt;DecryptCheckBox.Name" xml:space="preserve">
     <value>DecryptCheckBox</value>
@@ -442,7 +442,7 @@
     <value>2</value>
   </data>
   <data name="IgnoreIntegrityCheckBox.Text" xml:space="preserve">
-    <value>Ignore les v�rifications d'int�grit� de signature</value>
+    <value>Ignore les vérifications d'intégrité de signature</value>
   </data>
   <data name="&gt;&gt;IgnoreIntegrityCheckBox.Name" xml:space="preserve">
     <value>IgnoreIntegrityCheckBox</value>
@@ -472,7 +472,7 @@
     <value>3</value>
   </data>
   <data name="checkBoxSaveDecrypted.Text" xml:space="preserve">
-    <value>Sauvegarder les mails d�chiffr�s</value>
+    <value>Sauvegarder les mails déchiffrés</value>
   </data>
   <data name="&gt;&gt;checkBoxSaveDecrypted.Name" xml:space="preserve">
     <value>checkBoxSaveDecrypted</value>
@@ -529,7 +529,7 @@
     <value>1</value>
   </data>
   <data name="ReadTab.Text" xml:space="preserve">
-    <value>Read</value>
+    <value>Lecture</value>
   </data>
   <data name="&gt;&gt;ReadTab.Name" xml:space="preserve">
     <value>ReadTab</value>
@@ -571,7 +571,7 @@
     <value>0</value>
   </data>
   <data name="DefaultDomainLabel.Text" xml:space="preserve">
-    <value>Default Domain Name</value>
+    <value>Nom de Domaine par défaut</value>
   </data>
   <data name="&gt;&gt;DefaultDomainLabel.Name" xml:space="preserve">
     <value>DefaultDomainLabel</value>
@@ -643,7 +643,7 @@
     <value>CenterScreen</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
-    <value>R�glage Outlook Privacy Plugin</value>
+    <value>Réglages Outlook Privacy Plugin</value>
   </data>
   <data name="&gt;&gt;Errors.Name" xml:space="preserve">
     <value>Errors</value>
@@ -733,7 +733,7 @@
     <value>3</value>
   </data>
   <data name="ExchangeServerTab.Text" xml:space="preserve">
-    <value>Exchange Server</value>
+    <value>Serveur Exchange</value>
   </data>
   <data name="&gt;&gt;ExchangeServerTab.Name" xml:space="preserve">
     <value>ExchangeServerTab</value>
@@ -763,8 +763,8 @@
     <value>4</value>
   </data>
   <data name="label3.Text" xml:space="preserve">
-    <value>Algorithme par d�faut pour le chiffrement et
-les op�rations de signature.
+    <value>Algorithme par défaut pour le chiffrement et
+les opérations de signature.
 </value>
   </data>
   <data name="&gt;&gt;label3.Name" xml:space="preserve">
@@ -930,7 +930,7 @@ les op�rations de signature.
     <value>4</value>
   </data>
   <data name="tabPageCrypto.Text" xml:space="preserve">
-    <value>Algorithms</value>
+    <value>Algorithmes</value>
   </data>
   <data name="&gt;&gt;tabPageCrypto.Name" xml:space="preserve">
     <value>tabPageCrypto</value>
