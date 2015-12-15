@@ -11,7 +11,7 @@
     <RootNamespace>Newtonsoft.Json</RootNamespace>
     <AssemblyName>Newtonsoft.Json</AssemblyName>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>OutlookPrivacyPlugin_TemporaryKey.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>opp.snk</AssemblyOriginatorKeyFile>
     <SccProjectName>
     </SccProjectName>
     <SccLocalPath>
@@ -64,7 +64,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\Net40\</OutputPath>
     <IntermediateOutputPath>obj\Release\Net40\</IntermediateOutputPath>
-    <DefineConstants>TRACE;CODE_ANALYSIS;NET40;CODE_ANALYSIS;SIGNED</DefineConstants>
+    <DefineConstants>TRACE;CODE_ANALYSIS;CODE_ANALYSIS;NET40;CODE_ANALYSIS;SIGNED</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\Net40\Newtonsoft.Json.xml</DocumentationFile>
@@ -307,10 +307,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Dynamic.snk" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="OutlookPrivacyPlugin_TemporaryKey.pfx" />
+    <None Include="opp.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

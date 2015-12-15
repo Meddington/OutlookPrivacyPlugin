@@ -25,7 +25,7 @@ namespace Deja.Crypto.BcPgp
 		/// <returns>Password to secret key</returns>
 		public delegate char[] GetPasswordCallback(PgpSecretKey masterKey, PgpSecretKey key);
 
-		public CryptoContext()
+		public CryptoContext(bool loadKeys = true)
 		{
 			IsEncrypted = false;
 			IsSigned = false;
@@ -38,6 +38,9 @@ namespace Deja.Crypto.BcPgp
 			GetPasswordCallback PasswordCallback = null;
 			OnePassSignature = null;
 			Signature = null;
+
+		    if (!loadKeys)
+		        return;
 
 			List<string> gpgLocations = new List<string>();
 
@@ -92,8 +95,8 @@ namespace Deja.Crypto.BcPgp
 			throw new ApplicationException("Error, failed to locate keyrings! Please specify location using GNUPGHOME environmental variable.");
 		}
 
-		public CryptoContext(GetPasswordCallback passwordCallback, string cipher, string digest)
-			: this()
+		public CryptoContext(GetPasswordCallback passwordCallback, string cipher, string digest, bool loadKeys = true)
+			: this(loadKeys)
 		{
 			PasswordCallback = passwordCallback;
 			Digest = digest;
@@ -102,7 +105,7 @@ namespace Deja.Crypto.BcPgp
 
 		public CryptoContext(GetPasswordCallback passwordCallback, string publicKeyRing, string secretKeyRing,
 			string cipher, string digest)
-			: this(passwordCallback, cipher, digest)
+			: this(passwordCallback, cipher, digest, false)
 		{
 			PublicKeyRingFile = publicKeyRing;
 			PrivateKeyRingFile = secretKeyRing;

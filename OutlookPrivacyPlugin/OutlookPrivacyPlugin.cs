@@ -1138,7 +1138,8 @@ namespace OutlookPrivacyPlugin
 						return;
 					}
 
-					recipients.Add(GetSMTPAddress(mailItem));
+                    if(_settings.Encrypt2Self)
+					    recipients.Add(GetSMTPAddress(mailItem));
 				}
 
 				var attachments = new List<Attachment>();
