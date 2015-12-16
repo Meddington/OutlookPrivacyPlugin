@@ -37,7 +37,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>opp.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>oop.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NLog">
@@ -61,7 +61,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="opp.snk" />
+    <None Include="oop.snk" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

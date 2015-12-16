@@ -276,7 +276,7 @@
       <DependentUpon>FormSelectLineWrap.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="App.config" />
-    <None Include="opp.snk" />
+    <None Include="oop.snk" />
     <None Include="OutlookPrivacyPlugin_TemporaryKey.pfx" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -347,13 +347,13 @@
     <ManifestKeyFile>OutlookPrivacyPlugin_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>AE989CAC8D909E44D83CFCD7B5AB59FFC1854AE4</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>C59300CE714F8A15418DA6E37CECE19CB5A50786</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>opp.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>oop.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

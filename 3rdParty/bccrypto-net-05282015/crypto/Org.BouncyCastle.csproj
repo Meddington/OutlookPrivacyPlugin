@@ -10,7 +10,7 @@
     <ApplicationIcon />
     <AssemblyKeyContainerName />
     <AssemblyName>crypto</AssemblyName>
-    <AssemblyOriginatorKeyFile>opp.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>oop.snk</AssemblyOriginatorKeyFile>
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
@@ -4289,7 +4289,7 @@
     <Content Include="License.html" />
     <Content Include="Readme.html" />
     <None Include="NBuild.build" />
-    <None Include="opp.snk" />
+    <None Include="oop.snk" />
     <None Include="packages.config" />
     <None Include="testcfg.nunit" />
   </ItemGroup>
