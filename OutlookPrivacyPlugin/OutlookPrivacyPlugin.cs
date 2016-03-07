@@ -109,7 +109,7 @@ namespace OutlookPrivacyPlugin
 				{
 					var client = new WebClient();
 					var json =
-						Encoding.UTF8.GetString(client.DownloadData(@"http://dejavusecurity.github.io/OutlookPrivacyPlugin/latest.json"));
+						Encoding.UTF8.GetString(client.DownloadData(@"https://dejavusecurity.github.io/OutlookPrivacyPlugin/latest.json"));
 					dynamic latest = JsonConvert.DeserializeObject(json);
 					var latestVersion = latest.version.Value;
 
