@@ -10,6 +10,16 @@ Outlook Privacy Plugin is a security extension for Outlook. It enables Outlook t
 
 This plugin is fairly stable and is used daily by numerous people. We have just started translating into different languages. If your interested in contributing a translation for an unsupported language please see https://github.com/dejavusecurity/OutlookPrivacyPlugin/issues/27[issue #27].
 
+=== Submitting Fixes or Features
+
+We will happilly accept bug fixes or feature improvments as pull requests. Your welcome to contact me via email or issues to ask any questions.
+
+==== Pull Request Guidelines
+
+Please submit one pull request per-feature or bug fix. Please be detailed in your commit message about what has been changed and why. It is likely that we will make comments and suggestions prior to accepting (code review). This is normal :)
+
+When possible please squash all commits to a single one.  If multiple commits per pull request are needed, please make each commit message descriptive and detailed.
+
 == Installation
 
 See the https://github.com/dejavusecurity/OutlookPrivacyPlugin/releases[releases] page for downloads and release notes.
