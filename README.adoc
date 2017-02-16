@@ -2,6 +2,8 @@
 
 A GnuPG/GPG/OpenPGP encryption plugin for Outlook 2010, 2013 and 2016.  Supports both 32 and 64bit versions of Outlook.
 
+NOTE: This plugin only works for the Windows version of Outlook.
+
 == About
 
 Outlook Privacy Plugin is a security extension for Outlook. It enables Outlook to send and receive email messages that are encrypted and/or signed with the OpenPGP standard. It uses your existing GnuPG/GPG keyrings.
