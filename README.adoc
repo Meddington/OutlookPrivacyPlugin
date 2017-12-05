@@ -32,9 +32,11 @@ Download the latest release from the the https://github.com/dejavusecurity/Outlo
 
 === 2. Install Gpg4win
 
-Install http://www.gpg4win.org/[gpg4win] and import or create keys as needed. Verify you can see all expected keys from the gpg4win key manager software.
+Install http://www.gpg4win.org/[gpg4win version 2.3.4] and import or create keys as needed. Verify you can see all expected keys from the gpg4win key manager software.
 
 Gpg4win is not required, but highly recommended.
+
+TIP: Versions newer than 2.3.4 have been reported as not compatable with OPP.
 
 === 3. Install Outlook Privacy Plugin
 
