@@ -742,63 +742,67 @@ namespace OutlookPrivacyPlugin
 				var doc = new HtmlAgilityPack.HtmlDocument();
 				var savedImages = new List<MimePart>();
 
-				doc.LoadHtml(htmlBody);
-
 				// Find any embedded images
-				foreach (var img in doc.DocumentNode.SelectNodes("//img[@src]"))
+				doc.LoadHtml(htmlBody);
+				var images = doc.DocumentNode.SelectNodes("//img[@src]");
+			   
+				if (images != null)
 				{
-					var src = img.Attributes["src"];
-					Uri uri;
-
-					if (src == null || src.Value == null)
-						continue;
-
-					// parse the <img src=...> attribute value into a Uri
-					if (Uri.IsWellFormedUriString(src.Value, UriKind.Absolute))
-						uri = new Uri(src.Value, UriKind.Absolute);
-					else
-						uri = new Uri(src.Value, UriKind.Relative);
-
-					// locate the index of the attachment within the multipart/related (if it exists)
-					string imageCid = src.Value.Substring(4);
-
-					var iter = new MimeIterator(msg);
-					MimePart attachment = null;
-					while (iter.MoveNext())
+					foreach (var img in images)
 					{
-						if (iter.Current.ContentId == imageCid)
+						var src = img.Attributes["src"];
+						Uri uri;
+
+						if (src == null || src.Value == null)
+							continue;
+
+						// parse the <img src=...> attribute value into a Uri
+						if (Uri.IsWellFormedUriString(src.Value, UriKind.Absolute))
+							uri = new Uri(src.Value, UriKind.Absolute);
+						else
+							uri = new Uri(src.Value, UriKind.Relative);
+
+						// locate the index of the attachment within the multipart/related (if it exists)
+						string imageCid = src.Value.Substring(4);
+
+						var iter = new MimeIterator(msg);
+						MimePart attachment = null;
+						while (iter.MoveNext())
 						{
-							attachment = iter.Current as MimePart;
-							break;
+							if (iter.Current.ContentId == imageCid)
+							{
+								attachment = iter.Current as MimePart;
+								break;
+							}
 						}
-					}
 
-					if (attachment == null)
-						continue;
+						if (attachment == null)
+							continue;
 
-					string fileName;
+						string fileName;
 
-					// save the attachment (if we haven't already saved it)
-					if (!savedImages.Contains(attachment))
-					{
-						fileName = attachment.FileName;
-
-						if (string.IsNullOrEmpty(fileName))
-							fileName = Guid.NewGuid().ToString();
-
-						using (var stream = File.Create(fileName))
-							attachment.ContentObject.DecodeTo(stream);
-
-						try
+						// save the attachment (if we haven't already saved it)
+						if (!savedImages.Contains(attachment))
 						{
-							var att = mailItem.Attachments.Add(fileName, Outlook.OlAttachmentType.olEmbeddeditem, null, "");
-							att.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", imageCid);
-							savedImages.Add(attachment);
-						}
-						finally
-						{
-							// try not to leak temp files :)
-							File.Delete(fileName);
+							fileName = attachment.FileName;
+
+							if (string.IsNullOrEmpty(fileName))
+								fileName = Guid.NewGuid().ToString();
+
+							using (var stream = File.Create(fileName))
+								attachment.ContentObject.DecodeTo(stream);
+
+							try
+							{
+								var att = mailItem.Attachments.Add(fileName, Outlook.OlAttachmentType.olEmbeddeditem, null, "");
+								att.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", imageCid);
+								savedImages.Add(attachment);
+							}
+							finally
+							{
+								// try not to leak temp files :)
+								File.Delete(fileName);
+							}
 						}
 					}
 				}
